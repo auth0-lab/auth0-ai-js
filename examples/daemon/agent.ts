@@ -5,9 +5,9 @@ import { interact, Auth0PollingCIBAAuthorizer } from '@auth0/ai';
 // `@auth0/ai` can add human-in-the-loop orchestration to agents written in any
 // framework.  Uncomment the example agent written in your preferred framework
 // to host it as a background agent using CIBA to obtain authorization.
-//import { prompt } from '../agent-llamaindex';
-// -- OR --
 import { prompt } from '../agent-genkit';
+// -- OR --
+//import { prompt } from '../agent-llamaindex';
 
 
 

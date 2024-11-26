@@ -4,12 +4,22 @@ import { AuthorizationOptions, AuthorizationError } from './errors/authorization
 export function interact(fn, authorizer) {
   
   const ifn = async function(ctx, ...args) {
+    console.log('ABOUT TO RUN...');
+    console.log(ctx)
+    
     return agentAsyncStorage.run(ctx, async () => {
       const store = agentAsyncStorage.getStore();
+      
+      console.log('START INTERACTION');
+      console.log(store)
+      
       
       try {
         return await fn.apply(undefined, args);
       } catch (error) {
+        console.log('EXCEPTION HANDLED');
+        console.log(store)
+        
         if (error instanceof AuthorizationError) {
           // The function threw an `AuthorizationError`, indicating that the
           // authentication context is not sufficient.  This error _may_ be
@@ -37,22 +47,17 @@ export function interact(fn, authorizer) {
           params.scope = error.scope;
           params.realm = error.realm;
           
-          var token = await authorizer.authorize(params, error.sessionId);
+          var token = await authorizer.authorize(params);
           if (!token) {
             console.log('NO TOKEN, STATELESS...');
             return
           }
           
           
-          // FIXME: preserve the passed in context better here.
-          ctx.session = ctx.session || {};
-          ctx.session.id = error.sessionId;
           ctx.tokens = {
             accessToken: token
           };
-          
-          
-          // WIP: how to apply session id here
+          // TODO: call this not within `run` to avoid nexted context?
           return ifn.apply(undefined, arguments);
         }
         

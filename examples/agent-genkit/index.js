@@ -75,9 +75,6 @@ export async function prompt(message) {
       // system method saying that authorization was requested, in which case
       // `chat.updateMessages()` would be the correct approach.
       await chat.session.store.save(chat.session.id, chat.session.sessionData);
-      
-      // Set `sessionId` property on the authorization error.
-      error.sessionId = chat.session.id;
     }
     
     throw error;
