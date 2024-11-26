@@ -88,6 +88,35 @@ export class NotificationCIBAAuthorizer implements Authorizer {
     console.log('waiting for notification: ' + reqId);
   }
   
+  async tokens(reqId: string) {
+    console.log('GET TOKENS!');
+    console.log(reqId)
+    
+    
+    var headers = {};
+    const body = {
+      grant_type: 'urn:openid:params:grant-type:ciba',
+      auth_req_id: reqId
+    }
+    
+    
+    if (this.clientId && this.clientSecret) {
+      headers['Authorization'] = 'Basic ' + Buffer.from([ this.clientId, this.clientSecret ].join(':')).toString('base64')
+    }
+    
+    headers['Content-Type'] = 'application/x-www-form-urlencoded'
+    const response = await fetch(this.tokenURL, {
+      method: 'POST',
+      headers: headers,
+      body: new URLSearchParams(body).toString(),
+      // ...
+    });
+    
+    var json = await response.json();
+    console.log('GOT JSON');
+    console.log(json)
+    return json;
+  }
   
 }
 

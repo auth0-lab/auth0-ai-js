@@ -17,6 +17,7 @@ const store = new auth0AI.FSStateStore('.');
 
 const authorizer = new auth0AI.NotificationCIBAAuthorizer({
   authorizationURL: 'http://localhost:8080/oauth2/bc-authorize',
+  tokenURL: 'http://localhost:8080/oauth2/token',
   clientId: process.env['CLIENT_ID'],
   clientSecret: process.env['CLIENT_SECRET'],
   store: store
@@ -75,6 +76,17 @@ router.post('/cb',
     console.log(req.body)
     console.log(req.user);
     console.log(req.authInfo);
+    
+    authorizer.tokens(req.authInfo.authReqId)
+      .then(function(tokens) {
+        console.log('GOT TOKENS');
+        console.log(tokens);
+        
+        auth0AI.resume(interactivePrompt, req.authInfo.authReqId, req.authInfo)
+      })
+    
+    
+    
   })
 
 module.exports = router;
