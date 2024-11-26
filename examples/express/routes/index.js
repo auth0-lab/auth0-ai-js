@@ -30,8 +30,8 @@ var router = express.Router();
 router.post('/',
   function(req, res, next) {
     const user = {
-      id: 'auth0|672d15e3a67830e930d6679b'
-    }
+      id: req.body.username
+    };
   
     interactivePrompt({ user: user }, req.body.message)
       .then(function(result) {
