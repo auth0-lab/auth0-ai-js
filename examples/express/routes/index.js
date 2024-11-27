@@ -54,7 +54,7 @@ var notificationStrategy = new BearerStrategy(function(token, cb) {
     .then(function(data) {
       console.log(data);
       
-      
+      data.transactionId = token;
       cb(null, true, data);
       
     })
@@ -82,7 +82,8 @@ router.post('/cb',
         console.log('GOT TOKENS');
         console.log(tokens);
         
-        auth0AI.resume(interactivePrompt, req.authInfo.requestId, req.authInfo)
+        // FIXME: pass transactionId, not requestId
+        auth0AI.resume(interactivePrompt, req.authInfo.transactionId, req.authInfo.context, req.authInfo.arguments)
       })
     
     

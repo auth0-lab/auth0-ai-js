@@ -54,8 +54,12 @@ export function interact(fn, authorizer, stateStore) {
           if (result.transactionId) {
             console.log('NO TOKEN, STATELESS...');
             
-            var d: any = { requestId: result.requestId, state: args }
-            d.session = store.session;
+            var d: any = { requestId: result.requestId, arguments: args }
+            // TODO: Filter context better to include all things except tokens
+            d.context = {
+              user: store.user,
+              session: store.session
+            }
             await stateStore.save(result.transactionId, d);
             return
           }
