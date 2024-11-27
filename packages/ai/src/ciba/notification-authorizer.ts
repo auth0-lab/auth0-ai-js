@@ -122,7 +122,15 @@ export class NotificationCIBAAuthorizer implements Authorizer {
     var json = await response.json();
     console.log('GOT JSON');
     console.log(json)
-    return json;
+    
+    const credentials = {
+      accessToken: {
+        type: json.token_type || 'bearer', // FIXME: Auth0 is not returnin token_type
+        value: json.access_token
+      }
+    }
+    
+    return credentials;
   }
   
 }

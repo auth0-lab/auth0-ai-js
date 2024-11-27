@@ -82,8 +82,14 @@ router.post('/cb',
         console.log('GOT TOKENS');
         console.log(tokens);
         
+        req.authInfo.context.tokens = tokens;
+        
         // FIXME: pass transactionId, not requestId
         auth0AI.resume(interactivePrompt, req.authInfo.transactionId, req.authInfo.context, req.authInfo.arguments)
+          .then(function(result) {
+            console.log('GOT RESULT')
+            console.log(result)
+          })
       })
     
     
