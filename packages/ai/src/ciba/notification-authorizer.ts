@@ -77,11 +77,12 @@ export class NotificationCIBAAuthorizer implements Authorizer {
     // TODO: get the arguments from context...
     var d = { authReqId: json.auth_req_id, state: { foo: 'bar' } }
     
-    await this.store.save(token, d);
+    //await this.store.save(token, d);
     
     
     const pending = {
-      transactionId: json.auth_req_id
+      transactionId: token,
+      requestId: json.auth_req_id
     }
     
     return Promise.resolve(pending);

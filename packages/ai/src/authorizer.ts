@@ -1,20 +1,22 @@
 import { AuthorizationOptions } from './errors/authorizationerror';
 
-export interface Token {
+export interface Credential {
   type: string;
   value: string;
 }
 
-export interface TokenResult {
-  accessToken: Token
+export interface Credentials {
+  accessToken: Credential
+  refreshToken?: Credential
 }
 
-export interface PendingResult {
+export interface PendingAuthorization {
   transactionId: string
+  requestId: string
 }
 
 
 
 export interface Authorizer {
-  authorize(params: AuthorizationOptions): Promise<TokenResult | PendingResult>;
+  authorize(params: AuthorizationOptions): Promise<Credentials | PendingAuthorization>;
 }

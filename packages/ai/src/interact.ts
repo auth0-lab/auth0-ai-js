@@ -47,16 +47,17 @@ export function interact(fn, authorizer) {
           params.scope = error.scope;
           params.realm = error.realm;
           
-          var token = await authorizer.authorize(params);
-          if (!token) {
+          var result = await authorizer.authorize(params);
+          console.log('token is!');
+          console.log(result)
+          
+          if (result.transactionId) {
             console.log('NO TOKEN, STATELESS...');
             return
           }
           
           
-          ctx.tokens = {
-            accessToken: token
-          };
+          ctx.tokens = result;
           // TODO: call this not within `run` to avoid nexted context?
           return ifn.apply(undefined, arguments);
         }

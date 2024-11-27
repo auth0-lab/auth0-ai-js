@@ -1,4 +1,4 @@
-import { Authorizer, TokenResult } from '../authorizer'
+import { Authorizer, Credentials } from '../authorizer'
 import { AuthorizationError, AuthorizationOptions } from '../errors/authorizationerror'
 
 export interface CIBAAuthorizerOptions {
@@ -26,7 +26,7 @@ export class PollingCIBAAuthorizer implements Authorizer {
     this.clientSecret = options.clientSecret;
   }
   
-  async authorize(params: AuthorizationOptions): Promise<TokenResult> {
+  async authorize(params: AuthorizationOptions): Promise<Credentials> {
     var headers = {};
     var body: {
       login_hint?: string;
@@ -64,7 +64,7 @@ export class PollingCIBAAuthorizer implements Authorizer {
     return await this.poll(json.auth_req_id)
   }
   
-  async poll(reqId: string): Promise<TokenResult> {
+  async poll(reqId: string): Promise<Credentials> {
     return new Promise((resolve, reject) => {
       const interval = setInterval(async () => {
         var headers = {};
@@ -97,14 +97,14 @@ export class PollingCIBAAuthorizer implements Authorizer {
           return;
         }
   
-        const token = {
+        const credentials = {
           accessToken: {
             type: json.token_type || 'bearer', // FIXME: Auth0 is not returnin token_type
             value: json.access_token
           }
         }
         clearInterval(interval);
-        return resolve(token);
+        return resolve(credentials);
       }, 5000);
     });
   }
