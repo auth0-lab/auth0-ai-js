@@ -24,16 +24,16 @@ a person or organization. Common use cases include:
 
 ## Packages
 
-- [`@auth0/ai`](https://github.com/atko-cic-lab/auth0-ai-js/tree/main/packages/ai) -
+- [`@auth0/ai`](https://github.com/auth0-lab/auth0-ai-js/tree/main/packages/ai) -
   Base abstractions for authentication and authorization in AI applications.
 
-- [`@auth0/ai-genkit`](https://github.com/atko-cic-lab/auth0-ai-js/tree/main/packages/ai-genkit) -
+- [`@auth0/ai-genkit`](https://github.com/auth0-lab/auth0-ai-js/tree/main/packages/ai-genkit) -
   Integration with [Genkit](https://firebase.google.com/docs/genkit) framework.
 
-- [`@auth0/ai-llamaindex`](https://github.com/atko-cic-lab/auth0-ai-js/tree/main/packages/ai-llamaindex) -
+- [`@auth0/ai-llamaindex`](https://github.com/auth0-lab/auth0-ai-js/tree/main/packages/ai-llamaindex) -
   Integration with [LlamaIndex.TS](https://ts.llamaindex.ai/) framework.
 
-- [`@auth0/ai-langchain`](https://github.com/atko-cic-lab/auth0-ai-js/tree/main/packages/ai-langchain) -
+- [`@auth0/ai-langchain`](https://github.com/auth0-lab/auth0-ai-js/tree/main/packages/ai-langchain) -
   Integration with [LangchainJS](https://js.langchain.com/docs/introduction/) framework.
 
 ## Running examples
