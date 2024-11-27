@@ -80,7 +80,13 @@ export class NotificationCIBAAuthorizer implements Authorizer {
     await this.store.save(token, d);
     
     
-    return await this.wait(json.auth_req_id)
+    const pending = {
+      transactionId: json.auth_req_id
+    }
+    
+    return Promise.resolve(pending);
+    
+    //return await this.wait(json.auth_req_id)
   }
   
   // TODO: make this private
