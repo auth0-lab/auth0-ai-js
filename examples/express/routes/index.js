@@ -23,7 +23,7 @@ const authorizer = new auth0AI.NotificationCIBAAuthorizer({
   store: store
 });
 
-const interactivePrompt = auth0AI.interact(agent.prompt, authorizer);
+const interactivePrompt = auth0AI.interact(agent.prompt, authorizer, store);
 
 
 var router = express.Router();
@@ -64,7 +64,7 @@ var notificationStrategy = new BearerStrategy(function(token, cb) {
 router.post('/cb',
   passport.authenticate(notificationStrategy, { session: false }),
   function validateAuthReqIdBinding(req, res, next) {
-    if (req.authInfo.authReqId !== req.body.auth_req_id) {
+    if (req.authInfo.requestId !== req.body.auth_req_id) {
       // TODO: make it an http 402 error
       return next(new Error('invalid auth req id binding'));
     }
@@ -77,12 +77,12 @@ router.post('/cb',
     console.log(req.user);
     console.log(req.authInfo);
     
-    authorizer.tokens(req.authInfo.authReqId)
+    authorizer.tokens(req.authInfo.requestId)
       .then(function(tokens) {
         console.log('GOT TOKENS');
         console.log(tokens);
         
-        auth0AI.resume(interactivePrompt, req.authInfo.authReqId, req.authInfo)
+        auth0AI.resume(interactivePrompt, req.authInfo.requestId, req.authInfo)
       })
     
     

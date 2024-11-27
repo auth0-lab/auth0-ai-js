@@ -1,7 +1,7 @@
 import { agentAsyncStorage } from './async-storage';
 import { AuthorizationOptions, AuthorizationError } from './errors/authorizationerror';
 
-export function interact(fn, authorizer) {
+export function interact(fn, authorizer, stateStore) {
   
   const ifn = async function(ctx, ...args) {
     console.log('ABOUT TO RUN...');
@@ -53,6 +53,10 @@ export function interact(fn, authorizer) {
           
           if (result.transactionId) {
             console.log('NO TOKEN, STATELESS...');
+            
+            var d: any = { requestId: result.requestId, state: args }
+            d.session = store.session;
+            await stateStore.save(result.transactionId, d);
             return
           }
           
