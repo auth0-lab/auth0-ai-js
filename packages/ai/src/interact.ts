@@ -2,7 +2,8 @@ import { agentAsyncStorage } from './async-storage';
 import { AuthorizationOptions, AuthorizationError } from './errors/authorizationerror';
 
 /**
- * Make `fn` interactive with authentication and authorization ceremonies.
+ * Make `fn` interactive by supplying it with authentication context and
+ * orchestrating authentication and authorization ceremonies when necessary.
  *
  * @remarks
  * This functions wraps `fn`, interacting with the user when authentication or
@@ -13,16 +14,15 @@ import { AuthorizationOptions, AuthorizationError } from './errors/authorization
  * goal of the ceremony is to obtain credentials with the necessary
  * authentication and/or authorization context to execute `fn`.
  *
+ * Authentication context is made available to `fn` (and any callbacks or promise
+ * chains it propagates) via an instance of {@link https://nodejs.org/docs/latest/api/async_context.html#class-asynclocalstorage AsyncLocalStorage}.
+ * Functions can access this context by requiring `import`ing
+ * '@auth0/ai/user', '@auth0/ai/session', and `'@auth0/ai/tokens'`.
+ *
  * Interaction is triggered by throwing an `AuthorizationError` from `fn`.  The
  * `AuthorizationError` represents a challenge that must be successfully
  * completed in order to execute the function.  Challenge parameters indicate
  * the required authentication and authorization context.
- *
- * This is particularly well suited to AI agents making use of tools as part of
- * executing a task.  Tool functions throw `AuthorizationError`s, typically upon
- * receiving an `HTTP 401` response from an API.  Such challenges can be used to
- * bring a human-in-the-loop when the agent attempts a task that requires
- * approval, such as transfering a certain amount of money.
  *
  * It is recommended that HTTP APIs respond with challenges containing
  * parameters standardized by {@link https://datatracker.ietf.org/doc/html/rfc6750 RFC 6750}
@@ -34,6 +34,33 @@ import { AuthorizationOptions, AuthorizationError } from './errors/authorization
  * authorizer typically relays the authorization challenge to an authorization
  * server, which then interacts with the user.  Once authorization has been
  * obtained, a new set of credentials are issued and `fn` is re-executed.
+ *
+ * It is recommended that an `authorizer` implements a standard authorization
+ * protocol.  This package provides authorizers that implement {@link https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html OpenID Connect CIBA}.
+ *
+ * Interaction is particularly well suited to AI agents making use of tools as
+ * part of executing a task.  Tool functions throw `AuthorizationError`s,
+ * typically upon receiving an `HTTP 401` response from an API.  Such challenges
+ * can be used to bring a human-in-the-loop when the agent attempts a task that
+ * requires approval, such as transfering a certain amount of money.
+ *
+ * An application that wraps `fn` for interaction is said to be "hosting" that
+ * function.  The function can be hosted in a variety of different interaction
+ * contexts, without the function itself being aware.   The interaction context
+ * can be tailord to the environment by passing the appropriate `authorizer`
+ * implementation.  For instance, an agent running autonomously in the
+ * background can interact with the user via out-of-band channels by using a
+ * CIBA authorizer.   The same agent running in an input constrained device
+ * (such as a smart TV app) can use a device flow authorizer.
+ *
+ * Often times, agents are deployed in situations where logic is invoked as
+ * statess HTTP endpoints.   In such scenarios, an optional `stateStore` can be
+ * used to persist context while authorization is being obtained.  Once
+ * obtained, `fn` can be resumed later.
+ *
+ * @param fn - The function to wrap with interaction.
+ * @param authorizer - Orchestrates interaction with the user.
+ * @param stateStore - Persist context for later resumption.
  */
 export function interact(fn, authorizer, stateStore) {
   
