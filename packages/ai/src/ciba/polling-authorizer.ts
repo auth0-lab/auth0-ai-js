@@ -1,5 +1,5 @@
-import { Authorizer, Credentials } from '../authorizer'
-import { AuthorizationError, AuthorizationOptions } from '../errors/authorizationerror'
+import { Authorizer, AuthorizationOptions, Credentials } from '../authorizer'
+import { AuthorizationError } from '../errors/authorizationerror'
 
 export interface CIBAAuthorizerOptions {
   authorizationURL: string;

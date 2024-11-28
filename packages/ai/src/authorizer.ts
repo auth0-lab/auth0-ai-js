@@ -1,4 +1,12 @@
-import { AuthorizationOptions } from './errors/authorizationerror';
+export interface AuthorizationOptions {
+  loginHint?: string;
+  acrValues?: string[];
+  maxAge?: number;
+  scope?: string[];
+  bindingMessage?: string;
+  realm?: string
+}
+
 
 export interface Credential {
   type: string;

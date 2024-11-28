@@ -1,5 +1,6 @@
+import { AuthorizationOptions } from './authorizer';
+import { AuthorizationError } from './errors/authorizationerror';
 import { agentAsyncStorage } from './async-storage';
-import { AuthorizationOptions, AuthorizationError } from './errors/authorizationerror';
 
 /**
  * Make `fn` interactive by supplying it with authentication context and

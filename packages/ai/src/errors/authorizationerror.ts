@@ -1,15 +1,6 @@
 // https://datatracker.ietf.org/doc/html/rfc6750
 // https://datatracker.ietf.org/doc/html/rfc9470
 
-export interface AuthorizationOptions {
-  loginHint?: string;
-  acrValues?: string[];
-  maxAge?: number;
-  scope?: string[];
-  bindingMessage?: string;
-  realm?: string
-}
-
 export interface AuthorizationErrorOptions {
   acrValues?: string[] | string;
   maxAge?: number | string;

@@ -1,5 +1,5 @@
-import { Authorizer } from '../authorizer'
-import { AuthorizationError, AuthorizationOptions } from '../errors/authorizationerror'
+import { Authorizer, AuthorizationOptions } from '../authorizer'
+import { AuthorizationError } from '../errors/authorizationerror'
 import { CIBAAuthorizerOptions } from './polling-authorizer'
 import { StateStore } from '../state/state-store'
 import { randomBytes } from 'crypto';
