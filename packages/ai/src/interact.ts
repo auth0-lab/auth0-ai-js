@@ -54,40 +54,30 @@ import { AuthorizationOptions, AuthorizationError } from './errors/authorization
  * (such as a smart TV app) can use a device flow authorizer.
  *
  * Often times, agents are deployed in situations where logic is invoked as
- * statess HTTP endpoints.   In such scenarios, an optional `stateStore` can be
+ * stateless HTTP endpoints.   In such scenarios, an optional `store` can be
  * used to persist context while authorization is being obtained.  Once
  * obtained, `fn` can be resumed later.
  *
  * @param fn - The function to wrap with interaction.
  * @param authorizer - Orchestrates interaction with the user.
- * @param stateStore - Persist context for later resumption.
+ * @param store - Persist context for later resumption.
  */
-export function interact(fn, authorizer, stateStore) {
+export function interact(fn, authorizer, store) {
   
   const ifn = async function(ctx, ...args) {
-    console.log('ABOUT TO RUN...');
-    console.log(ctx)
     
     return agentAsyncStorage.run(ctx, async () => {
-      const store = agentAsyncStorage.getStore();
-      
-      console.log('START INTERACTION');
-      console.log(store)
-      
-      
+      const shared = agentAsyncStorage.getStore();
       try {
         return await fn.apply(undefined, args);
       } catch (error) {
-        console.log('EXCEPTION HANDLED');
-        console.log(store)
-        
         if (error instanceof AuthorizationError) {
           // The function threw an `AuthorizationError`, indicating that the
           // authentication context is not sufficient.  This error _may_ be
           // remediable by authenticating the user or obtaining their consent.
           var params: AuthorizationOptions = {};
-          if (store.user) {
-            params.loginHint = store.user.id;
+          if (shared.user) {
+            params.loginHint = shared.user.id;
           }
           
           params.acrValues = error.acrValues;
@@ -96,22 +86,16 @@ export function interact(fn, authorizer, stateStore) {
           params.realm = error.realm;
           
           var result = await authorizer.authorize(params);
-          console.log('token is!');
-          console.log(result)
-          
           if (result.transactionId) {
-            console.log('NO TOKEN, STATELESS...');
-            
             var d: any = { requestId: result.requestId, arguments: args }
             // TODO: Filter context better to include all things except tokens
             d.context = {
-              user: store.user,
-              session: store.session
+              user: shared.user,
+              session: shared.session
             }
-            await stateStore.save(result.transactionId, d);
-            return
+            await store.save(result.transactionId, d);
+            return;
           }
-          
           
           ctx.tokens = result;
           // TODO: call this not within `run` to avoid nexted context?
