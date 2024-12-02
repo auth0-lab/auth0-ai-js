@@ -81,8 +81,8 @@ const result = await interactiveBuyStock({ user: user }, { symbol: ZEKO, qty: 10
 
 Examples of tool-calling agents are available in a variety of popular frameworks:
 
-  - [../../examples/agent-genkit](Genkit)
-  - [../../examples/agent-llamaindex](LlamaIndex)
+  - [Genkit](../../examples/agent-genkit)
+  - [LlamaIndex](../../examples/agent-llamaindex)
 
 The agents can be made interactive by "hosting" them in variety of application
 contexts:
