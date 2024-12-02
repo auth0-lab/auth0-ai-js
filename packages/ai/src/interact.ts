@@ -1,4 +1,4 @@
-import { AuthorizationOptions } from './authorizer';
+import { Authorizer, AuthorizationOptions, isPending } from './authorizer';
 import { AuthorizationError } from './errors/authorizationerror';
 import { agentAsyncStorage } from './async-storage';
 
@@ -63,7 +63,7 @@ import { agentAsyncStorage } from './async-storage';
  * @param authorizer - Orchestrates interaction with the user.
  * @param store - Persist context for later resumption.
  */
-export function interact(fn, authorizer, store) {
+export function interact(fn, authorizer: Authorizer, store) {
   
   const ifn = async function(ctx, ...args) {
     
@@ -87,7 +87,15 @@ export function interact(fn, authorizer, store) {
           params.realm = error.realm;
           
           var result = await authorizer.authorize(params);
-          if (result.transactionId) {
+          if (isPending(result)) {
+            // The authorization result is pending.  A notification will be sent
+            // when the result is available.  This pattern is typically used to
+            // implement "stateless" agents, where logic is invoked via HTTP
+            // endpoints.  Depending on the deployment architecture, logic may
+            // resume on an entirely separate process than the current one which
+            // triggered the authorization request.   As such, the context of
+            // the authorization transaction is saved so it can later be resumed
+            // when the result is available.
             var d: any = { requestId: result.requestId, arguments: args }
             // TODO: Filter context better to include all things except tokens
             d.context = {
