@@ -63,7 +63,7 @@ const interactiveBuyStock = interact(buyStock, authorizer);
 
 Invoke the interactive function.  Whenever an `AuthorizationError` is thrown,
 the user will be prompted.  Once authorization has been granted, the function
-will be re-invoked with with newly issued credentials.
+will be re-invoked with newly issued credentials.
 
 ```js
 const user = {

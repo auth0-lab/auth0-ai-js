@@ -1,24 +1,23 @@
 # agent-genkit
 
-`agent-genkit` is an example stock trading agent implemented in [Genkit](https://firebase.google.com/docs/genkit)
-for [Node.js](https://nodejs.org/).  The agent supports multi-turn conversations
-by persisting messages sent within a [chat session](https://firebase.google.com/docs/genkit/chat).
-The agent executes trades via [tool calling](https://firebase.google.com/docs/genkit/tool-calling)
-which, in turn, call APIs.
+This is an example agent implemented using [Genkit](https://firebase.google.com/docs/genkit).
+It supports [chat sessions](https://firebase.google.com/docs/genkit/chat) and
+[tool calling](https://firebase.google.com/docs/genkit/tool-calling).
 
-In order to impose guardrails on the agent, APIs can, in real-time, apply
-policies such as requiring human approval for any trade that exceeds a certain
-amount of money.  When such a policy constraint is encountered, the agent is
-challenged using, for example, [OAuth 2.0 Step Up Authentication Challenge
-Protocol](https://datatracker.ietf.org/doc/html/rfc9470).  When challenged, tool
-functions throw an `AuthorizationError` with the challenge parameters.
+The tool calls make requests to HTTP endpoints, and expect to be provided with
+an access token that is obtained by `import`ing '@auth0/ai/tokens'.  If the
+access token doesn't have sufficient context, the `WWW-Authenticate` challenge
+header is parsed, and an `AuthorizationError` is thrown.
 
-[`@auth0/ai`](../../packages/ai) provides a framework that orchestrates the
-interaction between the agent and the human who can grant authorization.  It
-intercepts `AuthorizationError`s, and relays the parameters in a request to an
-authorization server.  Once access has been granted, a fresh set of tokens are
-issued to the agent.  The framework then retries the previously denied request
-using the new credentials, which should allow it to proceed.
+This agent is "hosted" within an application that allows it to interact with the
+user to obtain authorization.   Example host applications demonstrate how to
+interact in a variety of contexts:
 
-Using `@auth0/ai`, this agent can be hosted in a variety of different
-modalities, including ...
+  - [daemon](../daemon) - A background agent that interacts out-of-band via CIBA
+    polling.
+  - [express](../../examples/daemon) - A "stateless" background agent that
+    interacts out-of-band via CIBA notifications.
+
+Whenever authorization is needed, the user will be prompted.  Once authorization
+has been granted, the agent will be re-invoked with a newly issued access token,
+which should allow the previously denied tool call to succeed.
