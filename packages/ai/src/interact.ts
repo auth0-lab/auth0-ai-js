@@ -1,4 +1,5 @@
 import { Authorizer, AuthorizationOptions, isPending } from './authorizer';
+import { StateStore } from './state/state-store';
 import { AuthorizationError } from './errors/authorizationerror';
 import { agentAsyncStorage } from './async-storage';
 
@@ -63,7 +64,7 @@ import { agentAsyncStorage } from './async-storage';
  * @param authorizer - Orchestrates interaction with the user.
  * @param store - Persist context for later resumption.
  */
-export function interact(fn, authorizer: Authorizer, store) {
+export function interact(fn, authorizer: Authorizer, store?: StateStore) {
   
   const ifn = async function(ctx, ...args) {
     
