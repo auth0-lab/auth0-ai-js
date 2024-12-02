@@ -17,6 +17,7 @@
   "dependencies": {
     "@auth0/ai": "*",
     "@genkit-ai/ai": "^0.5.17",
+    "genkit": "^0.9.6",
     "zod": "^3.23.8"
   },
   "peerDependencies": {
