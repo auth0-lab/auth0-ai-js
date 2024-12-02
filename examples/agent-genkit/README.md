@@ -6,7 +6,7 @@ It supports [chat sessions](https://firebase.google.com/docs/genkit/chat) and
 
 The tool calls make requests to HTTP endpoints, and expect to be provided with
 an access token that is obtained by `import`ing `'@auth0/ai/tokens'`.  If the
-access token doesn't have sufficient context, the `WWW-Authenticate` challenge
+access token does not have sufficient context, the `WWW-Authenticate` challenge
 header is parsed, and an `AuthorizationError` is thrown.
 
 This agent is "hosted" within an application that allows it to interact with the
