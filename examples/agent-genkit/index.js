@@ -1,6 +1,7 @@
 import { genkit, z } from 'genkit';
 import { openAI, gpt4o } from 'genkitx-openai';
 import { FSSessionStore } from '@auth0/ai-genkit';
+import { user } from '@auth0/ai/user';
 import { session as sess } from '@auth0/ai/session';
 import { tokens } from '@auth0/ai/tokens';
 import { AuthorizationError } from '@auth0/ai';
@@ -31,6 +32,10 @@ const buy = ai.defineTool(
       qty: qty
     };
     
+    const u = user();
+    console.log('Buying stock for user: ')
+    console.log(u);
+    
     const accessToken = tokens().accessToken;
     if (accessToken) {
       headers['Authorization'] = 'Bearer ' + accessToken.value;
@@ -41,7 +46,7 @@ const buy = ai.defineTool(
       headers: headers,
       body: JSON.stringify(body),
     });
-    if (response.status == '401') {
+    if (response.status == 401) {
       const challenge = parseWWWAuthenticateHeader(response.headers.get('WWW-Authenticate'));
       console.log(challenge);
       throw new AuthorizationError('You need authorization to buy stock', 'insufficient_scope', { scope: challenge.data.scope });

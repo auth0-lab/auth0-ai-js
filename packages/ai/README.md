@@ -36,7 +36,7 @@ export async function buyStock({ symbol, qty }) {
     headers: headers,
     // ...
   });
-  if (response.status == '401') {
+  if (response.status == 401) {
     const challenge = parseWWWAuthenticateHeader(response.headers.get('WWW-Authenticate'));
     throw new AuthorizationError('You need authorization to buy stock', 'insufficient_scope', { scope: challenge.data.scope });
   }
@@ -69,7 +69,7 @@ will be re-invoked with with newly issued credentials.
 const user = {
   id: '248289761001',
   email: 'janedoe@example.com',
-  idToken: 'eyJhbGciOiJSUzI'
+  idToken: 'eyJhbGci...'
 }
 
 const result = await interactiveBuyStock({ user: user }, { symbol: ZEKO, qty: 10});
