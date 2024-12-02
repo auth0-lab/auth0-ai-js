@@ -6,7 +6,8 @@
   "exports": {
     ".": "./dist/index.js",
     "./session": "./dist/session.js",
-    "./tokens": "./dist/tokens.js"
+    "./tokens": "./dist/tokens.js",
+    "./user": "./dist/user.js"
   },
   "scripts": {
     "build": "tsc",
