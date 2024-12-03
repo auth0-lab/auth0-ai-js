@@ -4,13 +4,41 @@ import { ChatOpenAI } from "@langchain/openai";
 import { StateGraph, Annotation, messagesStateReducer, MemorySaver } from "@langchain/langgraph";
 import { ToolNode } from "@langchain/langgraph/prebuilt"
 import { z } from "zod";
+import { tokens } from '@auth0/ai/tokens';
+import { AuthorizationError } from '@auth0/ai';
+import { parseWWWAuthenticateHeader } from 'http-auth-utils';
 
 const buyTool = tool(async ({ ticker, qty }) => {
   console.log('buy stock!');
   console.log(ticker)
   console.log(qty)
   
-  return 'OK'
+  const headers = {
+    'Content-Type': 'application/json'
+  };
+  const body = {
+    ticker: ticker,
+    qty: qty
+  };
+  
+  const accessToken = tokens().accessToken;
+  if (accessToken) {
+    headers['Authorization'] = 'Bearer ' + accessToken.value;
+  }
+  
+  const response = await fetch('http://localhost:8081/', {
+    method: 'POST',
+    headers: headers,
+    body: JSON.stringify(body),
+  });
+  if (response.status == 401) {
+    const challenge = parseWWWAuthenticateHeader(response.headers.get('WWW-Authenticate'));
+    console.log(challenge);
+    throw new AuthorizationError('You need authorization to buy stock', 'insufficient_scope', { scope: challenge.data.scope });
+  }
+  
+  var json = await response.json();
+  return 'OK';
 }, {
   name: "buy",
   description: "Use this function to buy stock",
@@ -21,7 +49,7 @@ const buyTool = tool(async ({ ticker, qty }) => {
 });
 
 const tools = [ buyTool ];
-const toolNode = new ToolNode(tools);
+const toolNode = new ToolNode(tools, { handleToolErrors: false });
 
 const model = new ChatOpenAI({ model: "gpt-4" }).bindTools(tools);
 
@@ -70,7 +98,9 @@ const checkpointer = new MemorySaver();
 // Finally, we compile it!
 // This compiles it into a LangChain Runnable.
 // Note that we're (optionally) passing the memory when compiling the graph
-const app = workflow.compile({ checkpointer });
+// FIXME the checkpointer is saving the tool call that threw the exception.
+//const app = workflow.compile({ checkpointer });
+const app = workflow.compile();
 
 
 export async function prompt(message) {
@@ -83,5 +113,5 @@ export async function prompt(message) {
 
   //var rv = await model.invoke(messages);
   var rv = await app.invoke({ messages: messages}, { configurable: { thread_id: "42" } });
-  console.log(rv);
+  console.log(rv.messages[rv.messages.length - 1].content);
 }
