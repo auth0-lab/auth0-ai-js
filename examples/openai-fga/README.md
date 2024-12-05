@@ -39,6 +39,9 @@
       relations
         define owner: [user]
         define viewer: [user, user:*]
+        define can_view: [user] or owner
+        define can_edit: owner
+    
     ```
 
 2. Create a client: Navigate to *Settings* and in the *Authorized Clients* section click **+ Create Client** button. On the new page give your client a name and mark all three client permissions then click **Create**.
