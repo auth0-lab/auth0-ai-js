@@ -1,0 +1,19 @@
+{
+  "name": "agent-langchain",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@langchain/core": "^0.3.19",
+    "@langchain/langgraph": "^0.2.24",
+    "@langchain/openai": "^0.3.14",
+    "http-auth-utils": "^6.0.1",
+    "zod": "^3.23.8"
+  }
+}
