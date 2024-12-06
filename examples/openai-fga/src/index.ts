@@ -21,7 +21,7 @@ async function main() {
     buildQuery: (doc) => ({
       user: `user:${user}`,
       object: `doc:${doc.id}`,
-      relation: "viewer",
+      relation: "can_view",
     }),
   });
 
