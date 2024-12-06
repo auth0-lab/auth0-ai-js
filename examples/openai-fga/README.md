@@ -39,7 +39,7 @@
       relations
         define owner: [user]
         define viewer: [user, user:*]
-        define can_view: [user] or owner
+        define can_view: viewer or owner
         define can_edit: owner
     
     ```
