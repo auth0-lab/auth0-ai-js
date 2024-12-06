@@ -26,40 +26,12 @@ async function main() {
     },
   });
 
-  // 01. WRITE MODEL
-  const model = await fgaClient.writeAuthorizationModel({
-    schema_version: "1.1",
-    type_definitions: [
-      { type: "user" },
-      {
-        type: "doc",
-        relations: { owner: { this: {} }, viewer: { this: {} } },
-        metadata: {
-          relations: {
-            owner: { directly_related_user_types: [{ type: "user" }] },
-            viewer: {
-              directly_related_user_types: [
-                { type: "user" },
-                { type: "user", wildcard: {} },
-              ],
-            },
-          },
-        },
-      },
-    ],
-  });
-
-  console.log("NEW MODEL ID: ", model.authorization_model_id);
-
-  // 02. CONFIGURE PRE-DEFINED TUPLES
+  // 01. CONFIGURE PRE-DEFINED TUPLES
   await fgaClient.write(
     {
       writes: [
         { user: "user:*", relation: "viewer", object: "doc:public-doc" },
       ],
-    },
-    {
-      authorizationModelId: model.authorization_model_id,
     }
   );
 }
