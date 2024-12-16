@@ -3,7 +3,7 @@ import { defineCommand, runMain } from 'citty';
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { tool } from "@langchain/core/tools";
 import { ChatOpenAI } from "@langchain/openai";
-import { StateGraph, Annotation, messagesStateReducer, MemorySaver } from "@langchain/langgraph";
+import { StateGraph, Annotation, messagesStateReducer, MemorySaver, NodeInterrupt } from "@langchain/langgraph";
 import { ToolNode } from "@langchain/langgraph/prebuilt"
 import { z } from "zod";
 import { parseWWWAuthenticateHeader } from 'http-auth-utils';
@@ -41,8 +41,21 @@ const buyTool = tool(async ({ ticker, qty }, config) => {
   });
   if (response.status == 401) {
     const challenge = parseWWWAuthenticateHeader(response.headers.get('WWW-Authenticate'));
+    
+    console.log('CHALLENGE!');
+    console.log(challenge);
+    
     //console.log(challenge);
-    //throw new AuthorizationError('You need authorization to buy stock', 'insufficient_scope', { scope: challenge.data.scope });
+    //throw new Error('You need authorization to buy stock', 'insufficient_scope', { scope: challenge.data.scope });
+    //throw new NodeInterrupt(`Received input that is longer than 5 characters`, { foo: 'bar' });
+    //var i = new NodeInterrupt(`Received input that is longer than 5 characters`, { foo: 'bar' });
+    //var i = new NodeInterrupt({ bar: 'baz' }, { foo: 'bar' });
+    //i.scope = 'foo';
+    //throw i;
+    
+    //throw new Error('i need a human to be in the loop')
+    throw new NodeInterrupt('i need a human to be in the loop');
+    //throw new NodeInterrupt({ bar: 'baz' }, { foo: 'bar' });
   }
   
   var json = await response.json();
@@ -57,8 +70,25 @@ const buyTool = tool(async ({ ticker, qty }, config) => {
   })
 });
 
+const interruptedStep = async (state: typeof StateAnnotation.State) => {
+  // Let's optionally raise a NodeInterrupt
+  // if the length of the input is longer than 5 characters
+  //if (state.input?.length > 5) {
+  //  throw new NodeInterrupt(`Received input that is longer than 5 characters: ${state.input}`);
+  //}
+  //console.log("---Step 2---");
+  //throw new Error('something is wrong')
+  //throw new NodeInterrupt(`something is interrupted`);
+  
+  //throw new NodeInterrupt({ bar: 'baz' });
+  
+  return state;
+};
+
+
 const tools = [ buyTool ];
-const toolNode = new ToolNode(tools, { handleToolErrors: false });
+// NOTE: handleToolErrors: false seems to be necessary to get NodeInterrupt bubbled up from tool-wrapped functions
+const toolNode = new ToolNode(tools, { xhandleToolErrors: false });
 
 const model = new ChatOpenAI({ model: "gpt-4" }).bindTools(tools);
 
@@ -97,8 +127,11 @@ const StateAnnotation = Annotation.Root({
 const workflow = new StateGraph(StateAnnotation)
   .addNode("agent", callModel)
   .addNode("tools", toolNode)
+  .addNode("inter", interruptedStep)
   .addEdge("__start__", "agent")
-  .addConditionalEdges("agent", shouldContinue)
+  .addEdge("agent", "inter")
+  //.addConditionalEdges("agent", shouldContinue)
+  .addConditionalEdges("inter", shouldContinue)
   .addEdge("tools", "agent");
 
 // Initialize memory to persist state between graph runs
@@ -108,8 +141,8 @@ const checkpointer = new MemorySaver();
 // This compiles it into a LangChain Runnable.
 // Note that we're (optionally) passing the memory when compiling the graph
 // FIXME the checkpointer is saving the tool call that threw the exception.
-//const app = workflow.compile({ checkpointer });
-const app = workflow.compile();
+const app = workflow.compile({ checkpointer });
+//const app = workflow.compile();
 
 
 export async function prompt(message, user) {
@@ -120,7 +153,8 @@ export async function prompt(message, user) {
     configurable: {
       thread_id: "1",
       user: user
-    }
+    },
+    streamMode: "values" as const
   };
 
 
@@ -129,8 +163,23 @@ export async function prompt(message, user) {
   ];
 
   //var rv = await model.invoke(messages);
-  var rv = await app.invoke({ messages: messages}, config);
-  console.log(rv.messages[rv.messages.length - 1].content);
+  //var rv = await app.invoke({ messages: messages}, config);
+  
+  const stream = await app.stream({ messages: messages}, config);
+  for await (const event of stream) {
+    console.log(event);
+  }
+  
+  const state = await app.getState(config);
+  console.log('---');
+  console.log(state.next);
+  console.log(state.tasks);
+  if (state.tasks[0]) {
+    console.log(state.tasks[0].interrupts)
+  }
+  
+  
+  //console.log(rv.messages[rv.messages.length - 1].content);
 }
 
 //prompt("Buy 100 shares of ZEKO");

@@ -10,7 +10,7 @@ curl --header "Content-Type: application/json" \
 ```
 curl --header "Content-Type: application/json" \
   --request POST \
-  --data '{"user":"auth0|672d15e3a67830e930d6679b","message":"Buy 100 shares of ZEKO"}' \
+  --data '{"username":"auth0|672d15e3a67830e930d6679b","message":"Buy 100 shares of ZEKO"}' \
   http://localhost:3000/
 ```
 

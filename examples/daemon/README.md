@@ -27,3 +27,11 @@ architecture.
 ```sh
 $ npx tsx agent.ts -u "auth0|672d15e3a67830e930d6679b" "Buy 100 shares of ZEKO"
 ```
+
+
+
++$ npx tsx agent.ts "Hi stock trader"
++$ npx tsx agent.ts "I'm interested in ZEKO"
++$ npx tsx agent.ts "Buy 100 shares of the company"
++$ npx tsx agent.ts "ZEKO"
+

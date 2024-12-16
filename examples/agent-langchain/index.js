@@ -4,14 +4,21 @@ import { ChatOpenAI } from "@langchain/openai";
 import { StateGraph, Annotation, messagesStateReducer, MemorySaver } from "@langchain/langgraph";
 import { ToolNode } from "@langchain/langgraph/prebuilt"
 import { z } from "zod";
+import { user } from '@auth0/ai/user';
 import { tokens } from '@auth0/ai/tokens';
 import { AuthorizationError } from '@auth0/ai';
 import { parseWWWAuthenticateHeader } from 'http-auth-utils';
 
-const buyTool = tool(async ({ ticker, qty }) => {
+const buyTool = tool(async ({ ticker, qty }, config) => {
   console.log('buy stock!');
   console.log(ticker)
   console.log(qty)
+  console.log('---')
+  console.log(config)
+  
+  const u = user();
+  console.log('Buying stock for user: ')
+  console.log(u);
   
   const headers = {
     'Content-Type': 'application/json'
