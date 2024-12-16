@@ -9,12 +9,6 @@ import { z } from "zod";
 import { parseWWWAuthenticateHeader } from 'http-auth-utils';
 
 const buyTool = tool(async ({ ticker, qty }, config) => {
-  console.log('buy stock!');
-  console.log(ticker)
-  console.log(qty)
-  console.log('---')
-  console.log(config)
-  
   var store = config.store;
   console.log('STORE')
   console.log(store)
