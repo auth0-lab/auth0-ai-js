@@ -16,7 +16,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@auth0/ai": "*",
-    "llamaindex": "^0.8.23"
+    "llamaindex": "^0.8.31"
   },
   "peerDependencies": {
     "@openfga/sdk": "^0.7.0"

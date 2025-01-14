@@ -18,7 +18,7 @@
     "@langchain/openai": "^0.3.16",
     "@openfga/sdk": "^0.7.0",
     "dotenv": "16.4.7",
-    "langchain": "^0.3.3"
+    "langchain": "^0.3.11"
   },
   "devDependencies": {
     "@types/node": "^22.10.5"
