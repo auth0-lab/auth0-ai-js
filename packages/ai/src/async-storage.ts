@@ -1,7 +1,7 @@
-import { AsyncLocalStorage } from 'node:async_hooks';
+import { AsyncLocalStorage } from "node:async_hooks";
 
 export const agentAsyncStorage = new AsyncLocalStorage<{
-  user: any
-  session: any
-  tokens: any
+  user: { id: string; name: string };
+  session: { id: string; expires: Date };
+  tokens: { accessToken: string; refreshToken: string };
 }>();

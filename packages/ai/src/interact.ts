@@ -1,7 +1,7 @@
-import { Authorizer, AuthorizationOptions, isPending } from './authorizer';
-import { StateStore } from './state/state-store';
-import { AuthorizationError } from './errors/authorizationerror';
-import { agentAsyncStorage } from './async-storage';
+import { agentAsyncStorage } from "./async-storage";
+import { AuthorizationOptions, Authorizer, isPending } from "./authorizer";
+import { AuthorizationError } from "./errors/authorizationerror";
+import { StateStore } from "./state/state-store";
 
 /**
  * Make `fn` interactive by supplying it with authentication context and
@@ -65,30 +65,45 @@ import { agentAsyncStorage } from './async-storage';
  * @param store - Persist context for later resumption.
  */
 export function interact(fn, authorizer: Authorizer, store?: StateStore) {
-  
-  const ifn = async function(ctx, ...args) {
-    
+  const ifn = async function (ctx, ...args) {
     return agentAsyncStorage.run(ctx, async () => {
       const shared = agentAsyncStorage.getStore();
       try {
-        return await fn.apply(undefined, args);
+        return await fn(...args);
       } catch (error) {
+        console.log("SDK::INTERACT ERROR", error);
+
         if (error instanceof AuthorizationError) {
           // The function threw an `AuthorizationError`, indicating that the
           // authentication context is not sufficient.  This error _may_ be
           // remediable by authenticating the user or obtaining their consent.
-          var params: AuthorizationOptions = {};
+          const params: AuthorizationOptions = {};
           if (shared.user) {
             params.loginHint = shared.user.id;
           }
-          
+
           params.acrValues = error.acrValues;
           params.maxAge = error.maxAge;
           params.scope = error.scope;
           params.realm = error.realm;
-          
-          var result = await authorizer.authorize(params);
+          params.audience = error.audience;
+
+          const result = await authorizer.authorize(params);
+
           if (isPending(result)) {
+            type DType = {
+              requestId: string;
+              arguments: unknown[];
+              context?: {
+                user?: {
+                  id: string;
+                };
+                session?: {
+                  id: string;
+                };
+              };
+            };
+
             // The authorization result is pending.  A notification will be sent
             // when the result is available.  This pattern is typically used to
             // implement "stateless" agents, where logic is invoked via HTTP
@@ -97,25 +112,28 @@ export function interact(fn, authorizer: Authorizer, store?: StateStore) {
             // triggered the authorization request.   As such, the context of
             // the authorization transaction is saved so it can later be resumed
             // when the result is available.
-            var d: any = { requestId: result.requestId, arguments: args }
+            const d: DType = { requestId: result.requestId, arguments: args };
             // TODO: Filter context better to include all things except tokens
             d.context = {
               user: shared.user,
-              session: shared.session
-            }
+              session: shared.session,
+            };
             await store.save(result.transactionId, d);
+            console.log("SDK::isPending");
+            // return { message: { content: "hello" } };
             return;
           }
-          
+
           ctx.tokens = result;
+          console.log("SDK::ifn:args", args, ctx);
           // TODO: call this not within `run` to avoid nexted context?
-          return ifn.apply(undefined, arguments);
+          return ifn(ctx, ...args);
         }
-        
+
         throw error;
       }
     });
   };
-  
+
   return ifn;
 }

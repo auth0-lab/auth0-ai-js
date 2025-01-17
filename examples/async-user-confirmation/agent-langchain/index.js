@@ -1,61 +1,75 @@
-import { HumanMessage, SystemMessage } from "@langchain/core/messages";
+import { HumanMessage } from "@langchain/core/messages";
 import { tool } from "@langchain/core/tools";
 import { ChatOpenAI } from "@langchain/openai";
-import { StateGraph, Annotation, messagesStateReducer, MemorySaver } from "@langchain/langgraph";
-import { ToolNode } from "@langchain/langgraph/prebuilt"
+import {
+  StateGraph,
+  Annotation,
+  messagesStateReducer,
+  MemorySaver,
+} from "@langchain/langgraph";
+import { ToolNode } from "@langchain/langgraph/prebuilt";
 import { z } from "zod";
-import { user } from '@auth0/ai/user';
-import { tokens } from '@auth0/ai/tokens';
-import { AuthorizationError } from '@auth0/ai';
-import { parseWWWAuthenticateHeader } from 'http-auth-utils';
+import { user } from "@auth0/ai/user";
+import { tokens } from "@auth0/ai/tokens";
+import { AuthorizationError } from "@auth0/ai";
+import { parseWWWAuthenticateHeader } from "http-auth-utils";
 
-const buyTool = tool(async ({ ticker, qty }, config) => {
-  console.log('buy stock!');
-  console.log(ticker)
-  console.log(qty)
-  console.log('---')
-  console.log(config)
-  
-  const u = user();
-  console.log('Buying stock for user: ')
-  console.log(u);
-  
-  const headers = {
-    'Content-Type': 'application/json'
-  };
-  const body = {
-    ticker: ticker,
-    qty: qty
-  };
-  
-  const accessToken = tokens().accessToken;
-  if (accessToken) {
-    headers['Authorization'] = 'Bearer ' + accessToken.value;
-  }
-  
-  const response = await fetch('http://localhost:8081/', {
-    method: 'POST',
-    headers: headers,
-    body: JSON.stringify(body),
-  });
-  if (response.status == 401) {
-    const challenge = parseWWWAuthenticateHeader(response.headers.get('WWW-Authenticate'));
-    console.log(challenge);
-    throw new AuthorizationError('You need authorization to buy stock', 'insufficient_scope', { scope: challenge.data.scope });
-  }
-  
-  var json = await response.json();
-  return 'OK';
-}, {
-  name: "buy",
-  description: "Use this function to buy stock",
-  schema: z.object({
-    ticker: z.string(),
-    qty: z.number()
-  })
-});
+const buyTool = tool(
+  async ({ ticker, qty }, config) => {
+    console.log("buy stock!");
+    console.log(ticker);
+    console.log(qty);
+    console.log("---");
+    console.log(config);
 
-const tools = [ buyTool ];
+    const u = user();
+    console.log("Buying stock for user: ");
+    console.log(u);
+
+    const headers = {
+      "Content-Type": "application/json",
+    };
+    const body = {
+      ticker: ticker,
+      qty: qty,
+    };
+
+    const accessToken = tokens().accessToken;
+    if (accessToken) {
+      headers["Authorization"] = "Bearer " + accessToken.value;
+    }
+
+    const response = await fetch("http://localhost:8081/", {
+      method: "POST",
+      headers: headers,
+      body: JSON.stringify(body),
+    });
+    if (response.status == 401) {
+      const challenge = parseWWWAuthenticateHeader(
+        response.headers.get("WWW-Authenticate")
+      );
+      console.log(challenge);
+      throw new AuthorizationError(
+        "You need authorization to buy stock",
+        "insufficient_scope",
+        { scope: challenge.data.scope }
+      );
+    }
+
+    var json = await response.json();
+    return "OK";
+  },
+  {
+    name: "buy",
+    description: "Use this function to buy stock",
+    schema: z.object({
+      ticker: z.string(),
+      qty: z.number(),
+    }),
+  }
+);
+
+const tools = [buyTool];
 const toolNode = new ToolNode(tools, { handleToolErrors: false });
 
 const model = new ChatOpenAI({ model: "gpt-4" }).bindTools(tools);
@@ -109,16 +123,16 @@ const checkpointer = new MemorySaver();
 //const app = workflow.compile({ checkpointer });
 const app = workflow.compile();
 
-
 export async function prompt(message) {
-  console.log('LangChain prompt:');
+  console.log("LangChain prompt:");
   console.log(message);
 
-  const messages = [
-    new HumanMessage(message),
-  ];
+  const messages = [new HumanMessage(message)];
 
   //var rv = await model.invoke(messages);
-  var rv = await app.invoke({ messages: messages}, { configurable: { thread_id: "42" } });
+  var rv = await app.invoke(
+    { messages: messages },
+    { configurable: { thread_id: "42" } }
+  );
   console.log(rv.messages[rv.messages.length - 1].content);
 }

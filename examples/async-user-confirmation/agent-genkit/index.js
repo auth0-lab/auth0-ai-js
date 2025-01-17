@@ -1,17 +1,18 @@
-import { genkit, z } from 'genkit';
-import { openAI, gpt4o } from 'genkitx-openai';
-import { FSSessionStore } from '@auth0/ai-genkit';
-import { user } from '@auth0/ai/user';
-import { session as sess } from '@auth0/ai/session';
-import { tokens } from '@auth0/ai/tokens';
-import { AuthorizationError } from '@auth0/ai';
-import { parseWWWAuthenticateHeader } from 'http-auth-utils';
-
+import { genkit, z } from "genkit";
+import { openAI, gpt4o } from "genkitx-openai";
+import { FSSessionStore } from "@auth0/ai-genkit";
+import { user } from "@auth0/ai/user";
+import { session as sess } from "@auth0/ai/session";
+import { tokens } from "@auth0/ai/tokens";
+import { AuthorizationError } from "@auth0/ai";
+import { parseWWWAuthenticateHeader } from "http-auth-utils";
 
 const ai = genkit({
-  plugins: [ openAI({ apiKey: process.env.OPENAI_API_KEY }) ],
+  plugins: [openAI({ apiKey: process.env.OPENAI_API_KEY })],
   model: gpt4o,
 });
+
+// withAuth(finally, [authorizers])
 
 const buy = ai.defineTool(
   {
@@ -19,44 +20,52 @@ const buy = ai.defineTool(
     description: "Use this function to buy stock",
     inputSchema: z.object({
       ticker: z.string(),
-      qty: z.number()
+      qty: z.number(),
     }),
     outputSchema: z.string(),
   },
   async ({ ticker, qty }) => {
     const headers = {
-      'Content-Type': 'application/json'
+      "Content-Type": "application/json",
     };
     const body = {
       ticker: ticker,
-      qty: qty
+      qty: qty,
     };
-    
+
     const u = user();
-    console.log('Buying stock for user: ')
+    console.log("Buying stock for user: ");
     console.log(u);
-    
+
     const accessToken = tokens().accessToken;
     if (accessToken) {
-      headers['Authorization'] = 'Bearer ' + accessToken.value;
+      headers["Authorization"] = "Bearer " + accessToken.value;
     }
-    
-    const response = await fetch('http://localhost:8081/', {
-      method: 'POST',
+
+    const response = await fetch(process.env["API_URL"], {
+      method: "POST",
       headers: headers,
       body: JSON.stringify(body),
     });
     if (response.status == 401) {
-      const challenge = parseWWWAuthenticateHeader(response.headers.get('WWW-Authenticate'));
-      console.log(challenge);
-      throw new AuthorizationError('You need authorization to buy stock', 'insufficient_scope', { scope: challenge.data.scope });
+      // According to RFC-6750 audience and scope are optional
+      const challenge = parseWWWAuthenticateHeader(
+        response.headers.get("WWW-Authenticate")
+      );
+      console.log("AGENT:challenge", challenge);
+      //  throw Auth0Ai.InsufficientScopeError("You need authorization to buy stock");
+
+      throw new AuthorizationError(
+        "You need authorization to buy stock",
+        "insufficient_scope",
+        { scope: "openid", audience: process.env["AUDIENCE"] }
+      );
     }
-    
+
     var json = await response.json();
-    return 'OK';
+    return "OK";
   }
 );
-
 
 export async function prompt(message) {
   const sessionId = sess().id;
@@ -70,23 +79,25 @@ export async function prompt(message) {
       store: new FSSessionStore(),
     });
   }
-  
-  
+
   const chat = session.chat();
   sess().id = chat.session.id;
-  
+
   try {
     const { text } = await chat.send({
       //'Hello, I am a stock trader'
       prompt: message,
-      tools: [ buy ]
+      tools: [buy],
     });
-  
-    return { message: {
-      //content: 'OK'
-      context: text
-    } };
+
+    return {
+      message: {
+        //content: 'OK'
+        context: text,
+      },
+    };
   } catch (error) {
+    console.log("AGENT:error", error);
     if (error instanceof AuthorizationError) {
       // TODO: I wish there was a better interface here to explicitly persist
       // the session.  It may also be worth considering wether to inject a
@@ -94,7 +105,7 @@ export async function prompt(message) {
       // `chat.updateMessages()` would be the correct approach.
       await chat.session.store.save(chat.session.id, chat.session.sessionData);
     }
-    
+
     throw error;
   }
 }

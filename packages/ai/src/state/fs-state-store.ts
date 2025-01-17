@@ -1,18 +1,20 @@
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile, writeFile } from "node:fs/promises";
 
 export class FSStateStore {
-  path
-  
+  path;
+
   constructor(path) {
     this.path = path;
   }
-  
+
   async get(stateId) {
-    var data = await readFile(`${stateId}.json`, { encoding: 'utf8' });
+    const data = await readFile(`${stateId}.json`, { encoding: "utf8" });
     return JSON.parse(data);
   }
-  
+
   async save(stateId, stateData) {
-    return writeFile(`${stateId}.json`, JSON.stringify(stateData), { encoding: 'utf8' })
+    return writeFile(`${stateId}.json`, JSON.stringify(stateData), {
+      encoding: "utf8",
+    });
   }
 }
