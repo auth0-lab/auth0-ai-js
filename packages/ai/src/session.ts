@@ -1,7 +1,7 @@
-import { agentAsyncStorage } from './async-storage'
+import { agentAsyncStorage } from "./async-storage";
 
 export function session() {
   const store = agentAsyncStorage.getStore();
-  store.session = store.session || {};
+  store.session = store.session || { id: "", expires: new Date() };
   return store.session;
 }

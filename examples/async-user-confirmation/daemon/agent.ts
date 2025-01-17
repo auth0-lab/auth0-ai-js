@@ -1,16 +1,15 @@
-import 'dotenv/config'
-import { defineCommand, runMain } from 'citty';
-import { interact, Auth0PollingCIBAAuthorizer } from '@auth0/ai';
+import "dotenv/config";
+
+import { defineCommand, runMain } from "citty";
+
+import { Auth0PollingCIBAAuthorizer, interact } from "@auth0/ai";
 
 // `@auth0/ai` can add human-in-the-loop orchestration to agents written in any
 // framework.  Uncomment the example agent written in your preferred framework
 // to host it as a background agent using CIBA to obtain authorization.
 //import { prompt } from '../agent-genkit';
 // -- OR --
-import { prompt } from '../agent-langchain';
-//import { prompt } from '../agent-llamaindex';
-
-
+import { prompt } from "../agent-genkit";
 
 const main = defineCommand({
   meta: {
@@ -28,7 +27,7 @@ const main = defineCommand({
       alias: "u",
       type: "string",
       description: "Identifier for the user",
-    }
+    },
   },
   async run({ args }) {
     // Instantiate a CIBA authorizer, which is suitable for obtaining
@@ -36,20 +35,26 @@ const main = defineCommand({
     // background, use of direct channels (such as HTTP redirection, common in
     // "traditional" OAuth flows) is not possible.
     const authorizer = new Auth0PollingCIBAAuthorizer({
-      domain: process.env['DOMAIN'],
-      clientId: process.env['CLIENT_ID'],
-      clientSecret: process.env['CLIENT_SECRET']
+      domain: process.env["DOMAIN"]!,
+      clientId: process.env["CLIENT_ID"]!,
+      clientSecret: process.env["CLIENT_SECRET"]!,
+      authorizationURL: `https://${process.env["DOMAIN"]}/bc-authorize`,
+      tokenURL: `https://${process.env["DOMAIN"]}/oauth/token`,
+
+      // config the withAuth0
+      audience: process.env["AUDIENCE"],
+      scope: "openid",
     });
-    
+
     // Wrap the agent's `prompt` method for interaction with the user.  When
     // the agent encounters an authorization challenge, `interact` will
     // orchestrate the process of obtaining necessary credentials, including
     // human-in-the-loop interaction if necessary.
-    const interactivePrompt = interact(prompt, authorizer);
+    const interactivePrompt = interact(prompt, authorizer); // [authorizers]
     const user = {
-      id: args.username
-    }
-    
+      id: args.username,
+    };
+
     let rv = await interactivePrompt({ user: user }, args.message);
     console.log(rv.message);
   },

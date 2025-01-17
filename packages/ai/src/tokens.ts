@@ -1,4 +1,4 @@
-import { agentAsyncStorage } from './async-storage'
+import { agentAsyncStorage } from "./async-storage";
 
 export function tokens() {
   const store = agentAsyncStorage.getStore();

@@ -4,9 +4,9 @@ export interface AuthorizationOptions {
   maxAge?: number;
   scope?: string[];
   bindingMessage?: string;
-  realm?: string
+  realm?: string;
+  audience?: string;
 }
-
 
 export interface Credential {
   type: string;
@@ -14,17 +14,19 @@ export interface Credential {
 }
 
 export interface Credentials {
-  accessToken: Credential
-  refreshToken?: Credential
+  accessToken: Credential;
+  refreshToken?: Credential;
 }
 
 export interface PendingAuthorization {
-  transactionId: string
-  requestId: string
+  transactionId: string;
+  requestId: string;
 }
 
 export interface Authorizer {
-  authorize(params: AuthorizationOptions): Promise<Credentials | PendingAuthorization>;
+  authorize(
+    params: AuthorizationOptions
+  ): Promise<Credentials | PendingAuthorization>;
 }
 
 /**
@@ -37,6 +39,8 @@ export interface Authorizer {
  *
  * @param result - The result of calling authorize.
  */
-export function isPending(result: Credentials | PendingAuthorization): result is PendingAuthorization {
+export function isPending(
+  result: Credentials | PendingAuthorization
+): result is PendingAuthorization {
   return (result as PendingAuthorization).transactionId !== undefined;
 }
