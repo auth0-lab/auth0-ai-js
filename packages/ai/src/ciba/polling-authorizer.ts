@@ -67,7 +67,7 @@ export class PollingCIBAAuthorizer implements Authorizer {
     // TODO: login_hint
     // TODO: client authentication
 
-    console.log("SDK::PollingCIBAAuthorizer::authorize", body);
+    console.log("SDK::PollingCIBAAuthorizer::authorize:body", body);
 
     headers["Content-Type"] = "application/x-www-form-urlencoded";
     const response = await fetch(this.authorizationURL, {
@@ -78,7 +78,7 @@ export class PollingCIBAAuthorizer implements Authorizer {
     });
 
     const json = await response.json();
-    console.log("SDK::PollingCIBAAuthorizer::authorize", json);
+    console.log("SDK::PollingCIBAAuthorizer::authorize:json", json);
     //return json.auth_req_id;
 
     return await this.poll(json.auth_req_id);

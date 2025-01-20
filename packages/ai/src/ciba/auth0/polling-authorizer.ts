@@ -6,14 +6,13 @@ import {
 
 interface Auth0CIBAAuthorizerOptions extends CIBAAuthorizerOptions {
   domain?: string;
-  audience?: string;
 }
 
 /**
  * Requests authorization by prompting the user via an out-of-band channel from
  * the backend.
  */
-export class Auth0PollingCIBAAuthorizer extends PollingCIBAAuthorizer {
+export class CIBAAuthorizer extends PollingCIBAAuthorizer {
   constructor(options: Auth0CIBAAuthorizerOptions) {
     if (options.domain) {
       options.authorizationURL = "https://" + options.domain + "/bc-authorize";
