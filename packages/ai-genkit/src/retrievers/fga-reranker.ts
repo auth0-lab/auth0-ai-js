@@ -157,8 +157,19 @@ export class FGAReranker {
     const { checks, documentToObjectMap } = documents.reduce(
       (acc, document: Document) => {
         const check = this.buildQuery(document);
-        acc.checks.push(check);
         acc.documentToObjectMap.set(document, check.object);
+        // Skip duplicate checks for same user, object, and relation
+        if (
+          acc.checks.some(
+            (ex) =>
+              ex.object === check.object &&
+              ex.user === check.user &&
+              ex.relation === check.relation
+          )
+        ) {
+          return acc;
+        }
+        acc.checks.push(check);
         return acc;
       },
       {
