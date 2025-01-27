@@ -142,8 +142,19 @@ export class FGARetriever extends BaseRetriever {
     const { checks, documentToObject } = documents.reduce(
       (acc, doc) => {
         const check = this.buildQuery(doc);
-        acc.checks.push(check);
         acc.documentToObject.set(doc, check.object);
+        // Skip duplicate checks for same user, object, and relation
+        if (
+          acc.checks.some(
+            (ex) =>
+              ex.object === check.object &&
+              ex.user === check.user &&
+              ex.relation === check.relation
+          )
+        ) {
+          return acc;
+        }
+        acc.checks.push(check);
         return acc;
       },
       {
