@@ -128,16 +128,8 @@ describe("FGARetriever", () => {
     expect(mockClient.batchCheck).toBeCalledWith(
       {
         checks: [
-          {
-            object: "doc:public-doc",
-            relation: "viewer",
-            user: "user:user1",
-          },
-          {
-            object: "doc:private-doc",
-            relation: "viewer",
-            user: "user:user1",
-          },
+          { object: "doc:public-doc", relation: "viewer", user: "user:user1" },
+          { object: "doc:private-doc", relation: "viewer", user: "user:user1" },
         ],
       },
       { consistency: ConsistencyPreference.HigherConsistency }
@@ -153,7 +145,6 @@ describe("FGARetriever", () => {
       result: [
         { request: { object: "doc:public-doc" }, allowed: false },
         { request: { object: "doc:private-doc" }, allowed: false },
-        { request: { object: "doc:private-doc-2" }, allowed: false },
       ],
     });
 
@@ -176,5 +167,17 @@ describe("FGARetriever", () => {
     const tool = retriever.asJoinedStringTool();
     const result = await tool.invoke({ query: "test query" });
     expect(result).toEqual("public content\n\nprivate content");
+  });
+
+  it("should handle batchCheck error gracefully", async () => {
+    // @ts-ignore
+    mockClient.batchCheck = vi
+      .fn()
+      .mockRejectedValue(new Error("FGA API Error"));
+
+    const retriever = FGARetriever.create(args, mockClient);
+    await expect(retriever.invoke("test query")).rejects.toThrow(
+      "FGA API Error"
+    );
   });
 });
