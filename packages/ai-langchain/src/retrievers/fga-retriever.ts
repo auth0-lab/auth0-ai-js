@@ -144,17 +144,11 @@ export class FGARetriever extends BaseRetriever {
         const check = this.buildQuery(doc);
         acc.documentToObject.set(doc, check.object);
         // Skip duplicate checks for same user, object, and relation
-        if (
-          acc.checks.some(
-            (ex) =>
-              ex.object === check.object &&
-              ex.user === check.user &&
-              ex.relation === check.relation
-          )
-        ) {
-          return acc;
+        const checkKey = `${check.user}|${check.object}|${check.relation}`;
+        if (!acc.seenChecks.has(checkKey)) {
+          acc.seenChecks.add(checkKey);
+          acc.checks.push(check);
         }
-        acc.checks.push(check);
         return acc;
       },
       {
@@ -163,6 +157,7 @@ export class FGARetriever extends BaseRetriever {
           DocumentInterface<Record<string, any>>,
           string
         >(),
+        seenChecks: new Set<string>(),
       }
     );
 

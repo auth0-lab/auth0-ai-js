@@ -159,22 +159,17 @@ export class FGAReranker {
         const check = this.buildQuery(document);
         acc.documentToObjectMap.set(document, check.object);
         // Skip duplicate checks for same user, object, and relation
-        if (
-          acc.checks.some(
-            (ex) =>
-              ex.object === check.object &&
-              ex.user === check.user &&
-              ex.relation === check.relation
-          )
-        ) {
-          return acc;
+        const checkKey = `${check.user}|${check.object}|${check.relation}`;
+        if (!acc.seenChecks.has(checkKey)) {
+          acc.seenChecks.add(checkKey);
+          acc.checks.push(check);
         }
-        acc.checks.push(check);
         return acc;
       },
       {
         checks: [] as ClientBatchCheckItem[],
         documentToObjectMap: new Map<Document, string>(),
+        seenChecks: new Set<string>(),
       }
     );
 
