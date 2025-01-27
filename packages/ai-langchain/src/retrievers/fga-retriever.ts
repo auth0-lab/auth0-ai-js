@@ -19,7 +19,8 @@ export type FGARetrieverCheckerFn = (
 export type FGARetrieverArgs = {
   retriever: BaseRetriever;
   buildQuery: FGARetrieverCheckerFn;
-  fields?: BaseRetrieverInput;
+  consistency?: ConsistencyPreference;
+  retrieverFields?: BaseRetrieverInput;
 };
 
 type AccessByDocumentFn = (
@@ -63,10 +64,10 @@ export class FGARetriever extends BaseRetriever {
   private constructor({
     retriever,
     buildQuery,
-    fields,
+    retrieverFields,
     accessByDocument,
   }: FGARetrieverArgsWithAccessByDocument) {
-    super(fields);
+    super(retrieverFields);
     this.buildQuery = buildQuery;
     this.retriever = retriever;
     this.accessByDocument = accessByDocument as AccessByDocumentFn;
@@ -78,7 +79,8 @@ export class FGARetriever extends BaseRetriever {
    * @param args - @FGARetrieverArgs
    * @param args.retriever - The underlying retriever instance to fetch documents.
    * @param args.buildQuery - A function to generate access check requests for each document.
-   * @param args.fields - Optional - Additional fields to pass to the underlying retriever.
+   * @param args.consistency - Optional - The consistency preference for the OpenFGA client.
+   * @param args.retrieverFields - Optional - Additional fields to pass to the underlying retriever.
    * @param fgaClient - Optional - OpenFgaClient instance to execute checks against.
    * @returns A newly created FGARetriever instance configured with the provided arguments.
    */
@@ -107,7 +109,8 @@ export class FGARetriever extends BaseRetriever {
       const response = await client.batchCheck(
         { checks },
         {
-          consistency: ConsistencyPreference.HigherConsistency,
+          consistency:
+            args.consistency || ConsistencyPreference.HigherConsistency,
         }
       );
       return response.result.reduce(
