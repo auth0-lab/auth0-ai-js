@@ -138,8 +138,19 @@ export class FGARetriever extends BaseRetriever {
     const { checks, documentToObjectMap } = retrievedNodes.reduce(
       (acc, nodeWithScore: NodeWithScore<Metadata>) => {
         const check = this.buildQuery(nodeWithScore.node);
-        acc.checks.push(check);
         acc.documentToObjectMap.set(nodeWithScore, check.object);
+        // Skip duplicate checks for same user, object, and relation
+        if (
+          acc.checks.some(
+            (ex) =>
+              ex.object === check.object &&
+              ex.user === check.user &&
+              ex.relation === check.relation
+          )
+        ) {
+          return acc;
+        }
+        acc.checks.push(check);
         return acc;
       },
       {
