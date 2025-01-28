@@ -119,11 +119,16 @@ export class FGARetriever extends BaseRetriever {
 
     return response.result.reduce(
       (permissionMap: Map<string, boolean>, result) => {
-        permissionMap.set(result.request.object, result.allowed || false);
+        const checkKey = this.getCheckKey(result.request);
+        permissionMap.set(checkKey, result.allowed || false);
         return permissionMap;
       },
       new Map<string, boolean>()
     );
+  }
+
+  private getCheckKey(check: ClientBatchCheckItem): string {
+    return `${check.user}|${check.object}|${check.relation}`;
   }
 
   /**
@@ -140,9 +145,9 @@ export class FGARetriever extends BaseRetriever {
     const { checks, documentToObjectMap } = retrievedNodes.reduce(
       (acc, nodeWithScore: NodeWithScore<Metadata>) => {
         const check = this.buildQuery(nodeWithScore.node);
-        acc.documentToObjectMap.set(nodeWithScore, check.object);
+        const checkKey = this.getCheckKey(check);
+        acc.documentToObjectMap.set(nodeWithScore, checkKey);
         // Skip duplicate checks for same user, object, and relation
-        const checkKey = `${check.user}|${check.object}|${check.relation}`;
         if (!acc.seenChecks.has(checkKey)) {
           acc.seenChecks.add(checkKey);
           acc.checks.push(check);
