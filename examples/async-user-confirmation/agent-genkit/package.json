@@ -11,6 +11,8 @@
   "license": "ISC",
   "dependencies": {
     "http-auth-utils": "^6.0.1",
-    "zod": "^3.24.1"
+    "zod": "^3.24.1",
+    "@auth0/ai": "@auth0/ai:*",
+    "@auth0/ai-genkit": "@auth0/ai-genkit:*"
   }
 }

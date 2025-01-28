@@ -3,25 +3,19 @@ import "dotenv/config";
 import { genkit, z } from "genkit";
 import { gpt4o, openAI } from "genkitx-openai";
 
-import { Auth0AI, CIBAAuthorizer } from "@auth0/ai";
+import { AuthContext, PollingCIBAAuthorizer } from "@auth0/ai";
+import { createAuthorizer } from "@auth0/ai-genkit";
 
 type ToolHandler = (input: { ticker: string; qty: number }) => Promise<string>;
-interface AuthContext {
-  userID: string;
-}
-
-const authorizer = new CIBAAuthorizer({
-  domain: process.env["DOMAIN"]!,
-  clientId: process.env["CLIENT_ID"]!,
-  clientSecret: process.env["CLIENT_SECRET"]!,
-  authorizationURL: `https://${process.env["DOMAIN"]}/bc-authorize`,
-  tokenURL: `https://${process.env["DOMAIN"]}/oauth/token`,
-});
-const withAuth = Auth0AI.initialize<ToolHandler>(authorizer);
 
 const ai = genkit({
   plugins: [openAI({ apiKey: process.env.OPENAI_API_KEY })],
   model: gpt4o,
+});
+
+const withAuth = createAuthorizer<ToolHandler>({
+  genkit: ai,
+  authorizer: new PollingCIBAAuthorizer(),
 });
 
 const buy = ai.defineTool(
@@ -34,42 +28,49 @@ const buy = ai.defineTool(
     }),
     outputSchema: z.string(),
   },
-  await withAuth(
+  withAuth(
     {
-      user: "google-oauth2|114615802253716134337",
       scope: "openid",
       audience: process.env["AUDIENCE"]!,
     },
-    (accessToken: string) =>
-      async ({ ticker, qty }) => {
-        const headers = {
-          "Content-Type": "application/json",
-        };
-        const body = {
-          ticker: ticker,
-          qty: qty,
-        };
+    async ({ ticker, qty }) => {
+      const headers = {
+        "Content-Type": "application/json",
+      };
+      const body = {
+        ticker: ticker,
+        qty: qty,
+      };
+      const session = ai.currentSession<AuthContext>();
+      const accessToken = session.state?.accessToken;
 
-        if (accessToken) {
-          headers["Authorization"] = "Bearer " + accessToken;
-        }
-
-        const response = await fetch(process.env["API_URL"]!, {
-          method: "POST",
-          headers: headers,
-          body: JSON.stringify(body),
-        });
-
-        console.log(response.status);
-
-        return "OK";
+      if (accessToken) {
+        headers["Authorization"] = "Bearer " + accessToken;
       }
+
+      const response = await fetch(process.env["API_URL"]!, {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify(body),
+      });
+
+      console.log(response.status);
+
+      return "OK";
+    }
   )
 );
 
+type MyContext = { userName?: string } & AuthContext;
+
 async function main() {
   try {
-    const session = ai.createSession<AuthContext>({});
+    const session = ai.createSession<MyContext>({
+      initialState: {
+        userId: "google-oauth2|114615802253716134337",
+        userName: "John",
+      },
+    });
     const chat = session.chat();
     const { text } = await chat.send({
       prompt: "Buy 100 shares of ZEKO",
