@@ -1,45 +1,33 @@
-import { Authorizer, Credentials } from "./authorizer";
+import { Authorizer } from "./authorizer";
 
-export { interact } from "./interact";
-export { resume } from "./resume";
-export { CIBAAuthorizer } from "./ciba/auth0/polling-authorizer";
-export { FSStateStore } from "./state/fs-state-store";
-export { AuthorizationError } from "./errors/authorizationerror";
+export { PollingCIBAAuthorizer } from "./ciba/polling-authorizer";
+export { AccessDeniedError } from "./errors/authorizationerror";
 
-type WithAuthParams = {
-  user: string;
+export type { Authorizer, Credentials } from "./authorizer";
+
+export type WithAuthParams = {
+  userId: string;
   scope: string;
   audience: string;
+  binding_message?: string;
   authorizer?: string | ((authorizers: Authorizer[]) => Authorizer);
 };
 
-type withAccessTokenFn<T> = (accessToken: string) => T;
-
-type withAuth<T> = (
-  params: WithAuthParams,
-  fn: withAccessTokenFn<T>
-) => Promise<T>;
-
-export class Auth0AI {
-  static initialize<T>(authorizer: Authorizer | Authorizer[]): withAuth<T> {
-    console.log(authorizer);
-
-    return async (params: WithAuthParams, fn) => {
-      if (Array.isArray(authorizer)) {
-        throw new Error("Temporary error");
-      }
-
-      const result = (await authorizer.authorize({
-        scope: params.scope.split(" "),
-        audience: params.audience,
-        loginHint: params.user,
-      })) as Credentials;
-
-      const fn2 = fn(result.accessToken.value);
-      return fn2;
-    };
-  }
+export interface AuthContext {
+  userId: string;
+  accessToken?: string;
 }
+
+export type AuthorizerConfigParams = {
+  authorizer: Authorizer | Authorizer[];
+};
+
+export type FnHandler<T extends any[] = any[], R = any> = (...args: T) => R;
+
+export type WithAuthHandler<F extends FnHandler, P> = (
+  params: P,
+  fn: F
+) => FnHandler;
 
 // const withAuth = Auth0Ai.setup(authorizer);
 

@@ -1,13 +1,13 @@
-import { AuthorizationOptions, Authorizer, Credentials } from "../authorizer";
+import { AuthenticationClient } from "auth0";
+import { AuthorizeOptions, AuthorizeResponse } from "auth0/dist/cjs/auth/backchannel";
 
-// import { AuthorizationError } from "../errors/authorizationerror";
+import { Authorizer, Credentials } from "../authorizer";
+import { AccessDeniedError } from "../errors/authorizationerror";
 
 export interface CIBAAuthorizerOptions {
-  authorizationURL: string;
-  tokenURL: string;
   clientId?: string;
   clientSecret?: string;
-  scope?: string;
+  domain?: string;
 }
 
 /**
@@ -15,123 +15,58 @@ export interface CIBAAuthorizerOptions {
  * the backend.
  */
 export class PollingCIBAAuthorizer implements Authorizer {
-  authorizationURL;
-  tokenURL;
-  clientId;
-  clientSecret;
+  auth0: AuthenticationClient;
 
-  constructor(options: CIBAAuthorizerOptions) {
-    this.authorizationURL = options.authorizationURL;
-    this.tokenURL = options.tokenURL;
-    this.clientId = options.clientId;
-    this.clientSecret = options.clientSecret;
+  constructor(options?: CIBAAuthorizerOptions) {
+    this.auth0 = new AuthenticationClient({
+      domain: options?.domain || process.env.AUTH0_DOMAIN,
+      clientId: options?.clientId || process.env.AUTH0_CLIENT_ID,
+      clientSecret: options?.clientSecret || process.env.AUTH0_CLIENT_SECRET,
+    });
   }
 
-  async authorize(params: AuthorizationOptions): Promise<Credentials> {
-    const headers = {};
-    const body: {
-      login_hint?: string;
-      acr_values?: string;
-      scope?: string;
-      binding_message?: string;
-      audience?: string;
-    } = {};
-
-    if (this.clientId && this.clientSecret) {
-      headers["Authorization"] =
-        "Basic " +
-        Buffer.from([this.clientId, this.clientSecret].join(":")).toString(
-          "base64"
-        );
-    }
-
-    if (params.loginHint) {
-      body.login_hint = params.loginHint;
-    }
-    if (params.acrValues) {
-      body.acr_values = params.acrValues.join(" ");
-    }
-    if (params.scope) {
-      body.scope = params.scope.join(" ");
-    }
-    if (params.bindingMessage) {
-      body.binding_message = params.bindingMessage;
-    }
-    if (params.audience) {
-      body.audience = params.audience;
-    }
-
-    // TODO: id_token_hint
-    // TODO: login_hint
-    // TODO: id_token_hint
-    // TODO: login_hint
-    // TODO: client authentication
-
-    console.log("SDK::PollingCIBAAuthorizer::authorize:body", body);
-
-    headers["Content-Type"] = "application/x-www-form-urlencoded";
-    const response = await fetch(this.authorizationURL, {
-      method: "POST",
-      headers: headers,
-      body: new URLSearchParams(body).toString(),
-      // ...
+  async authorize(params: AuthorizeOptions): Promise<Credentials> {
+    const response = await this.auth0.backchannel.authorize({
+      scope: params.scope,
+      binding_message: params.binding_message,
+      userId: params.userId,
+      audience: params.audience,
+      request_expiry: params.request_expiry,
+      subjectIssuerContext: params.subjectIssuerContext,
     });
 
-    const json = await response.json();
-    console.log("SDK::PollingCIBAAuthorizer::authorize:json", json);
-    //return json.auth_req_id;
-
-    return await this.poll(json.auth_req_id);
+    return await this.poll(response);
   }
 
-  async poll(reqId: string): Promise<Credentials> {
-    return new Promise((resolve) => {
+  async poll(params: AuthorizeResponse): Promise<Credentials> {
+    return new Promise((resolve, reject) => {
       const interval = setInterval(async () => {
-        const headers = {};
-        const body = {
-          grant_type: "urn:openid:params:grant-type:ciba",
-          auth_req_id: reqId,
-          client_id: this.clientId,
-        };
+        try {
+          const response = await this.auth0.backchannel.backchannelGrant({
+            auth_req_id: params.auth_req_id,
+          });
 
-        if (this.clientId && this.clientSecret) {
-          headers["Authorization"] =
-            "Basic " +
-            Buffer.from([this.clientId, this.clientSecret].join(":")).toString(
-              "base64"
-            );
-        }
+          const credentials = {
+            accessToken: {
+              type: response.token_type || "bearer",
+              value: response.access_token,
+            },
+          };
 
-        headers["Content-Type"] = "application/x-www-form-urlencoded";
-        const response = await fetch(this.tokenURL, {
-          method: "POST",
-          headers: headers,
-          body: new URLSearchParams(body).toString(),
-          // ...
-        });
-
-        const json = await response.json();
-        console.log("SDK::PollingCIBAAuthorizer::poll:token", json);
-        if (json.error == "authorization_pending") {
-          return;
-        }
-        if (json.error == "access_denied") {
           clearInterval(interval);
-          // TODO: reject with error
-          return;
+
+          return resolve(credentials);
+        } catch (e) {
+          console.log(e);
+          if (e.error == "authorization_pending") {
+            return;
+          }
+          if (e.error == "access_denied") {
+            clearInterval(interval);
+            return reject(new AccessDeniedError(e.error_description, e.error));
+          }
         }
-
-        const credentials = {
-          accessToken: {
-            type: json.token_type || "bearer", // FIXME: Auth0 is not returnin token_type
-            value: json.access_token,
-          },
-        };
-        clearInterval(interval);
-        return resolve(credentials);
-
-        // This can be set based on `interval` from /bc_authorize response
-      }, 5000);
+      }, params.interval * 1000);
     });
   }
 }
