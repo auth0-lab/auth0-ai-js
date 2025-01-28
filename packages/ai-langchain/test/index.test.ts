@@ -69,8 +69,22 @@ describe("FGARetriever", () => {
     // @ts-ignore
     mockClient.batchCheck = vi.fn().mockResolvedValue({
       result: [
-        { request: { object: "doc:public-doc" }, allowed: true },
-        { request: { object: "doc:private-doc" }, allowed: false },
+        {
+          request: {
+            object: "doc:public-doc",
+            user: "user:user1",
+            relation: "viewer",
+          },
+          allowed: true,
+        },
+        {
+          request: {
+            object: "doc:private-doc",
+            user: "user:user1",
+            relation: "viewer",
+          },
+          allowed: false,
+        },
       ],
     });
 
@@ -117,8 +131,22 @@ describe("FGARetriever", () => {
     // @ts-ignore
     mockClient.batchCheck = vi.fn().mockResolvedValue({
       result: [
-        { request: { object: "doc:public-doc" }, allowed: true },
-        { request: { object: "doc:private-doc" }, allowed: false },
+        {
+          request: {
+            object: "doc:public-doc",
+            user: "user:user1",
+            relation: "viewer",
+          },
+          allowed: true,
+        },
+        {
+          request: {
+            object: "doc:private-doc",
+            user: "user:user1",
+            relation: "viewer",
+          },
+          allowed: false,
+        },
       ],
     });
 
@@ -159,8 +187,22 @@ describe("FGARetriever", () => {
     // @ts-ignore
     mockClient.batchCheck = vi.fn().mockResolvedValue({
       result: [
-        { request: { object: "doc:public-doc" }, allowed: true },
-        { request: { object: "doc:private-doc" }, allowed: true },
+        {
+          request: {
+            object: "doc:public-doc",
+            user: "user:user1",
+            relation: "viewer",
+          },
+          allowed: true,
+        },
+        {
+          request: {
+            object: "doc:private-doc",
+            user: "user:user1",
+            relation: "viewer",
+          },
+          allowed: true,
+        },
       ],
     });
 
