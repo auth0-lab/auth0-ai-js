@@ -144,11 +144,16 @@ export class FGAReranker {
 
     return response.result.reduce(
       (permissionMap: Map<string, boolean>, result) => {
-        permissionMap.set(result.request.object, result.allowed || false);
+        const checkKey = this.getCheckKey(result.request);
+        permissionMap.set(checkKey, result.allowed || false);
         return permissionMap;
       },
       new Map<string, boolean>()
     );
+  }
+
+  private getCheckKey(check: ClientBatchCheckItem): string {
+    return `${check.user}|${check.object}|${check.relation}`;
   }
 
   /**
@@ -161,9 +166,9 @@ export class FGAReranker {
     const { checks, documentToObjectMap } = documents.reduce(
       (acc, document: Document) => {
         const check = this.buildQuery(document);
-        acc.documentToObjectMap.set(document, check.object);
+        const checkKey = this.getCheckKey(check);
+        acc.documentToObjectMap.set(document, checkKey);
         // Skip duplicate checks for same user, object, and relation
-        const checkKey = `${check.user}|${check.object}|${check.relation}`;
         if (!acc.seenChecks.has(checkKey)) {
           acc.seenChecks.add(checkKey);
           acc.checks.push(check);
