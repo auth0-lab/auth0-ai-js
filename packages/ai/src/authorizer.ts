@@ -1,6 +1,7 @@
+import { AuthorizeOptions } from "auth0/dist/cjs/auth/backchannel";
+
 export interface AuthorizationOptions {
-  loginHint?: string;
-  acrValues?: string[];
+  userId: string;
   maxAge?: number;
   scope?: string[];
   bindingMessage?: string;
@@ -25,7 +26,7 @@ export interface PendingAuthorization {
 
 export interface Authorizer {
   authorize(
-    params: AuthorizationOptions
+    params: AuthorizeOptions
   ): Promise<Credentials | PendingAuthorization>;
 }
 

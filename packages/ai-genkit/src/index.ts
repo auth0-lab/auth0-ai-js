@@ -1,5 +1,5 @@
-export { FSSessionStore } from "./session/fs-session-store";
 export { FGAReranker, auth0 } from "./retrievers/fga-reranker";
+export { createAuthorizer } from "./create-authorizer";
 
 // references:
 // https://firebase.google.com/docs/genkit/auth
