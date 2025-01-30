@@ -3,13 +3,11 @@ import { Genkit } from "genkit";
 import {
   AuthContext,
   Authorizer,
-  Credentials,
   FnHandler,
-  getAuthorizer,
-  runAuthorizer,
   WithAuthHandler,
   WithAuthParams,
 } from "@auth0/ai";
+import { getAuthorizer, runAuthorizer } from "@auth0/ai/dist/utils";
 
 type WithAuthHandlerParams = Omit<WithAuthParams, "userId">;
 

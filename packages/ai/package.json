@@ -3,12 +3,11 @@
   "version": "0.0.0",
   "description": "",
   "main": "dist/index.js",
-  "exports": {
-    ".": "./dist/index.js",
-    "./session": "./dist/session.js",
-    "./tokens": "./dist/tokens.js",
-    "./user": "./dist/user.js"
-  },
+  "types": "dist/index.d.ts",
+  "module": "./dist/index.mjs",
+  "files": [
+    "dist/**/*"
+  ],
   "scripts": {
     "build": "tsc",
     "doc": "typedoc src/index.ts",

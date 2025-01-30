@@ -1,14 +1,6 @@
 import { AuthenticationClientOptions } from "auth0";
-import { AuthorizeOptions } from "auth0/dist/cjs/auth/backchannel";
 
-export interface AuthorizationOptions {
-  userId: string;
-  maxAge?: number;
-  scope?: string[];
-  bindingMessage?: string;
-  realm?: string;
-  audience?: string;
-}
+import { AuthorizeOptions } from "./authorizers/ciba-authorizer";
 
 export interface Credential {
   type: string;
@@ -29,3 +21,24 @@ export interface AuthorizerParams {
   name?: string;
   options?: AuthenticationClientOptions;
 }
+
+export type WithAuthAuthorizerParam =
+  | string
+  | ((authorizers: Authorizer[]) => Promise<Authorizer>);
+
+export type WithAuthParams = {
+  userId: string;
+  authorizer?: WithAuthAuthorizerParam;
+} & AuthorizerParams;
+
+export interface AuthContext {
+  userId: string;
+  accessToken?: string;
+}
+
+export type FnHandler<T extends any[] = any[], R = any> = (...args: T) => R;
+
+export type WithAuthHandler<F extends FnHandler, P> = (
+  params: P,
+  fn: F
+) => FnHandler;

@@ -1,5 +1,3 @@
-import { AuthenticationClient } from "auth0";
-import { AuthorizeOptions } from "auth0/dist/cjs/auth/backchannel";
 import { prompt } from "enquirer";
 import open from "open";
 import {
@@ -11,18 +9,22 @@ import {
 } from "openid-client";
 
 import { Authorizer, AuthorizerParams, Credentials } from "../authorizer";
+import { AuthorizeOptions } from "./ciba-authorizer";
+
+export type DeviceAuthorizerOptions = {
+  scope: string;
+  audience: string;
+};
 
 export class DeviceAuthorizer implements Authorizer {
-  auth0: AuthenticationClient;
   domain: string;
   clientId: string;
-  clientSecret: string;
   name: string;
 
   constructor(params?: AuthorizerParams) {
     this.name = params?.name || "device";
-    this.domain = params?.options?.domain || process.env.AUTH0_DOMAIN;
-    this.clientId = params?.options?.clientId || process.env.AUTH0_CLIENT_ID;
+    this.domain = params?.options?.domain || process.env.AUTH0_DOMAIN!;
+    this.clientId = params?.options?.clientId || process.env.AUTH0_CLIENT_ID!;
   }
 
   async authorize(params: AuthorizeOptions): Promise<Credentials> {
@@ -33,7 +35,7 @@ export class DeviceAuthorizer implements Authorizer {
 
     const handle = await initiateDeviceAuthorization(config, {
       scope: params.scope,
-      audience: params.audience,
+      audience: params.audience!,
     });
 
     const { verification_uri_complete, user_code, expires_in } = handle;
@@ -48,13 +50,14 @@ export class DeviceAuthorizer implements Authorizer {
       }.`,
     });
 
-    await open(verification_uri_complete);
+    await open(verification_uri_complete!);
 
-    let tokens: TokenEndpointResponse & TokenEndpointResponseHelpers;
+    let tokens: (TokenEndpointResponse & TokenEndpointResponseHelpers) | null =
+      null;
 
     try {
       tokens = await pollDeviceAuthorizationGrant(config, handle);
-    } catch (err) {
+    } catch (err: any) {
       switch (err.error) {
         case "access_denied":
           console.error("\n\nCancelled interaction");
@@ -67,6 +70,10 @@ export class DeviceAuthorizer implements Authorizer {
             `Error: ${err.error}; Description: ${err.error_description}`
           );
       }
+    }
+
+    if (!tokens) {
+      throw new Error("Failed to obtain tokens");
     }
 
     const credentials = {
