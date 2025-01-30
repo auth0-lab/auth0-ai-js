@@ -1,27 +1,35 @@
 import { AuthenticationClient } from "auth0";
-import { AuthorizeOptions, AuthorizeResponse } from "auth0/dist/cjs/auth/backchannel";
+import {
+  AuthorizeOptions,
+  AuthorizeResponse,
+} from "auth0/dist/cjs/auth/backchannel";
 
-import { Authorizer, Credentials } from "../authorizer";
+import { Authorizer, AuthorizerParams, Credentials } from "../authorizer";
 import { AccessDeniedError } from "../errors/authorizationerror";
-
-export interface CIBAAuthorizerOptions {
-  clientId?: string;
-  clientSecret?: string;
-  domain?: string;
-}
 
 /**
  * Requests authorization by prompting the user via an out-of-band channel from
  * the backend.
+ *
+ * @remarks It only supports the polling mode of the CIBA flow.
  */
-export class PollingCIBAAuthorizer implements Authorizer {
+export class CIBAAuthorizer implements Authorizer {
   auth0: AuthenticationClient;
+  name: string;
 
-  constructor(options?: CIBAAuthorizerOptions) {
+  constructor(params?: AuthorizerParams) {
+    this.name = params?.name || "ciba";
+
     this.auth0 = new AuthenticationClient({
-      domain: options?.domain || process.env.AUTH0_DOMAIN,
-      clientId: options?.clientId || process.env.AUTH0_CLIENT_ID,
-      clientSecret: options?.clientSecret || process.env.AUTH0_CLIENT_SECRET,
+      domain: params?.options?.domain || process.env.AUTH0_DOMAIN,
+      clientId: params?.options?.clientId || process.env.AUTH0_CLIENT_ID,
+      clientSecret:
+        params?.options?.clientSecret || process.env.AUTH0_CLIENT_SECRET,
+      clientAssertionSigningAlg: params?.options?.clientAssertionSigningAlg,
+      clientAssertionSigningKey: params?.options?.clientAssertionSigningKey,
+      idTokenSigningAlg: params?.options?.idTokenSigningAlg,
+      clockTolerance: params?.options?.clockTolerance,
+      useMTLS: params?.options?.useMTLS,
     });
   }
 
