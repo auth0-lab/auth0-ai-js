@@ -12,6 +12,7 @@ export type FGARerankerCheckerFn = (doc: Document) => ClientBatchCheckItem;
 
 export type FGARerankerConstructorArgs = {
   buildQuery: FGARerankerCheckerFn;
+  consistency?: ConsistencyPreference;
 };
 
 export type FGARerankerArgs = FGARerankerConstructorArgs & {
@@ -45,6 +46,7 @@ export type FGARerankerArgs = FGARerankerConstructorArgs & {
 export class FGAReranker {
   lc_namespace = ["genkit", "rerankers", "fga-reranker"];
   private buildQuery: FGARerankerCheckerFn;
+  private consistency: ConsistencyPreference;
   private fgaClient: OpenFgaClient;
 
   static lc_name() {
@@ -52,10 +54,11 @@ export class FGAReranker {
   }
 
   private constructor(
-    { buildQuery }: FGARerankerConstructorArgs,
+    { buildQuery, consistency }: FGARerankerConstructorArgs,
     fgaClient?: OpenFgaClient
   ) {
     this.buildQuery = buildQuery;
+    this.consistency = consistency;
     this.fgaClient =
       fgaClient ||
       new OpenFgaClient({
@@ -134,17 +137,23 @@ export class FGAReranker {
     const response = await this.fgaClient.batchCheck(
       { checks },
       {
-        consistency: ConsistencyPreference.HigherConsistency,
+        consistency:
+          this.consistency || ConsistencyPreference.HigherConsistency,
       }
     );
 
     return response.result.reduce(
       (permissionMap: Map<string, boolean>, result) => {
-        permissionMap.set(result.request.object, result.allowed || false);
+        const checkKey = this.getCheckKey(result.request);
+        permissionMap.set(checkKey, result.allowed || false);
         return permissionMap;
       },
       new Map<string, boolean>()
     );
+  }
+
+  private getCheckKey(check: ClientBatchCheckItem): string {
+    return `${check.user}|${check.object}|${check.relation}`;
   }
 
   /**
@@ -157,13 +166,19 @@ export class FGAReranker {
     const { checks, documentToObjectMap } = documents.reduce(
       (acc, document: Document) => {
         const check = this.buildQuery(document);
-        acc.checks.push(check);
-        acc.documentToObjectMap.set(document, check.object);
+        const checkKey = this.getCheckKey(check);
+        acc.documentToObjectMap.set(document, checkKey);
+        // Skip duplicate checks for same user, object, and relation
+        if (!acc.seenChecks.has(checkKey)) {
+          acc.seenChecks.add(checkKey);
+          acc.checks.push(check);
+        }
         return acc;
       },
       {
         checks: [] as ClientBatchCheckItem[],
         documentToObjectMap: new Map<Document, string>(),
+        seenChecks: new Set<string>(),
       }
     );
 

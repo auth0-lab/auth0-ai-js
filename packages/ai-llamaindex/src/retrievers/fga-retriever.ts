@@ -20,6 +20,7 @@ export type FGARetrieverCheckerFn = (
 export interface FGARetrieverArgs {
   buildQuery: FGARetrieverCheckerFn;
   retriever: BaseRetriever;
+  consistency?: ConsistencyPreference;
 }
 
 /**
@@ -51,6 +52,7 @@ export class FGARetriever extends BaseRetriever {
   lc_namespace = ["llamaindex", "retrievers", "fga-retriever"];
   private retriever: BaseRetriever;
   private buildQuery: FGARetrieverCheckerFn;
+  private consistency: ConsistencyPreference;
   private fgaClient: OpenFgaClient;
 
   static lc_name() {
@@ -58,13 +60,14 @@ export class FGARetriever extends BaseRetriever {
   }
 
   private constructor(
-    { buildQuery, retriever }: FGARetrieverArgs,
+    { buildQuery, retriever, consistency }: FGARetrieverArgs,
     fgaClient?: OpenFgaClient
   ) {
     super();
 
     this.retriever = retriever;
     this.buildQuery = buildQuery;
+    this.consistency = consistency;
     this.fgaClient =
       fgaClient ||
       new OpenFgaClient({
@@ -89,14 +92,12 @@ export class FGARetriever extends BaseRetriever {
    * @param args - @FGARetrieverArgs
    * @param args.retriever - The underlying retriever instance to fetch documents.
    * @param args.buildQuery - A function to generate access check requests for each document.
+   * @param args.consistency - Optional - The consistency preference for the OpenFGA client.
    * @param fgaClient - Optional - OpenFgaClient instance to execute checks against.
    * @returns A newly created FGARetriever instance configured with the provided arguments.
    */
-  static create(
-    { buildQuery, retriever }: FGARetrieverArgs,
-    fgaClient?: OpenFgaClient
-  ) {
-    return new FGARetriever({ buildQuery, retriever }, fgaClient);
+  static create(args: FGARetrieverArgs, fgaClient?: OpenFgaClient) {
+    return new FGARetriever(args, fgaClient);
   }
 
   /**
@@ -111,17 +112,23 @@ export class FGARetriever extends BaseRetriever {
     const response = await this.fgaClient.batchCheck(
       { checks },
       {
-        consistency: ConsistencyPreference.HigherConsistency,
+        consistency:
+          this.consistency || ConsistencyPreference.HigherConsistency,
       }
     );
 
     return response.result.reduce(
       (permissionMap: Map<string, boolean>, result) => {
-        permissionMap.set(result.request.object, result.allowed || false);
+        const checkKey = this.getCheckKey(result.request);
+        permissionMap.set(checkKey, result.allowed || false);
         return permissionMap;
       },
       new Map<string, boolean>()
     );
+  }
+
+  private getCheckKey(check: ClientBatchCheckItem): string {
+    return `${check.user}|${check.object}|${check.relation}`;
   }
 
   /**
@@ -138,13 +145,19 @@ export class FGARetriever extends BaseRetriever {
     const { checks, documentToObjectMap } = retrievedNodes.reduce(
       (acc, nodeWithScore: NodeWithScore<Metadata>) => {
         const check = this.buildQuery(nodeWithScore.node);
-        acc.checks.push(check);
-        acc.documentToObjectMap.set(nodeWithScore, check.object);
+        const checkKey = this.getCheckKey(check);
+        acc.documentToObjectMap.set(nodeWithScore, checkKey);
+        // Skip duplicate checks for same user, object, and relation
+        if (!acc.seenChecks.has(checkKey)) {
+          acc.seenChecks.add(checkKey);
+          acc.checks.push(check);
+        }
         return acc;
       },
       {
         checks: [] as ClientBatchCheckItem[],
         documentToObjectMap: new Map<NodeWithScore<Metadata>, string>(),
+        seenChecks: new Set<string>(),
       }
     );
 

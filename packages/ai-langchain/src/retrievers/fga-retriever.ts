@@ -19,15 +19,8 @@ export type FGARetrieverCheckerFn = (
 export type FGARetrieverArgs = {
   retriever: BaseRetriever;
   buildQuery: FGARetrieverCheckerFn;
-  fields?: BaseRetrieverInput;
-};
-
-type AccessByDocumentFn = (
-  checks: ClientBatchCheckItem[]
-) => Promise<Map<string, boolean>>;
-
-type FGARetrieverArgsWithAccessByDocument = FGARetrieverArgs & {
-  accessByDocument: AccessByDocumentFn;
+  consistency?: ConsistencyPreference;
+  retrieverFields?: BaseRetrieverInput;
 };
 
 /**
@@ -58,35 +51,18 @@ export class FGARetriever extends BaseRetriever {
   lc_namespace = ["@langchain", "retrievers"];
   private retriever: BaseRetriever;
   private buildQuery: FGARetrieverCheckerFn;
-  private accessByDocument: AccessByDocumentFn;
+  private consistency: ConsistencyPreference;
+  private fgaClient: OpenFgaClient;
 
-  private constructor({
-    retriever,
-    buildQuery,
-    fields,
-    accessByDocument,
-  }: FGARetrieverArgsWithAccessByDocument) {
-    super(fields);
+  private constructor(
+    { buildQuery, retriever, consistency, retrieverFields }: FGARetrieverArgs,
+    fgaClient?: OpenFgaClient
+  ) {
+    super(retrieverFields);
     this.buildQuery = buildQuery;
     this.retriever = retriever;
-    this.accessByDocument = accessByDocument as AccessByDocumentFn;
-  }
-
-  /**
-   * Creates a new FGARetriever instance using the given arguments and optional OpenFgaClient.
-   *
-   * @param args - @FGARetrieverArgs
-   * @param args.retriever - The underlying retriever instance to fetch documents.
-   * @param args.buildQuery - A function to generate access check requests for each document.
-   * @param args.fields - Optional - Additional fields to pass to the underlying retriever.
-   * @param fgaClient - Optional - OpenFgaClient instance to execute checks against.
-   * @returns A newly created FGARetriever instance configured with the provided arguments.
-   */
-  static create(
-    args: FGARetrieverArgs,
-    fgaClient?: OpenFgaClient
-  ): FGARetriever {
-    const client =
+    this.consistency = consistency;
+    this.fgaClient =
       fgaClient ||
       new OpenFgaClient({
         apiUrl: process.env.FGA_API_URL || "https://api.us1.fga.dev",
@@ -102,24 +78,24 @@ export class FGARetriever extends BaseRetriever {
           },
         },
       });
+  }
 
-    const accessByDocument: AccessByDocumentFn = async function (checks) {
-      const response = await client.batchCheck(
-        { checks },
-        {
-          consistency: ConsistencyPreference.HigherConsistency,
-        }
-      );
-      return response.result.reduce(
-        (permissionMap: Map<string, boolean>, result) => {
-          permissionMap.set(result.request.object, result.allowed || false);
-          return permissionMap;
-        },
-        new Map<string, boolean>()
-      );
-    };
-
-    return new FGARetriever({ ...args, accessByDocument });
+  /**
+   * Creates a new FGARetriever instance using the given arguments and optional OpenFgaClient.
+   *
+   * @param args - @FGARetrieverArgs
+   * @param args.retriever - The underlying retriever instance to fetch documents.
+   * @param args.buildQuery - A function to generate access check requests for each document.
+   * @param args.consistency - Optional - The consistency preference for the OpenFGA client.
+   * @param args.retrieverFields - Optional - Additional fields to pass to the underlying retriever.
+   * @param fgaClient - Optional - OpenFgaClient instance to execute checks against.
+   * @returns A newly created FGARetriever instance configured with the provided arguments.
+   */
+  static create(
+    args: FGARetrieverArgs,
+    fgaClient?: OpenFgaClient
+  ): FGARetriever {
+    return new FGARetriever(args, fgaClient);
   }
 
   /**
@@ -142,8 +118,13 @@ export class FGARetriever extends BaseRetriever {
     const { checks, documentToObject } = documents.reduce(
       (acc, doc) => {
         const check = this.buildQuery(doc);
-        acc.checks.push(check);
-        acc.documentToObject.set(doc, check.object);
+        const checkKey = this.getCheckKey(check);
+        acc.documentToObject.set(doc, checkKey);
+        // Skip duplicate checks for same user, object, and relation
+        if (!acc.seenChecks.has(checkKey)) {
+          acc.seenChecks.add(checkKey);
+          acc.checks.push(check);
+        }
         return acc;
       },
       {
@@ -152,14 +133,46 @@ export class FGARetriever extends BaseRetriever {
           DocumentInterface<Record<string, any>>,
           string
         >(),
+        seenChecks: new Set<string>(),
       }
     );
 
-    const resultsByObject = await this.accessByDocument(checks);
+    const permissionsMap = await this.checkPermissions(checks);
 
     return documents.filter(
-      (d, i) => resultsByObject.get(documentToObject.get(d) || "") === true
+      (d, i) => permissionsMap.get(documentToObject.get(d) || "") === true
     );
+  }
+
+  /**
+   * Checks permissions for a list of client requests.
+   *
+   * @param checks - An array of `ClientBatchCheckItem` objects representing the permissions to be checked.
+   * @returns A promise that resolves to a `Map` where the keys are object identifiers and the values are booleans indicating whether the permission is allowed.
+   */
+  private async checkPermissions(
+    checks: ClientBatchCheckItem[]
+  ): Promise<Map<string, boolean>> {
+    const response = await this.fgaClient.batchCheck(
+      { checks },
+      {
+        consistency:
+          this.consistency || ConsistencyPreference.HigherConsistency,
+      }
+    );
+
+    return response.result.reduce(
+      (permissionMap: Map<string, boolean>, result) => {
+        const checkKey = this.getCheckKey(result.request);
+        permissionMap.set(checkKey, result.allowed || false);
+        return permissionMap;
+      },
+      new Map<string, boolean>()
+    );
+  }
+
+  private getCheckKey(check: ClientBatchCheckItem): string {
+    return `${check.user}|${check.object}|${check.relation}`;
   }
 
   /**

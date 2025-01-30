@@ -3,7 +3,11 @@ import {
   FGARetriever,
   FGARetrieverCheckerFn,
 } from "../src/retrievers/fga-retriever";
-import { OpenFgaClient, CredentialsMethod } from "@openfga/sdk";
+import {
+  OpenFgaClient,
+  CredentialsMethod,
+  ConsistencyPreference,
+} from "@openfga/sdk";
 import { BaseRetriever, NodeWithScore } from "llamaindex";
 
 describe("FGARetriever", () => {
@@ -64,14 +68,126 @@ describe("FGARetriever", () => {
     // @ts-ignore
     mockClient.batchCheck = vi.fn().mockResolvedValue({
       result: [
-        { request: { object: "doc:public-doc" }, allowed: true },
-        { request: { object: "doc:private-doc" }, allowed: false },
+        {
+          request: {
+            object: "doc:public-doc",
+            user: "user:user1",
+            relation: "viewer",
+          },
+          allowed: true,
+        },
+        {
+          request: {
+            object: "doc:private-doc",
+            user: "user:user1",
+            relation: "viewer",
+          },
+          allowed: false,
+        },
       ],
     });
 
     const retriever = FGARetriever.create(args, mockClient);
 
-    const result = await retriever._retrieve({ query: "test" });
+    const result = await retriever.retrieve({ query: "test" });
     expect(result).toEqual([mockDocuments[0]]);
+  });
+
+  it("should handle empty document list", async () => {
+    // @ts-ignore
+    args.retriever.retrieve.mockResolvedValue([]);
+    const retriever = FGARetriever.create(args, mockClient);
+
+    const result = await retriever.retrieve({ query: "test" });
+    expect(result).toHaveLength(0);
+  });
+
+  it("should handle empty permission list", async () => {
+    const retriever = FGARetriever.create(args, mockClient);
+    // @ts-ignore
+    mockClient.batchCheck = vi.fn().mockResolvedValue({ result: [] });
+
+    const result = await retriever.retrieve({ query: "test" });
+    expect(result).toHaveLength(0);
+  });
+
+  it("should deduplicate permission checks for same object/user/relation", async () => {
+    const duplicateDocuments = [
+      ...mockDocuments,
+      {
+        node: { text: "public content", metadata: { id: "public-doc" } },
+        score: 1,
+      } as unknown as NodeWithScore,
+      {
+        node: { text: "private content", metadata: { id: "private-doc" } },
+        score: 1,
+      } as unknown as NodeWithScore,
+    ];
+
+    // @ts-ignore
+    args.retriever.retrieve.mockResolvedValue(duplicateDocuments);
+
+    const retriever = FGARetriever.create(args, mockClient);
+    // @ts-ignore
+    mockClient.batchCheck = vi.fn().mockResolvedValue({
+      result: [
+        {
+          request: {
+            object: "doc:public-doc",
+            user: "user:user1",
+            relation: "viewer",
+          },
+          allowed: true,
+        },
+        {
+          request: {
+            object: "doc:private-doc",
+            user: "user:user1",
+            relation: "viewer",
+          },
+          allowed: false,
+        },
+      ],
+    });
+
+    const result = await retriever.retrieve({ query: "test" });
+    expect(result).toHaveLength(2);
+    expect(mockClient.batchCheck).toHaveBeenCalledTimes(1);
+    expect(mockClient.batchCheck).toBeCalledWith(
+      {
+        checks: [
+          { object: "doc:public-doc", relation: "viewer", user: "user:user1" },
+          { object: "doc:private-doc", relation: "viewer", user: "user:user1" },
+        ],
+      },
+      { consistency: ConsistencyPreference.HigherConsistency }
+    );
+  });
+
+  it("should handle all documents being filtered out", async () => {
+    const retriever = FGARetriever.create(args, mockClient);
+    // @ts-ignore
+    mockClient.batchCheck = vi.fn().mockResolvedValue({
+      result: [
+        { request: { object: "doc:public-doc" }, allowed: false },
+        { request: { object: "doc:private-doc" }, allowed: false },
+      ],
+    });
+
+    const result = await retriever.retrieve({ query: "test" });
+    expect(result).toHaveLength(0);
+  });
+
+  it("should handle batchCheck error gracefully", async () => {
+    // @ts-ignore
+    mockClient.batchCheck = vi
+      .fn()
+      .mockRejectedValue(new Error("FGA API Error"));
+
+    const retriever = FGARetriever.create(args, mockClient);
+
+    await expect(retriever.retrieve({ query: "test" })).rejects.toThrow(
+      "FGA API Error"
+    );
   });
 });
