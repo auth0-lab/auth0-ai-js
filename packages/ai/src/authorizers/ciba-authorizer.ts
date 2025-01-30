@@ -7,6 +7,8 @@ import {
 import { Authorizer, AuthorizerParams, Credentials } from "../authorizer";
 import { AccessDeniedError } from "../errors/authorizationerror";
 
+export type { AuthorizeOptions } from "auth0/dist/cjs/auth/backchannel";
+
 /**
  * Requests authorization by prompting the user via an out-of-band channel from
  * the backend.
@@ -21,8 +23,8 @@ export class CIBAAuthorizer implements Authorizer {
     this.name = params?.name || "ciba";
 
     this.auth0 = new AuthenticationClient({
-      domain: params?.options?.domain || process.env.AUTH0_DOMAIN,
-      clientId: params?.options?.clientId || process.env.AUTH0_CLIENT_ID,
+      domain: params?.options?.domain || process.env.AUTH0_DOMAIN!,
+      clientId: params?.options?.clientId || process.env.AUTH0_CLIENT_ID!,
       clientSecret:
         params?.options?.clientSecret || process.env.AUTH0_CLIENT_SECRET,
       clientAssertionSigningAlg: params?.options?.clientAssertionSigningAlg,
@@ -64,7 +66,7 @@ export class CIBAAuthorizer implements Authorizer {
           clearInterval(interval);
 
           return resolve(credentials);
-        } catch (e) {
+        } catch (e: any) {
           console.log(e);
           if (e.error == "authorization_pending") {
             return;
