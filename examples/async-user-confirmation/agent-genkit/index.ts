@@ -3,8 +3,8 @@ import "dotenv/config";
 import { genkit, z } from "genkit";
 import { gpt4o, openAI } from "genkitx-openai";
 
-import { AuthContext, PollingCIBAAuthorizer } from "@auth0/ai";
-import { createAuthorizer } from "@auth0/ai-genkit";
+import { AuthContext, DeviceAuthorizer } from "@auth0/ai";
+import { registerAuthorizers } from "@auth0/ai-genkit";
 
 type ToolHandler = (input: { ticker: string; qty: number }) => Promise<string>;
 
@@ -13,9 +13,8 @@ const ai = genkit({
   model: gpt4o,
 });
 
-const withAuth = createAuthorizer<ToolHandler>({
+const withAuth = registerAuthorizers<ToolHandler>([new DeviceAuthorizer()], {
   genkit: ai,
-  authorizer: new PollingCIBAAuthorizer(),
 });
 
 const buy = ai.defineTool(
@@ -53,8 +52,6 @@ const buy = ai.defineTool(
         headers: headers,
         body: JSON.stringify(body),
       });
-
-      console.log(response.status);
 
       return "OK";
     }

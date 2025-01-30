@@ -1,3 +1,4 @@
+import { AuthenticationClientOptions } from "auth0";
 import { AuthorizeOptions } from "auth0/dist/cjs/auth/backchannel";
 
 export interface AuthorizationOptions {
@@ -19,29 +20,12 @@ export interface Credentials {
   refreshToken?: Credential;
 }
 
-export interface PendingAuthorization {
-  transactionId: string;
-  requestId: string;
-}
-
 export interface Authorizer {
-  authorize(
-    params: AuthorizeOptions
-  ): Promise<Credentials | PendingAuthorization>;
+  name: string;
+  authorize(params: AuthorizeOptions): Promise<Credentials>;
 }
 
-/**
- * Returns `true` if the result is pending authorization.
- *
- * @remarks
- * This function returns a {@link https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates type predicate}
- * used to narrow the result of calling authorization to an instance of
- * `PendingAuthorization`.
- *
- * @param result - The result of calling authorize.
- */
-export function isPending(
-  result: Credentials | PendingAuthorization
-): result is PendingAuthorization {
-  return (result as PendingAuthorization).transactionId !== undefined;
+export interface AuthorizerParams {
+  name?: string;
+  options?: AuthenticationClientOptions;
 }

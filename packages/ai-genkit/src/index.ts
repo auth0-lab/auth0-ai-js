@@ -1,5 +1,5 @@
 export { FGAReranker, auth0 } from "./retrievers/fga-reranker";
-export { createAuthorizer } from "./create-authorizer";
+export { registerAuthorizers } from "./register-authorizer";
 
 // references:
 // https://firebase.google.com/docs/genkit/auth
