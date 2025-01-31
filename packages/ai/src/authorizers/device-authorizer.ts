@@ -9,7 +9,6 @@ import {
 } from "openid-client";
 
 import { Authorizer, AuthorizerParams, Credentials } from "../authorizer";
-import { CibaAuthorizerOptions } from "./ciba-authorizer";
 
 export type DeviceAuthorizerOptions = {
   scope: string;
@@ -27,7 +26,7 @@ export class DeviceAuthorizer implements Authorizer {
     this.clientId = params?.options?.clientId || process.env.AUTH0_CLIENT_ID!;
   }
 
-  async authorize(params: CibaAuthorizerOptions): Promise<Credentials> {
+  async authorize(params: DeviceAuthorizerOptions): Promise<Credentials> {
     const config = await discovery(
       new URL(`https://${this.domain}`),
       this.clientId
