@@ -4,9 +4,17 @@ import { AuthorizeResponse } from "auth0/dist/cjs/auth/backchannel";
 import { Authorizer, AuthorizerParams, Credentials } from "../authorizer";
 import { AccessDeniedError } from "../errors/authorizationerror";
 
-export type CibaAuthorizerOptions = {
+type DynamicBindingMessage<
+  T extends (...args: any[]) => Promise<any> = (...args: any[]) => Promise<any>
+> = (...args: Parameters<T>) => Promise<string>;
+
+export type CibaAuthorizerOptions<
+  T extends (...args: any[]) => Promise<string> = (
+    ...args: any[]
+  ) => Promise<any>
+> = {
   userId: string;
-  binding_message: string;
+  binding_message: string | DynamicBindingMessage<T>;
   scope: string;
   audience?: string;
   request_expiry?: string;
@@ -39,15 +47,31 @@ export class CIBAAuthorizer implements Authorizer {
     });
   }
 
-  async authorize(params: CibaAuthorizerOptions): Promise<Credentials> {
-    const response = await this.auth0.backchannel.authorize({
+  async authorize(
+    params: CibaAuthorizerOptions,
+    toolExecutionParams?: Record<string, any>
+  ): Promise<Credentials> {
+    const authorizeParams = {
       scope: params.scope,
-      binding_message: params.binding_message,
+      binding_message: "",
       userId: params.userId,
       audience: params.audience,
       request_expiry: params.request_expiry,
       subjectIssuerContext: params.subjectIssuerContext,
-    });
+    };
+
+    if (params.binding_message instanceof Function) {
+      // send params to the function
+      authorizeParams.binding_message = await params.binding_message(
+        toolExecutionParams
+      );
+    }
+
+    if (typeof params.binding_message === "string") {
+      authorizeParams.binding_message = params.binding_message;
+    }
+
+    const response = await this.auth0.backchannel.authorize(authorizeParams);
 
     return await this.poll(response);
   }

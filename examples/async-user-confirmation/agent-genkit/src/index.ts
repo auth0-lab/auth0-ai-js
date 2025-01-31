@@ -3,7 +3,7 @@ import "dotenv/config";
 import { genkit, z } from "genkit";
 import { gpt4o, openAI } from "genkitx-openai";
 
-import { AuthContext, DeviceAuthorizer } from "@auth0/ai";
+import { AuthContext, CIBAAuthorizer, DeviceAuthorizer } from "@auth0/ai";
 import { registerAuthorizers } from "@auth0/ai-genkit";
 
 type ToolHandler = (input: { ticker: string; qty: number }) => Promise<string>;
@@ -29,11 +29,13 @@ const buy = ai.defineTool(
   },
   withAuth(
     {
+      binding_message: async ({ ticker }) => `Buying ${ticker}`,
       scope: "openid",
       audience: process.env["AUDIENCE"]!,
     },
     async ({ ticker, qty }) => {
       const headers = {
+        Authorization: "",
         "Content-Type": "application/json",
       };
       const body = {

@@ -16,7 +16,8 @@ export interface Credentials {
 export interface Authorizer {
   name: string;
   authorize(
-    params: CibaAuthorizerOptions | DeviceAuthorizerOptions
+    params: CibaAuthorizerOptions | DeviceAuthorizerOptions,
+    toolExecutionParams?: Record<string, any>
   ): Promise<Credentials>;
 }
 
@@ -29,10 +30,10 @@ export type AuthorizerByNameOrFn =
   | string
   | ((authorizers: Authorizer[]) => Promise<Authorizer>);
 
-export type WithAuthParams = {
+export type WithAuthParams<T extends (...args: any[]) => Promise<any>> = {
   userId: string;
   authorizer?: AuthorizerByNameOrFn;
-} & (CibaAuthorizerOptions | DeviceAuthorizerOptions);
+} & (CibaAuthorizerOptions<T> | DeviceAuthorizerOptions);
 
 export interface AuthContext {
   userId: string;
