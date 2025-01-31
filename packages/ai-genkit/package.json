@@ -2,17 +2,27 @@
   "name": "@auth0/ai-genkit",
   "version": "0.0.0",
   "description": "",
-  "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "main": "dist/index.js",
   "module": "./dist/index.mjs",
   "files": [
     "dist/**/*"
   ],
   "scripts": {
-    "build": "tsc",
-    "doc": "typedoc src/index.ts",
-    "test": "vitest run",
-    "type-check": "tsc --noEmit"
+    "build": "tsup",
+    "build:watch": "tsup --watch",
+    "clean": "rm -rf dist",
+    "lint": "eslint \"./**/*.ts*\"",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
   },
   "author": {
     "name": "Auth0 Inc.",
@@ -28,6 +38,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.6",
+    "tsup": "^8.3.6",
     "typedoc": "^0.27.6",
     "typescript": "^5.7.3",
     "vitest": "^2.1.3"

@@ -5,8 +5,8 @@
       "dependsOn": ["^build"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"]
     },
-    "doc": {
-      "outputs": ["docs"]
+    "clean": {
+      "dependsOn": ["^clean"]
     },
     "dev": {
       "persistent": true,
@@ -16,7 +16,7 @@
       "dependsOn": ["^test"]
     },
     "type-check": {
-      "dependsOn": ["^type-check"]
+      "dependsOn": ["^build", "build"]
     }
   }
 }

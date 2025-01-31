@@ -1,10 +1,10 @@
-import { AuthorizeOptions } from "src/authorizers/ciba-authorizer";
-
 import { Authorizer, Credentials } from "../authorizer";
+import { CibaAuthorizerOptions } from "../authorizers/ciba-authorizer";
+import { DeviceAuthorizerOptions } from "../authorizers/device-authorizer";
 
 export async function runAuthorizer(
   authorizer: Authorizer,
-  params: AuthorizeOptions
+  params: CibaAuthorizerOptions | DeviceAuthorizerOptions
 ): Promise<Credentials> {
   return await authorizer.authorize(params);
 }
