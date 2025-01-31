@@ -1,13 +1,17 @@
 import { AuthenticationClient } from "auth0";
-import {
-  AuthorizeOptions,
-  AuthorizeResponse,
-} from "auth0/dist/cjs/auth/backchannel";
+import { AuthorizeResponse } from "auth0/dist/cjs/auth/backchannel";
 
 import { Authorizer, AuthorizerParams, Credentials } from "../authorizer";
 import { AccessDeniedError } from "../errors/authorizationerror";
 
-export type { AuthorizeOptions } from "auth0/dist/cjs/auth/backchannel";
+export type CibaAuthorizerOptions = {
+  userId: string;
+  binding_message: string;
+  scope: string;
+  audience?: string;
+  request_expiry?: string;
+  subjectIssuerContext?: string;
+};
 
 /**
  * Requests authorization by prompting the user via an out-of-band channel from
@@ -35,7 +39,7 @@ export class CIBAAuthorizer implements Authorizer {
     });
   }
 
-  async authorize(params: AuthorizeOptions): Promise<Credentials> {
+  async authorize(params: CibaAuthorizerOptions): Promise<Credentials> {
     const response = await this.auth0.backchannel.authorize({
       scope: params.scope,
       binding_message: params.binding_message,

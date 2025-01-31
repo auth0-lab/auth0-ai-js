@@ -1,4 +1,4 @@
-import { prompt } from "enquirer";
+import Enquirer from "enquirer";
 import open from "open";
 import {
   discovery,
@@ -9,7 +9,7 @@ import {
 } from "openid-client";
 
 import { Authorizer, AuthorizerParams, Credentials } from "../authorizer";
-import { AuthorizeOptions } from "./ciba-authorizer";
+import { CibaAuthorizerOptions } from "./ciba-authorizer";
 
 export type DeviceAuthorizerOptions = {
   scope: string;
@@ -27,7 +27,7 @@ export class DeviceAuthorizer implements Authorizer {
     this.clientId = params?.options?.clientId || process.env.AUTH0_CLIENT_ID!;
   }
 
-  async authorize(params: AuthorizeOptions): Promise<Credentials> {
+  async authorize(params: CibaAuthorizerOptions): Promise<Credentials> {
     const config = await discovery(
       new URL(`https://${this.domain}`),
       this.clientId
@@ -40,7 +40,8 @@ export class DeviceAuthorizer implements Authorizer {
 
     const { verification_uri_complete, user_code, expires_in } = handle;
 
-    await prompt({
+    const enquirer = new Enquirer();
+    await enquirer.prompt({
       type: "input",
       name: "confirmation",
       message: `Press Enter to open the browser to log in or press Ctrl+C to abort. You should see the following code: ${user_code}. It expires in ${

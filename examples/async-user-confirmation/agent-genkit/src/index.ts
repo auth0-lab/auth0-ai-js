@@ -53,7 +53,7 @@ const buy = ai.defineTool(
         body: JSON.stringify(body),
       });
 
-      return "OK";
+      return response.statusText;
     }
   )
 );

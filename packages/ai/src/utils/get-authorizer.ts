@@ -1,8 +1,8 @@
-import { Authorizer, WithAuthAuthorizerParam } from "../authorizer";
+import { Authorizer, AuthorizerByNameOrFn } from "../authorizer";
 
 export async function getAuthorizer(
   authorizers: Authorizer[],
-  authorizer?: WithAuthAuthorizerParam
+  authorizer?: AuthorizerByNameOrFn
 ): Promise<Authorizer> {
   let current: Authorizer = authorizers[0];
 

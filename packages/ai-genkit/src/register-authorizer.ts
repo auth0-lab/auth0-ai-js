@@ -1,26 +1,27 @@
 import { Genkit } from "genkit";
 
+import { AuthContext, Authorizer, WithAuthParams } from "@auth0/ai";
 import {
-  AuthContext,
-  Authorizer,
-  FnHandler,
-  WithAuthHandler,
-  WithAuthParams,
-} from "@auth0/ai";
-import { getAuthorizer, runAuthorizer } from "@auth0/ai/dist/utils";
+  DistributiveOmit,
+  getAuthorizer,
+  ReturnTypeOf,
+  runAuthorizer,
+} from "@auth0/ai/utils";
 
-type WithAuthHandlerParams = Omit<WithAuthParams, "userId">;
-
-type GenkitAutorizerConfig = {
+type GenkitConfig = {
   genkit: Genkit;
 };
 
-export function registerAuthorizers<T extends FnHandler>(
+type WithAuthHandlerParams = DistributiveOmit<WithAuthParams, "userId">;
+
+export function registerAuthorizers<T extends (...args: any[]) => any>(
   authorizers: Authorizer[],
-  config: GenkitAutorizerConfig
-): WithAuthHandler<T, WithAuthHandlerParams> {
+  config: GenkitConfig
+) {
+  // WithAuth handler
   return (params: WithAuthHandlerParams, fn: T) => {
-    return async (...args: any[]) => {
+    // Tool handler
+    return async (...args: Parameters<T>): Promise<ReturnTypeOf<T>> => {
       const authorizer = await getAuthorizer(authorizers, params.authorizer);
       const session = config.genkit.currentSession<AuthContext>();
       const userId = session.state!.userId;
