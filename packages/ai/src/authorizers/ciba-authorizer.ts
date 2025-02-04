@@ -1,20 +1,16 @@
 import { AuthenticationClient } from "auth0";
 import { AuthorizeResponse } from "auth0/dist/cjs/auth/backchannel";
 
-import { Authorizer, AuthorizerParams, Credentials } from "../authorizer";
+import { AuthorizerParams } from "../authorizer";
+import { BaseAuthorizer } from "../base-authorizer";
+import { Credentials } from "../credentials";
 import { AccessDeniedError } from "../errors/authorizationerror";
 
-type DynamicBindingMessage<
-  T extends (...args: any[]) => Promise<any> = (...args: any[]) => Promise<any>
-> = (...args: Parameters<T>) => Promise<string>;
+type DynamicBindingMessage = <I>(params: I) => Promise<string>;
 
-export type CibaAuthorizerOptions<
-  T extends (...args: any[]) => Promise<string> = (
-    ...args: any[]
-  ) => Promise<any>
-> = {
+export type CibaAuthorizerOptions = {
   userId: string;
-  binding_message: string | DynamicBindingMessage<T>;
+  binding_message: string | DynamicBindingMessage;
   scope: string;
   audience?: string;
   request_expiry?: string;
@@ -27,12 +23,11 @@ export type CibaAuthorizerOptions<
  *
  * @remarks It only supports the polling mode of the CIBA flow.
  */
-export class CIBAAuthorizer implements Authorizer {
+export class CIBAAuthorizer extends BaseAuthorizer {
   auth0: AuthenticationClient;
-  name: string;
 
   constructor(params?: AuthorizerParams) {
-    this.name = params?.name || "ciba";
+    super("ciba-authorizer");
 
     this.auth0 = new AuthenticationClient({
       domain: params?.options?.domain || process.env.AUTH0_DOMAIN!,
@@ -95,7 +90,6 @@ export class CIBAAuthorizer implements Authorizer {
 
           return resolve(credentials);
         } catch (e: any) {
-          console.log(e);
           if (e.error == "authorization_pending") {
             return;
           }

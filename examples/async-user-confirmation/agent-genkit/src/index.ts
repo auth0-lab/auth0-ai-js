@@ -3,18 +3,28 @@ import "dotenv/config";
 import { genkit, z } from "genkit";
 import { gpt4o, openAI } from "genkitx-openai";
 
-import { AuthContext, CIBAAuthorizer, DeviceAuthorizer } from "@auth0/ai";
-import { registerAuthorizers } from "@auth0/ai-genkit";
-
-type ToolHandler = (input: { ticker: string; qty: number }) => Promise<string>;
+import {
+  Auth0AI,
+  AuthContext,
+  CIBAAuthorizer,
+  DeviceAuthorizer,
+} from "@auth0/ai";
 
 const ai = genkit({
   plugins: [openAI({ apiKey: process.env.OPENAI_API_KEY })],
   model: gpt4o,
 });
 
-const withAuth = registerAuthorizers<ToolHandler>([new DeviceAuthorizer()], {
-  genkit: ai,
+const a0 = Auth0AI({
+  authorizers: [new DeviceAuthorizer(), new CIBAAuthorizer()],
+});
+
+const useCIBAAuthorizer = a0.authorizeWith({
+  authorizer: "ciba-authorizer",
+  userId: "google-oauth2|114615802253716134337",
+  binding_message: "Buy 100 shares of ZEKO",
+  scope: "openid",
+  audience: process.env["AUDIENCE"]!,
 });
 
 const buy = ai.defineTool(
@@ -27,37 +37,28 @@ const buy = ai.defineTool(
     }),
     outputSchema: z.string(),
   },
-  withAuth(
-    {
-      binding_message: async ({ ticker }) => `Buying ${ticker}`,
-      scope: "openid",
-      audience: process.env["AUDIENCE"]!,
-    },
-    async ({ ticker, qty }) => {
-      const headers = {
-        Authorization: "",
-        "Content-Type": "application/json",
-      };
-      const body = {
-        ticker: ticker,
-        qty: qty,
-      };
-      const session = ai.currentSession<AuthContext>();
-      const accessToken = session.state?.accessToken;
+  useCIBAAuthorizer(async (accessToken, { ticker, qty }) => {
+    const headers = {
+      Authorization: "",
+      "Content-Type": "application/json",
+    };
+    const body = {
+      ticker: ticker,
+      qty: qty,
+    };
 
-      if (accessToken) {
-        headers["Authorization"] = "Bearer " + accessToken;
-      }
-
-      const response = await fetch(process.env["API_URL"]!, {
-        method: "POST",
-        headers: headers,
-        body: JSON.stringify(body),
-      });
-
-      return response.statusText;
+    if (accessToken) {
+      headers["Authorization"] = "Bearer " + accessToken;
     }
-  )
+
+    const response = await fetch(process.env["API_URL"]!, {
+      method: "POST",
+      headers: headers,
+      body: JSON.stringify(body),
+    });
+
+    return response.statusText;
+  })
 );
 
 type MyContext = { userName?: string } & AuthContext;
