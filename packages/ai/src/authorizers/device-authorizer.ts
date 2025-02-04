@@ -8,20 +8,22 @@ import {
   TokenEndpointResponseHelpers,
 } from "openid-client";
 
-import { Authorizer, AuthorizerParams, Credentials } from "../authorizer";
+import { AuthorizerParams } from "../authorizer";
+import { BaseAuthorizer } from "../base-authorizer";
+import { Credentials } from "../credentials";
 
 export type DeviceAuthorizerOptions = {
   scope: string;
   audience: string;
 };
 
-export class DeviceAuthorizer implements Authorizer {
+export class DeviceAuthorizer extends BaseAuthorizer {
   domain: string;
   clientId: string;
-  name: string;
 
   constructor(params?: AuthorizerParams) {
-    this.name = params?.name || "device";
+    super("device-authorizer");
+
     this.domain = params?.options?.domain || process.env.AUTH0_DOMAIN!;
     this.clientId = params?.options?.clientId || process.env.AUTH0_CLIENT_ID!;
   }
@@ -76,12 +78,19 @@ export class DeviceAuthorizer implements Authorizer {
       throw new Error("Failed to obtain tokens");
     }
 
-    const credentials = {
+    const credentials: Credentials = {
       accessToken: {
         type: tokens.token_type || "bearer",
         value: tokens.access_token,
       },
     };
+
+    if (tokens.id_token) {
+      credentials.idToken = {
+        type: tokens.token_type || "bearer",
+        value: tokens.id_token,
+      };
+    }
 
     return credentials;
   }
