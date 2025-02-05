@@ -1,4 +1,4 @@
-import { z, Genkit, Document } from "genkit";
+import { Document, Genkit, z } from "genkit";
 import { GenkitPlugin, genkitPlugin } from "genkit/plugin";
 
 import {
@@ -58,7 +58,7 @@ export class FGAReranker {
     fgaClient?: OpenFgaClient
   ) {
     this.buildQuery = buildQuery;
-    this.consistency = consistency;
+    this.consistency = consistency || ConsistencyPreference.HigherConsistency;
     this.fgaClient =
       fgaClient ||
       new OpenFgaClient({
@@ -192,5 +192,7 @@ export class FGAReranker {
 }
 
 export function auth0(): GenkitPlugin {
-  return genkitPlugin("auth0", async (ai: Genkit) => {});
+  return genkitPlugin("auth0", async () => {
+    // Define the FGAReranker
+  });
 }
