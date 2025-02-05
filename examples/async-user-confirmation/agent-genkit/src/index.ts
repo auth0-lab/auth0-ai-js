@@ -3,28 +3,15 @@ import "dotenv/config";
 import { genkit, z } from "genkit";
 import { gpt4o, openAI } from "genkitx-openai";
 
-import {
-  CIBAAuthorizer,
-  DeviceAuthorizer,
-  FGAAuthorizer,
-  usePipeline,
-} from "@auth0/ai";
+import { DeviceAuthorizer, FGAAuthorizer, usePipeline } from "@auth0/ai";
 
 const ai = genkit({
   plugins: [openAI({ apiKey: process.env.OPENAI_API_KEY })],
   model: gpt4o,
 });
 
-const ciba = CIBAAuthorizer.create();
 const deviceFlow = DeviceAuthorizer.create();
 const fga = FGAAuthorizer.create();
-
-const useCiba = ciba({
-  userId: async () => "google-oauth2|114615802253716134337",
-  binding_message: "Buy 100 shares of ZEKO",
-  scope: "openid",
-  audience: process.env["AUDIENCE"]!,
-});
 
 const useDeviceFlow = deviceFlow({
   scope: "openid",
