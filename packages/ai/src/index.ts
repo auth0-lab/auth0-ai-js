@@ -3,7 +3,7 @@ import { AuthParams } from "./authorizers";
 export { CIBAAuthorizer } from "./authorizers/ciba-authorizer";
 export { DeviceAuthorizer } from "./authorizers/device-authorizer";
 export { FGAAuthorizer } from "./authorizers/fga-authorizer";
-export { AccessDeniedError } from "./errors/authorizationerror";
+export * from "./errors";
 
 export const usePipeline = <I, O>(
   authorizers: any[],

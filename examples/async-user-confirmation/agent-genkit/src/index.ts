@@ -3,29 +3,26 @@ import "dotenv/config";
 import { genkit, z } from "genkit";
 import { gpt4o, openAI } from "genkitx-openai";
 
-import { DeviceAuthorizer, FGAAuthorizer, usePipeline } from "@auth0/ai";
+import { AccessDeniedError, CIBAAuthorizer, DeviceAuthorizer } from "@auth0/ai";
+
+type MyContext = { userId: string };
 
 const ai = genkit({
   plugins: [openAI({ apiKey: process.env.OPENAI_API_KEY })],
   model: gpt4o,
 });
 
-const deviceFlow = DeviceAuthorizer.create();
-const fga = FGAAuthorizer.create();
+const ciba = CIBAAuthorizer.create();
 
-const useDeviceFlow = deviceFlow({
-  scope: "openid",
-  audience: process.env["AUDIENCE"]!,
-});
-
-const useFga = fga({
-  buildQuery: async ({ userId }) => {
-    return {
-      user: `user:${userId}`,
-      object: "doc:1",
-      relation: "can_view",
-    };
+const useCiba = ciba({
+  userId: async () => {
+    const data = ai.currentSession<MyContext>();
+    return data.state?.userId!;
   },
+  binding_message: async ({ ticker, qty }) =>
+    `Do you want to buy ${qty} shares of ${ticker}`,
+  scope: "openid buy:stocks",
+  audience: process.env["AUDIENCE"]!,
 });
 
 const buy = ai.defineTool(
@@ -38,11 +35,8 @@ const buy = ai.defineTool(
     }),
     outputSchema: z.string(),
   },
-  usePipeline(
-    [useDeviceFlow, useFga],
-    async ({ accessToken, allowed, claims }, { ticker, qty }) => {
-      console.log(allowed, claims);
-
+  useCiba(
+    async ({ accessToken }, { ticker, qty }) => {
       const headers = {
         Authorization: "",
         "Content-Type": "application/json",
@@ -63,17 +57,30 @@ const buy = ai.defineTool(
       });
 
       return response.statusText;
+    },
+    async (error: Error) => {
+      console.log(error);
+      if (error instanceof AccessDeniedError) {
+        return "The user has denied the request";
+      }
+
+      return "Oops! Something went wrong.";
     }
   )
 );
 
-type MyContext = { userName?: string };
-
 async function main() {
   try {
+    const response = await DeviceAuthorizer.start(
+      { scope: "openid" },
+      {
+        domain: process.env["AUTH0_DOMAIN"]!,
+        clientId: process.env["AUTH0_PUBLIC_CLIENT_ID"]!,
+      }
+    );
     const session = ai.createSession<MyContext>({
       initialState: {
-        userName: "John",
+        userId: response.claims?.sub!,
       },
     });
     const chat = session.chat();

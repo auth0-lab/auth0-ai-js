@@ -11,11 +11,11 @@ import {
 } from "openid-client";
 
 import { Credentials } from "../credentials";
-import { ToolWithAuthHandler } from "./";
+import { AuthParams, ToolWithAuthHandler } from "./";
 
 export type DeviceAuthorizerOptions = {
   scope: string;
-  audience: string;
+  audience?: string;
 };
 
 export class DeviceAuthorizer {
@@ -36,8 +36,7 @@ export class DeviceAuthorizer {
     );
 
     const handle = await initiateDeviceAuthorization(config, {
-      scope: params.scope,
-      audience: params.audience!,
+      ...params,
     });
 
     const { verification_uri_complete, user_code, expires_in } = handle;
@@ -94,6 +93,22 @@ export class DeviceAuthorizer {
     }
 
     return credentials;
+  }
+
+  static async start(
+    options: DeviceAuthorizerOptions,
+    params?: AuthenticationClientOptions
+  ) {
+    const authorizer = new DeviceAuthorizer(params);
+    const credentials = await authorizer.authorize(options);
+
+    let claims = {};
+
+    if (credentials.idToken) {
+      claims = jose.decodeJwt(credentials.idToken!.value);
+    }
+
+    return { accessToken: credentials.accessToken.value, claims } as AuthParams;
   }
 
   static create(params?: AuthenticationClientOptions) {
