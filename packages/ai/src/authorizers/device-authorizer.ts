@@ -1,4 +1,6 @@
+import { AuthenticationClientOptions } from "auth0";
 import Enquirer from "enquirer";
+import * as jose from "jose";
 import open from "open";
 import {
   discovery,
@@ -8,27 +10,26 @@ import {
   TokenEndpointResponseHelpers,
 } from "openid-client";
 
-import { AuthorizerParams } from "../authorizer";
-import { BaseAuthorizer } from "../base-authorizer";
 import { Credentials } from "../credentials";
+import { ToolWithAuthHandler } from "./";
 
 export type DeviceAuthorizerOptions = {
   scope: string;
   audience: string;
 };
 
-export class DeviceAuthorizer extends BaseAuthorizer {
+export class DeviceAuthorizer {
   domain: string;
   clientId: string;
 
-  constructor(params?: AuthorizerParams) {
-    super("device-authorizer");
-
-    this.domain = params?.options?.domain || process.env.AUTH0_DOMAIN!;
-    this.clientId = params?.options?.clientId || process.env.AUTH0_CLIENT_ID!;
+  private constructor(params?: AuthenticationClientOptions) {
+    this.domain = params?.domain || process.env.AUTH0_DOMAIN!;
+    this.clientId = params?.clientId || process.env.AUTH0_CLIENT_ID!;
   }
 
-  async authorize(params: DeviceAuthorizerOptions): Promise<Credentials> {
+  private async authorize(
+    params: DeviceAuthorizerOptions
+  ): Promise<Credentials> {
     const config = await discovery(
       new URL(`https://${this.domain}`),
       this.clientId
@@ -93,5 +94,23 @@ export class DeviceAuthorizer extends BaseAuthorizer {
     }
 
     return credentials;
+  }
+
+  static create(params?: AuthenticationClientOptions) {
+    const authorizer = new DeviceAuthorizer(params);
+
+    return (options: DeviceAuthorizerOptions) => {
+      return function deviceFlow<I, O>(handler: ToolWithAuthHandler<I, O>) {
+        return async (input: I): Promise<O> => {
+          const credentials = await authorizer.authorize(options);
+          const claims = jose.decodeJwt(credentials.idToken!.value);
+
+          return handler(
+            { accessToken: credentials.accessToken.value, claims },
+            input
+          );
+        };
+      };
+    };
   }
 }
