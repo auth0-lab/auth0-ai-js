@@ -20,7 +20,7 @@
     "outDir": "./dist",
     "baseUrl": "."
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "test/authorizers/fga-authorizer.test.ts"],
   "types": ["@types/node"],
   "exclude": ["node_modules"]
 }

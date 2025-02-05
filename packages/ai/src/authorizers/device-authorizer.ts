@@ -105,7 +105,11 @@ export class DeviceAuthorizer {
       ) {
         return async (input: I, config?: C): Promise<O> => {
           const credentials = await authorizer.authorize(options);
-          const claims = jose.decodeJwt(credentials.idToken!.value);
+          let claims = {};
+
+          if (credentials.idToken) {
+            claims = jose.decodeJwt(credentials.idToken!.value);
+          }
 
           return handler(
             { accessToken: credentials.accessToken.value, claims },

@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "type": "module",
   "scripts": {
     "start": "npx tsx src/index.ts"
   },
@@ -15,7 +14,6 @@
   "dependencies": {
     "dotenv": "^16.4.7",
     "zod": "^3.24.1",
-    "@auth0/ai": "@auth0/ai:*",
-    "@auth0/ai-genkit": "@auth0/ai-genkit:*"
+    "@auth0/ai": "@auth0/ai:*"
   }
 }
