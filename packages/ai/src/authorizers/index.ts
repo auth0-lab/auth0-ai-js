@@ -1,9 +1,12 @@
-import { CibaAuthorizerOptions } from "./ciba-authorizer";
-import { DeviceAuthorizerOptions } from "./device-authorizer";
+import * as jose from "jose";
 
-export type AuthorizerOptionsMap = {
-  "device-authorizer": DeviceAuthorizerOptions;
-  "ciba-authorizer": CibaAuthorizerOptions;
+export type AuthParams = {
+  allowed?: boolean;
+  accessToken?: string;
+  claims?: jose.JWTPayload;
 };
 
-export type AvailableAuthorizers = keyof AuthorizerOptionsMap;
+export type ToolWithAuthHandler<I, O> = (
+  authParams: AuthParams,
+  input: I
+) => Promise<O>;

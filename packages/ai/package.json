@@ -44,6 +44,7 @@
     "@openfga/sdk": "^0.8.0",
     "auth0": "^4.18.0",
     "enquirer": "^2.4.1",
+    "jose": "^5.9.6",
     "open": "^10.1.0",
     "openid-client": "^6.1.7"
   }

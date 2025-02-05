@@ -1,7 +1,11 @@
-import { ClientCheckRequest, ConsistencyPreference, CredentialsMethod, OpenFgaClient } from "@openfga/sdk";
+import {
+  ClientCheckRequest,
+  ConsistencyPreference,
+  CredentialsMethod,
+  OpenFgaClient,
+} from "@openfga/sdk";
 
-import { Authorizer } from "../authorizer";
-import { Credentials } from "../credentials";
+import { ToolWithAuthHandler } from "./";
 
 export type FGAAuthorizerParams = {
   name: string;
@@ -18,11 +22,15 @@ export type FGAAuthorizerParams = {
   };
 };
 
-export class FGAAuthorizer implements Authorizer {
+export type FGAAuthorizerOptions = {
+  buildQuery: (params: any) => Promise<ClientCheckRequest>;
+};
+
+export class FGAAuthorizer {
   name: string;
   fgaClient: OpenFgaClient;
 
-  constructor(params?: FGAAuthorizerParams) {
+  private constructor(params?: FGAAuthorizerParams) {
     this.name = params?.name || "fga";
     this.fgaClient = new OpenFgaClient({
       apiUrl:
@@ -50,20 +58,30 @@ export class FGAAuthorizer implements Authorizer {
     });
   }
 
-  async authorize(params: ClientCheckRequest): Promise<Credentials> {
-    const response = await this.fgaClient.check(params, {
+  private async authorize<I>(
+    params: FGAAuthorizerOptions,
+    toolExecutionParams?: I
+  ): Promise<boolean | undefined> {
+    const check = await params.buildQuery(toolExecutionParams);
+
+    const response = await this.fgaClient.check(check, {
       consistency: ConsistencyPreference.HigherConsistency,
     });
 
-    if (!response.allowed) {
-      throw new Error("Client is not allowed to access the resource");
-    }
+    return response.allowed;
+  }
 
-    return {
-      accessToken: {
-        type: "Bearer",
-        value: "",
-      },
+  static create(params?: FGAAuthorizerParams) {
+    const authorizer = new FGAAuthorizer(params);
+
+    return (options: FGAAuthorizerOptions) => {
+      return function fga<I, O>(handler: ToolWithAuthHandler<I, O>) {
+        return async (input: I): Promise<O> => {
+          const checkResponse = await authorizer.authorize(options, input);
+
+          return handler({ allowed: checkResponse }, input);
+        };
+      };
     };
   }
 }

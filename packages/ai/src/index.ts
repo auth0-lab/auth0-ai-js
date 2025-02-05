@@ -1,43 +1,40 @@
-import { AuthorizerOptionsMap, AvailableAuthorizers } from "./authorizers";
-import { BaseAuthorizer } from "./base-authorizer";
+import { AuthParams } from "./authorizers";
 
 export { CIBAAuthorizer } from "./authorizers/ciba-authorizer";
 export { DeviceAuthorizer } from "./authorizers/device-authorizer";
 export { FGAAuthorizer } from "./authorizers/fga-authorizer";
 export { AccessDeniedError } from "./errors/authorizationerror";
 
-export type * from "./authorizer";
-
-class AIAuthorization {
-  private authorizers = new Map<string, BaseAuthorizer>();
-
-  constructor(authorizers: BaseAuthorizer[]) {
-    authorizers.forEach((authorizer) => {
-      const name = authorizer.name;
-      if (!name) {
-        throw new Error("Authorizer must have a name.");
-      }
-      this.authorizers.set(name, authorizer);
-    });
+export const usePipeline = <I, O>(
+  authorizers: any[],
+  handler: (authParams: AuthParams, input: I) => Promise<O>
+) => {
+  if (authorizers.length === 0) {
+    throw new Error("No authorizers provided");
   }
 
-  authorizeWith = <T extends AvailableAuthorizers>(
-    options: AuthorizerOptionsMap[T] & { authorizer: T }
-  ) => {
-    return <I, O>(handler: (accessToken: string, input: I) => Promise<O>) => {
-      return async (input: I): Promise<O> => {
-        const authorizer = this.authorizers.get(options.authorizer);
-        if (!authorizer) {
-          throw new Error("Authorizer not registered.");
-        }
-        const credentials = await authorizer.authorize(options, input as any);
+  if (authorizers.length > 2) {
+    throw new Error("Only 2 authorizers are allowed");
+  }
 
-        return handler(credentials.accessToken.value, input);
-      };
-    };
+  if (authorizers[0].name !== "fga" && authorizers[1].name !== "fga") {
+    throw new Error("FGA must be one of the authorizers");
+  }
+
+  return async (input: I): Promise<O> => {
+    const fgaAuthorizer = authorizers.find((a) => a.name === "fga");
+    const authorizer = authorizers.find((a) => a.name != "fga");
+    const authorizerHandler = (authParams: AuthParams) => authParams;
+
+    const authorizerResponse: AuthParams = await authorizer(authorizerHandler)(
+      input
+    );
+    const fgaAuthorizerResponse: AuthParams = await fgaAuthorizer(
+      authorizerHandler
+    )({ ...input, userId: authorizerResponse.claims?.sub });
+
+    const authParams = { ...authorizerResponse, ...fgaAuthorizerResponse };
+
+    return handler(authParams, input);
   };
-}
-
-export const Auth0AI = (config: { authorizers: BaseAuthorizer[] }) => {
-  return new AIAuthorization(config.authorizers);
 };
