@@ -1,0 +1,20 @@
+{
+  "name": "agent-llamaindex",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "npx tsx src/index.ts"
+  },
+  "author": {
+    "name": "Auth0 Inc.",
+    "url": "https://auth0.com"
+  },
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@auth0/ai": "@auth0/ai:*",
+    "dotenv": "^16.4.7",
+    "llamaindex": "^0.8.32",
+    "zod": "^3.24.1"
+  }
+}

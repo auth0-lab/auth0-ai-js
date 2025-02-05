@@ -1,0 +1,19 @@
+{
+  "name": "agent-genkit",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "npx tsx src/index.ts"
+  },
+  "author": {
+    "name": "Auth0 Inc.",
+    "url": "https://auth0.com"
+  },
+  "license": "Apache-2.0",
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "zod": "^3.24.1",
+    "@auth0/ai": "@auth0/ai:*"
+  }
+}

@@ -1,17 +1,26 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
-    "target": "es2015",
+    "composite": false,
     "declaration": true,
-    "outDir": "./dist",
+    "declarationMap": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "inlineSources": false,
+    "isolatedModules": true,
+    "moduleResolution": "node",
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "preserveWatchOutput": true,
     "skipLibCheck": true,
-    "strict": false
+    "strict": true,
+    "types": ["@types/node", "vitest/globals"],
+    "lib": ["dom", "ES2018"],
+    "module": "ESNext",
+    "target": "ES2018",
+    "outDir": "./dist",
+    "baseUrl": "."
   },
-  "include": [
-    "src/**/*"
-  ],
-  "types":  [
-    "@types/node"
-  ],
+  "include": ["src/**/*", "test/authorizers/fga-authorizer.test.ts"],
+  "types": ["@types/node"],
   "exclude": ["node_modules"]
 }

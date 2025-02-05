@@ -1,4 +1,3 @@
-export { FSSessionStore } from "./session/fs-session-store";
 export { FGAReranker, auth0 } from "./retrievers/fga-reranker";
 
 // references:
