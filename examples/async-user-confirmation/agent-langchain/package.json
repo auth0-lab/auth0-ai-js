@@ -5,15 +5,19 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "npx tsx src/index.ts"
   },
-  "author": "",
-  "license": "ISC",
+  "author": {
+    "name": "Auth0 Inc.",
+    "url": "https://auth0.com"
+  },
+  "license": "Apache-2.0",
   "dependencies": {
+    "@auth0/ai": "@auth0/ai:*",
     "@langchain/core": "^0.3.19",
     "@langchain/langgraph": "^0.2.24",
     "@langchain/openai": "^0.3.14",
-    "http-auth-utils": "^6.0.1",
+    "dotenv": "^16.4.7",
     "zod": "^3.23.8"
   }
 }

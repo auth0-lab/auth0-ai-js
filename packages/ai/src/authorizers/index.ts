@@ -6,7 +6,8 @@ export type AuthParams = {
   claims?: jose.JWTPayload;
 };
 
-export type ToolWithAuthHandler<I, O> = (
+export type ToolWithAuthHandler<I, O, C> = (
   authParams: AuthParams,
-  input: I
+  input: I,
+  config?: C
 ) => Promise<O>;

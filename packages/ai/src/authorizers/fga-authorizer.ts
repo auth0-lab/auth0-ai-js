@@ -75,11 +75,11 @@ export class FGAAuthorizer {
     const authorizer = new FGAAuthorizer(params);
 
     return (options: FGAAuthorizerOptions) => {
-      return function fga<I, O>(handler: ToolWithAuthHandler<I, O>) {
-        return async (input: I): Promise<O> => {
+      return function fga<I, O, C>(handler: ToolWithAuthHandler<I, O, C>) {
+        return async (input: I, config?: C): Promise<O> => {
           const checkResponse = await authorizer.authorize(options, input);
 
-          return handler({ allowed: checkResponse }, input);
+          return handler({ allowed: checkResponse }, input, config);
         };
       };
     };

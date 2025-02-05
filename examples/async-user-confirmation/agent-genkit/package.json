@@ -7,10 +7,13 @@
   "scripts": {
     "start": "npx tsx src/index.ts"
   },
-  "author": "",
-  "license": "ISC",
+  "author": {
+    "name": "Auth0 Inc.",
+    "url": "https://auth0.com"
+  },
+  "license": "Apache-2.0",
   "dependencies": {
-    "http-auth-utils": "^6.0.1",
+    "dotenv": "^16.4.7",
     "zod": "^3.24.1",
     "@auth0/ai": "@auth0/ai:*",
     "@auth0/ai-genkit": "@auth0/ai-genkit:*"

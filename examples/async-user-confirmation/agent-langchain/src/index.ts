@@ -1,30 +1,28 @@
+import "dotenv/config";
+
+import { z } from "zod";
+
+import { DeviceAuthorizer } from "@auth0/ai";
 import { HumanMessage } from "@langchain/core/messages";
 import { tool } from "@langchain/core/tools";
-import { ChatOpenAI } from "@langchain/openai";
 import {
-  StateGraph,
   Annotation,
   messagesStateReducer,
-  MemorySaver,
+  StateGraph,
 } from "@langchain/langgraph";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
-import { z } from "zod";
-import { user } from "@auth0/ai/user";
-import { tokens } from "@auth0/ai/tokens";
-import { AuthorizationError } from "@auth0/ai";
-import { parseWWWAuthenticateHeader } from "http-auth-utils";
+import { ChatOpenAI } from "@langchain/openai";
+
+const deviceFlow = DeviceAuthorizer.create();
+
+const useDeviceFlow = deviceFlow({
+  scope: "openid",
+  audience: process.env["AUDIENCE"]!,
+});
 
 const buyTool = tool(
-  async ({ ticker, qty }, config) => {
+  useDeviceFlow(async ({ accessToken }, { ticker, qty }) => {
     console.log("buy stock!");
-    console.log(ticker);
-    console.log(qty);
-    console.log("---");
-    console.log(config);
-
-    const u = user();
-    console.log("Buying stock for user: ");
-    console.log(u);
 
     const headers = {
       "Content-Type": "application/json",
@@ -34,31 +32,18 @@ const buyTool = tool(
       qty: qty,
     };
 
-    const accessToken = tokens().accessToken;
     if (accessToken) {
-      headers["Authorization"] = "Bearer " + accessToken.value;
+      headers["Authorization"] = "Bearer " + accessToken;
     }
 
-    const response = await fetch("http://localhost:8081/", {
+    const response = await fetch(process.env["API_URL"]!, {
       method: "POST",
       headers: headers,
       body: JSON.stringify(body),
     });
-    if (response.status == 401) {
-      const challenge = parseWWWAuthenticateHeader(
-        response.headers.get("WWW-Authenticate")
-      );
-      console.log(challenge);
-      throw new AuthorizationError(
-        "You need authorization to buy stock",
-        "insufficient_scope",
-        { scope: challenge.data.scope }
-      );
-    }
 
-    var json = await response.json();
-    return "OK";
-  },
+    return response.statusText;
+  }),
   {
     name: "buy",
     description: "Use this function to buy stock",
@@ -113,9 +98,6 @@ const workflow = new StateGraph(StateAnnotation)
   .addConditionalEdges("agent", shouldContinue)
   .addEdge("tools", "agent");
 
-// Initialize memory to persist state between graph runs
-const checkpointer = new MemorySaver();
-
 // Finally, we compile it!
 // This compiles it into a LangChain Runnable.
 // Note that we're (optionally) passing the memory when compiling the graph
@@ -123,16 +105,19 @@ const checkpointer = new MemorySaver();
 //const app = workflow.compile({ checkpointer });
 const app = workflow.compile();
 
-export async function prompt(message) {
-  console.log("LangChain prompt:");
-  console.log(message);
+async function main() {
+  try {
+    const messages = [new HumanMessage("Buy 100 shares of ZEKO")];
 
-  const messages = [new HumanMessage(message)];
-
-  //var rv = await model.invoke(messages);
-  var rv = await app.invoke(
-    { messages: messages },
-    { configurable: { thread_id: "42" } }
-  );
-  console.log(rv.messages[rv.messages.length - 1].content);
+    //var rv = await model.invoke(messages);
+    var rv = await app.invoke(
+      { messages: messages },
+      { configurable: { thread_id: "42" } }
+    );
+    console.log(rv.messages[rv.messages.length - 1].content);
+  } catch (error) {
+    console.log("AGENT:error", error);
+  }
 }
+
+main().catch(console.error);

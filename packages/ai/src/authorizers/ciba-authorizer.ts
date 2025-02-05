@@ -113,14 +113,15 @@ export class CIBAAuthorizer {
     const authorizer = new CIBAAuthorizer(params);
 
     return (options: CibaAuthorizerOptions) => {
-      return function ciba<I, O>(handler: ToolWithAuthHandler<I, O>) {
-        return async (input: I): Promise<O> => {
+      return function ciba<I, O, C>(handler: ToolWithAuthHandler<I, O, C>) {
+        return async (input: I, config?: C): Promise<O> => {
           const credentials = await authorizer.authorize(options, input);
           const claims = jose.decodeJwt(credentials.idToken!.value);
 
           return handler(
             { accessToken: credentials.accessToken.value, claims },
-            input
+            input,
+            config
           );
         };
       };
