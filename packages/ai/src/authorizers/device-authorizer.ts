@@ -114,7 +114,7 @@ export class DeviceAuthorizer {
     return { accessToken: credentials.accessToken.value, claims } as AuthParams;
   }
 
-  static create(params?: AuthorizerParams) {
+  static create(params?: AuthorizerParams): DeviceFlowInstance {
     const authorizer = new DeviceAuthorizer(params);
 
     return (options: DeviceAuthorizerOptions) => {
@@ -148,3 +148,10 @@ export class DeviceAuthorizer {
     };
   }
 }
+
+export type DeviceFlowInstance = (
+  options: DeviceAuthorizerOptions
+) => <I, O, C>(
+  handler: ToolWithAuthHandler<I, O, C>,
+  onError?: (error: Error) => Promise<O>
+) => (input: I, config?: C) => Promise<O>;

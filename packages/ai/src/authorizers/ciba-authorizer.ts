@@ -146,7 +146,7 @@ export class CIBAAuthorizer {
     return { accessToken: credentials.accessToken.value, claims } as AuthParams;
   }
 
-  static create(params?: AuthorizerParams) {
+  static create(params?: AuthorizerParams): CibaInstance {
     const authorizer = new CIBAAuthorizer(params);
 
     return (options: CibaAuthorizerOptions) => {
@@ -180,3 +180,10 @@ export class CIBAAuthorizer {
     };
   }
 }
+
+export type CibaInstance = (
+  options: CibaAuthorizerOptions
+) => <I, O, C>(
+  handler: ToolWithAuthHandler<I, O, C>,
+  onError?: (error: Error) => Promise<O>
+) => (input: I, config?: C) => Promise<O>;

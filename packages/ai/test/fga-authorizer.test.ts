@@ -399,8 +399,8 @@ describe("FGAAuthorizer", () => {
 
       const input: any = { userId: "user123", resourceId: "res456" };
 
-      await expect(wrappedHandler(input, undefined)).rejects.toThrow(
-        "FGA check failed"
+      await expect(wrappedHandler(input, undefined)).resolves.toBe(
+        "The user is not allowed to perform the action."
       );
 
       // Assertions

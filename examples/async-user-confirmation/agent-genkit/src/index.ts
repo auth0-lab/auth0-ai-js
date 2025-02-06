@@ -1,76 +1,24 @@
 import "dotenv/config";
 
-import { genkit, z } from "genkit";
+import Enquirer from "enquirer";
+import { genkit } from "genkit";
 import { gpt4o, openAI } from "genkitx-openai";
 
-import { AccessDeniedError, CIBAAuthorizer, DeviceAuthorizer } from "@auth0/ai";
+import { DeviceAuthorizer } from "@auth0/ai";
 
-type MyContext = { userId: string };
+import { Context } from "./context";
+import { buyTool } from "./tools/buy";
 
 const ai = genkit({
   plugins: [openAI({ apiKey: process.env.OPENAI_API_KEY })],
   model: gpt4o,
 });
 
-const ciba = CIBAAuthorizer.create();
-
-const useCiba = ciba({
-  userId: async () => {
-    const data = ai.currentSession<MyContext>();
-    return data.state?.userId!;
-  },
-  binding_message: async ({ ticker, qty }) =>
-    `Do you want to buy ${qty} shares of ${ticker}`,
-  scope: "openid buy:stocks",
-  audience: process.env["AUDIENCE"]!,
-});
-
-const buy = ai.defineTool(
-  {
-    name: "buy",
-    description: "Use this function to buy stock",
-    inputSchema: z.object({
-      ticker: z.string(),
-      qty: z.number(),
-    }),
-    outputSchema: z.string(),
-  },
-  useCiba(
-    async ({ accessToken }, { ticker, qty }) => {
-      const headers = {
-        Authorization: "",
-        "Content-Type": "application/json",
-      };
-      const body = {
-        ticker: ticker,
-        qty: qty,
-      };
-
-      if (accessToken) {
-        headers["Authorization"] = "Bearer " + accessToken;
-      }
-
-      const response = await fetch(process.env["API_URL"]!, {
-        method: "POST",
-        headers: headers,
-        body: JSON.stringify(body),
-      });
-
-      return response.statusText;
-    },
-    async (error: Error) => {
-      if (error instanceof AccessDeniedError) {
-        return "The user has denied the request";
-      }
-
-      return "Oops! Something went wrong.";
-    }
-  )
-);
-
 async function main() {
   try {
-    const response = await DeviceAuthorizer.authorize(
+    console.log(`<Enter a command (type "exit" to quit)>\n\n`);
+
+    const authResponse = await DeviceAuthorizer.authorize(
       {
         scope: "openid",
       },
@@ -78,18 +26,34 @@ async function main() {
         clientId: process.env["AUTH0_PUBLIC_CLIENT_ID"]!,
       }
     );
-    const session = ai.createSession<MyContext>({
+    const session = ai.createSession<Context>({
       initialState: {
-        userId: response.claims?.sub!,
+        userId: authResponse.claims?.sub!,
       },
     });
-    const chat = session.chat();
-    const { text } = await chat.send({
-      prompt: "Buy 100 shares of ZEKO",
-      tools: [buy],
-    });
 
-    console.log(text);
+    const chat = session.chat({ tools: [buyTool(ai)] });
+    const enquirer = new Enquirer<{ message: string }>();
+
+    while (true) {
+      const { message } = await enquirer.prompt({
+        type: "text",
+        name: "message",
+        message: "    ",
+        prefix: "User",
+      });
+
+      if (message.toLowerCase() === "exit") {
+        console.log("Goodbye!");
+        break;
+      }
+
+      const { text } = await chat.send({
+        prompt: message,
+      });
+
+      console.log(`Assistant · ${text}\n`);
+    }
   } catch (error) {
     console.log("AGENT:error", error);
   }

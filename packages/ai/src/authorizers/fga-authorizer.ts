@@ -81,7 +81,7 @@ export class FGAAuthorizer {
     return { allowed: checkResponse } as AuthParams;
   }
 
-  static create(params?: FGAAuthorizerParams) {
+  static create(params?: FGAAuthorizerParams): FGAInstance {
     const authorizer = new FGAAuthorizer(params);
 
     return (options: FGAAuthorizerOptions) => {
@@ -106,3 +106,10 @@ export class FGAAuthorizer {
     };
   }
 }
+
+export type FGAInstance = (
+  options: FGAAuthorizerOptions
+) => <I, O, C>(
+  handler: ToolWithAuthHandler<I, O, C>,
+  onError?: (error: Error) => Promise<O>
+) => (input: I, config?: C) => Promise<O>;

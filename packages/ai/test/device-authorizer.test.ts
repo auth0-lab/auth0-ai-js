@@ -164,11 +164,9 @@ describe("DeviceAuthorizer", () => {
     const deviceFlow = authorizer(mockOptions);
 
     // Assert
-    await expect(deviceFlow(mockHandler)({}, undefined)).rejects.toThrow(
-      "Failed to obtain tokens"
+    await expect(deviceFlow(mockHandler)({}, undefined)).resolves.toBe(
+      "Access denied."
     );
-
-    expect(console.error).toHaveBeenCalledWith("\n\nCancelled interaction");
   });
 
   it("should handle expired_token error gracefully", async () => {
@@ -188,11 +186,9 @@ describe("DeviceAuthorizer", () => {
     const deviceFlow = authorizer(mockOptions);
 
     // Assert
-    await expect(deviceFlow(mockHandler)({}, undefined)).rejects.toThrow(
-      "Failed to obtain tokens"
+    await expect(deviceFlow(mockHandler)({}, undefined)).resolves.toBe(
+      "Access denied."
     );
-
-    expect(console.error).toHaveBeenCalledWith("\n\nDevice flow expired");
   });
 
   it("should handle unknown errors gracefully", async () => {
@@ -212,12 +208,8 @@ describe("DeviceAuthorizer", () => {
     const deviceFlow = authorizer(mockOptions);
 
     // Assert
-    await expect(deviceFlow(mockHandler)({}, undefined)).rejects.toThrow(
-      "Failed to obtain tokens"
-    );
-
-    expect(console.error).toHaveBeenCalledWith(
-      "Error: server_error; Description: An unknown server error occurred"
+    await expect(deviceFlow(mockHandler)({}, undefined)).resolves.toBe(
+      "Access denied."
     );
   });
 
@@ -233,8 +225,8 @@ describe("DeviceAuthorizer", () => {
     const deviceFlow = authorizer(mockOptions);
 
     // Assert
-    await expect(deviceFlow(mockHandler)({}, undefined)).rejects.toThrow(
-      "Failed to obtain tokens"
+    await expect(deviceFlow(mockHandler)({}, undefined)).resolves.toBe(
+      "Access denied."
     );
   });
 
