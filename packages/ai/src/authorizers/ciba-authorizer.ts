@@ -1,4 +1,4 @@
-import { AuthenticationClient, AuthenticationClientOptions } from "auth0";
+import { AuthenticationClient } from "auth0";
 import { AuthorizeResponse } from "auth0/dist/cjs/auth/backchannel";
 import * as jose from "jose";
 
@@ -8,7 +8,7 @@ import {
   AuthorizationRequestExpiredError,
   UserDoesNotHavePushNotificationsError,
 } from "../errors";
-import { AuthParams, ToolWithAuthHandler } from "./";
+import { AuthorizerParams, AuthParams, ToolWithAuthHandler } from "./";
 
 type StringOrFn = (params: any) => Promise<string>;
 
@@ -30,7 +30,7 @@ export type CibaAuthorizerOptions = {
 export class CIBAAuthorizer {
   auth0: AuthenticationClient;
 
-  private constructor(params?: AuthenticationClientOptions) {
+  private constructor(params?: AuthorizerParams) {
     this.auth0 = new AuthenticationClient({
       domain: params?.domain || process.env.AUTH0_DOMAIN!,
       clientId: params?.clientId || process.env.AUTH0_CLIENT_ID!,
@@ -43,7 +43,7 @@ export class CIBAAuthorizer {
     });
   }
 
-  private async authorize<I>(
+  private async _authorize<I>(
     params: CibaAuthorizerOptions,
     toolExecutionParams?: I
   ): Promise<Credentials> {
@@ -130,12 +130,12 @@ export class CIBAAuthorizer {
     });
   }
 
-  static async start(
+  static async authorize(
     options: CibaAuthorizerOptions,
-    params?: AuthenticationClientOptions
+    params?: AuthorizerParams
   ) {
     const authorizer = new CIBAAuthorizer(params);
-    const credentials = await authorizer.authorize(options);
+    const credentials = await authorizer._authorize(options);
 
     let claims = {};
 
@@ -146,7 +146,7 @@ export class CIBAAuthorizer {
     return { accessToken: credentials.accessToken.value, claims } as AuthParams;
   }
 
-  static create(params?: AuthenticationClientOptions) {
+  static create(params?: AuthorizerParams) {
     const authorizer = new CIBAAuthorizer(params);
 
     return (options: CibaAuthorizerOptions) => {
@@ -156,7 +156,7 @@ export class CIBAAuthorizer {
       ) {
         return async (input: I, config?: C): Promise<O> => {
           try {
-            const credentials = await authorizer.authorize(options, input);
+            const credentials = await authorizer._authorize(options, input);
             let claims = {};
 
             if (credentials.idToken) {
@@ -173,7 +173,7 @@ export class CIBAAuthorizer {
               return onError(e);
             }
 
-            return "Access denied. Please try again later" as O;
+            return "Access denied." as O;
           }
         };
       };

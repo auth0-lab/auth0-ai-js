@@ -1,4 +1,3 @@
-import { AuthenticationClientOptions } from "auth0";
 import Enquirer from "enquirer";
 import * as jose from "jose";
 import open from "open";
@@ -9,9 +8,13 @@ import {
   TokenEndpointResponse,
   TokenEndpointResponseHelpers,
 } from "openid-client";
+import {
+  AccessDeniedError,
+  AuthorizationRequestExpiredError,
+} from "src/errors";
 
 import { Credentials } from "../credentials";
-import { AuthParams, ToolWithAuthHandler } from "./";
+import { AuthorizerParams, AuthParams, ToolWithAuthHandler } from "./";
 
 export type DeviceAuthorizerOptions = {
   scope: string;
@@ -22,12 +25,12 @@ export class DeviceAuthorizer {
   domain: string;
   clientId: string;
 
-  private constructor(params?: AuthenticationClientOptions) {
+  private constructor(params?: AuthorizerParams) {
     this.domain = params?.domain || process.env.AUTH0_DOMAIN!;
     this.clientId = params?.clientId || process.env.AUTH0_CLIENT_ID!;
   }
 
-  private async authorize(
+  private async _authorize(
     params: DeviceAuthorizerOptions
   ): Promise<Credentials> {
     const config = await discovery(
@@ -62,13 +65,13 @@ export class DeviceAuthorizer {
     } catch (err: any) {
       switch (err.error) {
         case "access_denied":
-          console.error("\n\nCancelled interaction");
-          break;
+          throw new AccessDeniedError(err.error_description);
         case "expired_token":
-          console.error("\n\nDevice flow expired");
-          break;
+          throw new AuthorizationRequestExpiredError(
+            "Authorization request has expired"
+          );
         default:
-          console.error(
+          throw new Error(
             `Error: ${err.error}; Description: ${err.error_description}`
           );
       }
@@ -95,12 +98,12 @@ export class DeviceAuthorizer {
     return credentials;
   }
 
-  static async start(
+  static async authorize(
     options: DeviceAuthorizerOptions,
-    params?: AuthenticationClientOptions
+    params?: AuthorizerParams
   ) {
     const authorizer = new DeviceAuthorizer(params);
-    const credentials = await authorizer.authorize(options);
+    const credentials = await authorizer._authorize(options);
 
     let claims = {};
 
@@ -111,26 +114,35 @@ export class DeviceAuthorizer {
     return { accessToken: credentials.accessToken.value, claims } as AuthParams;
   }
 
-  static create(params?: AuthenticationClientOptions) {
+  static create(params?: AuthorizerParams) {
     const authorizer = new DeviceAuthorizer(params);
 
     return (options: DeviceAuthorizerOptions) => {
       return function deviceFlow<I, O, C>(
-        handler: ToolWithAuthHandler<I, O, C>
+        handler: ToolWithAuthHandler<I, O, C>,
+        onError?: (error: Error) => Promise<O>
       ) {
         return async (input: I, config?: C): Promise<O> => {
-          const credentials = await authorizer.authorize(options);
-          let claims = {};
+          try {
+            const credentials = await authorizer._authorize(options);
+            let claims = {};
 
-          if (credentials.idToken) {
-            claims = jose.decodeJwt(credentials.idToken!.value);
+            if (credentials.idToken) {
+              claims = jose.decodeJwt(credentials.idToken!.value);
+            }
+
+            return handler(
+              { accessToken: credentials.accessToken.value, claims },
+              input,
+              config
+            );
+          } catch (e: any) {
+            if (typeof onError === "function") {
+              return onError(e);
+            }
+
+            return "Access denied." as O;
           }
-
-          return handler(
-            { accessToken: credentials.accessToken.value, claims },
-            input,
-            config
-          );
         };
       };
     };

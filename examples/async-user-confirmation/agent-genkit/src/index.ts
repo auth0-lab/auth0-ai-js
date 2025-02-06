@@ -59,7 +59,6 @@ const buy = ai.defineTool(
       return response.statusText;
     },
     async (error: Error) => {
-      console.log(error);
       if (error instanceof AccessDeniedError) {
         return "The user has denied the request";
       }
@@ -71,10 +70,11 @@ const buy = ai.defineTool(
 
 async function main() {
   try {
-    const response = await DeviceAuthorizer.start(
-      { scope: "openid" },
+    const response = await DeviceAuthorizer.authorize(
       {
-        domain: process.env["AUTH0_DOMAIN"]!,
+        scope: "openid",
+      },
+      {
         clientId: process.env["AUTH0_PUBLIC_CLIENT_ID"]!,
       }
     );

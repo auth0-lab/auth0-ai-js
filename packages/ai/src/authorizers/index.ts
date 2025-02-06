@@ -1,3 +1,4 @@
+import { AuthenticationClientOptions } from "auth0";
 import * as jose from "jose";
 
 export type AuthParams = {
@@ -11,3 +12,11 @@ export type ToolWithAuthHandler<I, O, C> = (
   input: I,
   config?: C
 ) => Promise<O>;
+
+export type AuthorizerParams = Omit<
+  AuthenticationClientOptions,
+  "domain" | "clientId"
+> & {
+  domain?: string;
+  clientId?: string;
+};
