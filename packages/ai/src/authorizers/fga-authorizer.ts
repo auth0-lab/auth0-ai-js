@@ -5,7 +5,7 @@ import {
   OpenFgaClient,
 } from "@openfga/sdk";
 
-import { ToolWithAuthHandler } from "./";
+import { AuthParams, ToolWithAuthHandler } from "./";
 
 export type FGAAuthorizerParams = {
   name: string;
@@ -58,11 +58,11 @@ export class FGAAuthorizer {
     });
   }
 
-  private async authorize<I>(
+  private async _authorize<I>(
     params: FGAAuthorizerOptions,
-    toolExecutionParams?: I
+    toolContext?: I
   ): Promise<boolean | undefined> {
-    const check = await params.buildQuery(toolExecutionParams);
+    const check = await params.buildQuery(toolContext);
 
     const response = await this.fgaClient.check(check, {
       consistency: ConsistencyPreference.HigherConsistency,
@@ -71,17 +71,48 @@ export class FGAAuthorizer {
     return response.allowed;
   }
 
-  static create(params?: FGAAuthorizerParams) {
+  static async authorize(
+    options: FGAAuthorizerOptions,
+    params?: FGAAuthorizerParams
+  ) {
+    const authorizer = new FGAAuthorizer(params);
+    const checkResponse = await authorizer._authorize(options);
+
+    return { allowed: checkResponse } as AuthParams;
+  }
+
+  static create(params?: FGAAuthorizerParams): FGAInstance {
     const authorizer = new FGAAuthorizer(params);
 
     return (options: FGAAuthorizerOptions) => {
-      return function fga<I, O, C>(handler: ToolWithAuthHandler<I, O, C>) {
+      return function fga<I, O, C>(
+        handler: ToolWithAuthHandler<I, O, C>,
+        onError?: (error: Error) => Promise<O>
+      ) {
         return async (input: I, config?: C): Promise<O> => {
-          const checkResponse = await authorizer.authorize(options, input);
+          try {
+            const checkResponse = await authorizer._authorize(options, {
+              ...input,
+              ...config,
+            });
 
-          return handler({ allowed: checkResponse }, input, config);
+            return handler({ allowed: checkResponse }, input, config);
+          } catch (e: any) {
+            if (typeof onError === "function") {
+              return onError(e);
+            }
+
+            return "The user is not allowed to perform the action." as O;
+          }
         };
       };
     };
   }
 }
+
+export type FGAInstance = (
+  options: FGAAuthorizerOptions
+) => <I, O, C>(
+  handler: ToolWithAuthHandler<I, O, C>,
+  onError?: (error: Error) => Promise<O>
+) => (input: I, config?: C) => Promise<O>;

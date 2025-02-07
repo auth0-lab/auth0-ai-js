@@ -1,10 +1,14 @@
-import { AuthenticationClient, AuthenticationClientOptions } from "auth0";
+import { AuthenticationClient } from "auth0";
 import { AuthorizeResponse } from "auth0/dist/cjs/auth/backchannel";
 import * as jose from "jose";
 
 import { Credentials } from "../credentials";
-import { AccessDeniedError } from "../errors/authorizationerror";
-import { ToolWithAuthHandler } from "./";
+import {
+  AccessDeniedError,
+  AuthorizationRequestExpiredError,
+  UserDoesNotHavePushNotificationsError,
+} from "../errors";
+import { AuthorizerParams, AuthParams, ToolWithAuthHandler } from "./";
 
 type StringOrFn = (params: any) => Promise<string>;
 
@@ -26,7 +30,7 @@ export type CibaAuthorizerOptions = {
 export class CIBAAuthorizer {
   auth0: AuthenticationClient;
 
-  private constructor(params?: AuthenticationClientOptions) {
+  private constructor(params?: AuthorizerParams) {
     this.auth0 = new AuthenticationClient({
       domain: params?.domain || process.env.AUTH0_DOMAIN!,
       clientId: params?.clientId || process.env.AUTH0_CLIENT_ID!,
@@ -39,9 +43,9 @@ export class CIBAAuthorizer {
     });
   }
 
-  private async authorize<I>(
+  private async _authorize<I>(
     params: CibaAuthorizerOptions,
-    toolExecutionParams?: I
+    toolContext?: I
   ): Promise<Credentials> {
     const authorizeParams = {
       scope: params.scope,
@@ -54,7 +58,7 @@ export class CIBAAuthorizer {
 
     if (typeof params.binding_message === "function") {
       authorizeParams.binding_message = await params.binding_message(
-        toolExecutionParams as I
+        toolContext as I
       );
     }
 
@@ -63,7 +67,7 @@ export class CIBAAuthorizer {
     }
 
     if (typeof params.userId === "function") {
-      authorizeParams.userId = await params.userId(toolExecutionParams as I);
+      authorizeParams.userId = await params.userId(toolContext as I);
     }
 
     if (typeof params.userId === "string") {
@@ -77,14 +81,23 @@ export class CIBAAuthorizer {
 
   private async poll(params: AuthorizeResponse): Promise<Credentials> {
     return new Promise((resolve, reject) => {
+      const startTime = Date.now();
       const interval = setInterval(async () => {
         try {
+          const elapsedSeconds = (Date.now() - startTime) / 1000;
+
+          if (elapsedSeconds >= params.expires_in) {
+            clearInterval(interval);
+            return reject(
+              new AuthorizationRequestExpiredError(
+                "Authorization request has expired"
+              )
+            );
+          }
+
           const response = await this.auth0.backchannel.backchannelGrant({
             auth_req_id: params.auth_req_id,
           });
-
-          // TODO: Handle expiration
-          // params.expires_in
 
           const credentials = {
             accessToken: {
@@ -97,38 +110,83 @@ export class CIBAAuthorizer {
 
           return resolve(credentials);
         } catch (e: any) {
-          if (e.error == "authorization_pending") {
-            return;
+          if (e.error == "invalid_request") {
+            clearInterval(interval);
+            return reject(
+              new UserDoesNotHavePushNotificationsError(e.error_description)
+            );
           }
+
           if (e.error == "access_denied") {
             clearInterval(interval);
-            return reject(new AccessDeniedError(e.error_description, e.error));
+            return reject(new AccessDeniedError(e.error_description));
+          }
+
+          if (e.error == "authorization_pending") {
+            return;
           }
         }
       }, params.interval * 1000);
     });
   }
 
-  static create(params?: AuthenticationClientOptions) {
+  static async authorize(
+    options: CibaAuthorizerOptions,
+    params?: AuthorizerParams
+  ) {
+    const authorizer = new CIBAAuthorizer(params);
+    const credentials = await authorizer._authorize(options);
+
+    let claims = {};
+
+    if (credentials.idToken) {
+      claims = jose.decodeJwt(credentials.idToken!.value);
+    }
+
+    return { accessToken: credentials.accessToken.value, claims } as AuthParams;
+  }
+
+  static create(params?: AuthorizerParams): CibaInstance {
     const authorizer = new CIBAAuthorizer(params);
 
     return (options: CibaAuthorizerOptions) => {
-      return function ciba<I, O, C>(handler: ToolWithAuthHandler<I, O, C>) {
+      return function ciba<I, O, C>(
+        handler: ToolWithAuthHandler<I, O, C>,
+        onError?: (error: Error) => Promise<O>
+      ) {
         return async (input: I, config?: C): Promise<O> => {
-          const credentials = await authorizer.authorize(options, input);
-          let claims = {};
+          try {
+            const credentials = await authorizer._authorize(options, {
+              ...input,
+              ...config,
+            });
+            let claims = {};
 
-          if (credentials.idToken) {
-            claims = jose.decodeJwt(credentials.idToken!.value);
+            if (credentials.idToken) {
+              claims = jose.decodeJwt(credentials.idToken!.value);
+            }
+
+            return handler(
+              { accessToken: credentials.accessToken.value, claims },
+              input,
+              config
+            );
+          } catch (e: any) {
+            if (typeof onError === "function") {
+              return onError(e);
+            }
+
+            return "Access denied." as O;
           }
-
-          return handler(
-            { accessToken: credentials.accessToken.value, claims },
-            input,
-            config
-          );
         };
       };
     };
   }
 }
+
+export type CibaInstance = (
+  options: CibaAuthorizerOptions
+) => <I, O, C>(
+  handler: ToolWithAuthHandler<I, O, C>,
+  onError?: (error: Error) => Promise<O>
+) => (input: I, config?: C) => Promise<O>;

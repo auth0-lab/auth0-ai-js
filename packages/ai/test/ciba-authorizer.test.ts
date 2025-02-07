@@ -5,7 +5,6 @@ import {
   CIBAAuthorizer,
   CibaAuthorizerOptions,
 } from "../src/authorizers/ciba-authorizer";
-import { AccessDeniedError } from "../src/errors/authorizationerror";
 
 vi.mock("auth0");
 
@@ -87,7 +86,7 @@ describe("CIBAAuthorizer", () => {
 
     const cibaHandler = authorizer(options)(handler);
 
-    await expect(cibaHandler({})).rejects.toThrow(AccessDeniedError);
+    await expect(cibaHandler({})).resolves.toBe("Access denied.");
   });
 
   it("should call authorize with function parameters", async () => {
