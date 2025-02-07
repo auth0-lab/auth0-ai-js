@@ -17,23 +17,34 @@ export const usePipeline = <I, O>(
     throw new Error("Only 2 authorizers are allowed");
   }
 
-  if (authorizers[0].name !== "fga" && authorizers[1].name !== "fga") {
-    throw new Error("FGA must be one of the authorizers");
+  if (
+    authorizers[0].name !== "fga" &&
+    authorizers[1].name !== "fga" &&
+    authorizers[0].name !== "ciba" &&
+    authorizers[1].name !== "ciba"
+  ) {
+    throw new Error("FGA or CIBA must be one of the authorizers");
   }
 
   return async (input: I): Promise<O> => {
     const fgaAuthorizer = authorizers.find((a) => a.name === "fga");
-    const authorizer = authorizers.find((a) => a.name != "fga");
+    const cibaAuthorizer = authorizers.find((a) => a.name === "ciba");
+    const authorizer = authorizers.find(
+      (a) => a.name != "fga" && a.name != "ciba"
+    );
     const authorizerHandler = (authParams: AuthParams) => authParams;
-
     const authorizerResponse: AuthParams = await authorizer(authorizerHandler)(
       input
     );
-    const fgaAuthorizerResponse: AuthParams = await fgaAuthorizer(
-      authorizerHandler
-    )({ ...input, userId: authorizerResponse.claims?.sub });
 
-    const authParams = { ...authorizerResponse, ...fgaAuthorizerResponse };
+    const secondAuthorizer = cibaAuthorizer || fgaAuthorizer;
+
+    const response: AuthParams = await secondAuthorizer(authorizerHandler)({
+      ...input,
+      userId: authorizerResponse.claims?.sub,
+    });
+
+    const authParams = { ...authorizerResponse, ...response };
 
     return handler(authParams, input);
   };

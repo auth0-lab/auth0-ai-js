@@ -413,7 +413,7 @@ describe("FGAAuthorizer", () => {
       expect(handler).not.toHaveBeenCalled();
     });
 
-    it("should handle undefined toolExecutionParams gracefully", async () => {
+    it("should handle undefined toolContext gracefully", async () => {
       const params: FGAAuthorizerParams = {
         name: "test_fga",
         storeId: "test_store_id",
@@ -441,7 +441,7 @@ describe("FGAAuthorizer", () => {
       const result = await wrappedHandler(undefined as any, undefined);
 
       // Assertions
-      expect(buildQueryMock).toHaveBeenCalledWith(undefined);
+      expect(buildQueryMock).toHaveBeenCalledWith({});
       expect(OpenFgaClient).toHaveBeenCalled();
       expect(mockCheck).toHaveBeenCalledWith(
         { user: "user", relation: "relation", object: "object" },

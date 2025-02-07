@@ -60,9 +60,9 @@ export class FGAAuthorizer {
 
   private async _authorize<I>(
     params: FGAAuthorizerOptions,
-    toolExecutionParams?: I
+    toolContext?: I
   ): Promise<boolean | undefined> {
-    const check = await params.buildQuery(toolExecutionParams);
+    const check = await params.buildQuery(toolContext);
 
     const response = await this.fgaClient.check(check, {
       consistency: ConsistencyPreference.HigherConsistency,
@@ -91,7 +91,10 @@ export class FGAAuthorizer {
       ) {
         return async (input: I, config?: C): Promise<O> => {
           try {
-            const checkResponse = await authorizer._authorize(options, input);
+            const checkResponse = await authorizer._authorize(options, {
+              ...input,
+              ...config,
+            });
 
             return handler({ allowed: checkResponse }, input, config);
           } catch (e: any) {

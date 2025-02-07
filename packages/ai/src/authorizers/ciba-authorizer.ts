@@ -45,7 +45,7 @@ export class CIBAAuthorizer {
 
   private async _authorize<I>(
     params: CibaAuthorizerOptions,
-    toolExecutionParams?: I
+    toolContext?: I
   ): Promise<Credentials> {
     const authorizeParams = {
       scope: params.scope,
@@ -58,7 +58,7 @@ export class CIBAAuthorizer {
 
     if (typeof params.binding_message === "function") {
       authorizeParams.binding_message = await params.binding_message(
-        toolExecutionParams as I
+        toolContext as I
       );
     }
 
@@ -67,7 +67,7 @@ export class CIBAAuthorizer {
     }
 
     if (typeof params.userId === "function") {
-      authorizeParams.userId = await params.userId(toolExecutionParams as I);
+      authorizeParams.userId = await params.userId(toolContext as I);
     }
 
     if (typeof params.userId === "string") {
@@ -156,7 +156,10 @@ export class CIBAAuthorizer {
       ) {
         return async (input: I, config?: C): Promise<O> => {
           try {
-            const credentials = await authorizer._authorize(options, input);
+            const credentials = await authorizer._authorize(options, {
+              ...input,
+              ...config,
+            });
             let claims = {};
 
             if (credentials.idToken) {
