@@ -30,7 +30,7 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "llamaindex": "^0.8.31"
+    "llamaindex": "^0.8.34"
   },
   "peerDependencies": {
     "@openfga/sdk": "^0.8.0"
