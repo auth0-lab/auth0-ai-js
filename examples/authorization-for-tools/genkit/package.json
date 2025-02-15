@@ -1,0 +1,23 @@
+{
+  "name": "@auth0-ai-js/examples-authorization-for-tools-genkit",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "npx tsx src/index.ts --no-color",
+    "fga:init": "npx tsx ./scripts/fga-init.ts"
+  },
+  "author": {
+    "name": "Auth0 Inc.",
+    "url": "https://auth0.com"
+  },
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@auth0/ai": "@auth0/ai:*",
+    "@openfga/sdk": "^0.8.0",
+    "dotenv": "^16.4.7",
+    "enquirer": "^2.4.1",
+    "genkit": "^0.9.12",
+    "zod": "^3.24.1"
+  }
+}
