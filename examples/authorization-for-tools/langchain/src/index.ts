@@ -9,7 +9,9 @@ import {
 } from "@langchain/core/messages";
 import {
   Annotation,
+  END,
   messagesStateReducer,
+  START,
   StateGraph,
 } from "@langchain/langgraph";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
@@ -30,7 +32,7 @@ function shouldContinue(state) {
     return "tools";
   }
 
-  return "__end__";
+  return END;
 }
 
 async function callModel(state: { messages: BaseMessage[] }) {
@@ -49,7 +51,7 @@ const StateAnnotation = Annotation.Root({
 const workflow = new StateGraph(StateAnnotation)
   .addNode("agent", callModel)
   .addNode("tools", toolNode)
-  .addEdge("__start__", "agent")
+  .addEdge(START, "agent")
   .addConditionalEdges("agent", shouldContinue)
   .addEdge("tools", "agent");
 
