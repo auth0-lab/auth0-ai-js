@@ -6,14 +6,12 @@ import { tool } from "@langchain/core/tools";
 const fga = FGAAuthorizer.create();
 
 const useFGA = fga({
-  buildQuery: async (params) => {
-    return {
-      user: `user:${params.configurable.userId}`,
-      object: `asset:${params.ticker}`,
-      relation: "can_buy",
-      context: { current_time: new Date().toISOString() },
-    };
-  },
+  buildQuery: async (params) => ({
+    user: `user:${params.configurable.userId}`,
+    object: `asset:${params.ticker}`,
+    relation: "can_buy",
+    context: { current_time: new Date().toISOString() },
+  }),
 });
 
 export const buyTool = tool(

@@ -18,6 +18,9 @@ OPENAI_API_KEY="<openai-api-key>"
 FGA_STORE_ID="<fga-store-id>"
 FGA_CLIENT_ID="<fga-client-id>"
 FGA_CLIENT_SECRET="<fga-client-secret>"
+
+# Langchain
+LANGGRAPH_API_URL="http://localhost:54367"
 ```
 
 ### How to run it
@@ -28,7 +31,13 @@ FGA_CLIENT_SECRET="<fga-client-secret>"
    $ npm install
    ```
 
-2. Running the example
+2. Running Langraph
+
+   ```sh
+   npm run langgraph:up
+   ```
+
+3. Running the example
    ```sh
    npm start
    ```
