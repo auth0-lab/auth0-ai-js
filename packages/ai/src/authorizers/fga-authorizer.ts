@@ -1,9 +1,4 @@
-import {
-  ClientCheckRequest,
-  ConsistencyPreference,
-  CredentialsMethod,
-  OpenFgaClient,
-} from "@openfga/sdk";
+import { ClientCheckRequest, ConsistencyPreference, CredentialsMethod, OpenFgaClient } from "@openfga/sdk";
 
 import { AuthParams, ToolWithAuthHandler } from "./";
 
@@ -63,7 +58,6 @@ export class FGAAuthorizer {
     toolContext?: I
   ): Promise<boolean | undefined> {
     const check = await params.buildQuery(toolContext);
-
     const response = await this.fgaClient.check(check, {
       consistency: ConsistencyPreference.HigherConsistency,
     });
