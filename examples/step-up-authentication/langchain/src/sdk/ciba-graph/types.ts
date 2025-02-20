@@ -12,7 +12,7 @@ export interface State {
 export type SchedulerParams = {
   userId: string;
   threadId: string;
-  onResumeCall: string;
+  onResumeInvoke: string;
   cibaGraphId: string;
   cibaResponse: {
     auth_req_id: string;
@@ -40,7 +40,7 @@ export interface ICIBAGraph<N extends string = string> {
 
 export type CIBAGraphOptions<N extends string> = {
   ciba?: Omit<CIBAOptions<N>, "binding_message"> & {
-    onResumeCall: string;
+    onResumeInvoke: string;
     scheduler: string | ((config: SchedulerParams) => Promise<void>);
   };
 };

@@ -8,11 +8,12 @@ import {
   START,
   StateGraph,
 } from "@langchain/langgraph";
-import { AIMessage, Client } from "@langchain/langgraph-sdk";
+import { AIMessage } from "@langchain/langgraph-sdk";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
 import { ChatOpenAI } from "@langchain/openai";
 
 import { Auth0AI, Auth0State } from "../sdk";
+import { SchedulerClient } from "../services/client";
 import { buyTool, weatherTool } from "./tools";
 
 const model = new ChatOpenAI({
@@ -52,24 +53,10 @@ const a0 = new Auth0AI({
   ciba: {
     onApproveGoTo: "tools",
     onRejectGoTo: "callLLM",
-
-    onResumeCall: "agent",
+    onResumeInvoke: "agent",
     scheduler: async (config) => {
       // Custom scheduler
-      const client = new Client({
-        apiUrl: "http://localhost:5555",
-      });
-
-      await client.crons.create(config.cibaGraphId, {
-        // node-cron format
-        schedule: "*/5 * * * * *",
-        input: {
-          user_id: config.userId,
-          thread_id: config.threadId,
-          auth_req_id: config.cibaResponse.auth_req_id,
-          agent_to_resume: config.onResumeCall,
-        },
-      });
+      await SchedulerClient().schedule(config);
     },
   },
 });

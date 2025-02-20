@@ -4,14 +4,20 @@ import { Client } from "@langchain/langgraph-sdk";
 
 import { Auth0Graphs } from "./types";
 
+type CibaResponse = {
+  auth_req_id: string;
+  expires_in: number;
+  interval: number;
+};
+
 const CibaPollerAnnotation = Annotation.Root({
-  auth_req_id: Annotation<string>(),
-  agent_to_resume: Annotation<string>(),
-  thread_id: Annotation<string>(),
-  user_id: Annotation<string>(),
+  cibaResponse: Annotation<CibaResponse>(),
+  onResumeInvoke: Annotation<string>(),
+  threadId: Annotation<string>(),
+  userId: Annotation<string>(),
 
   // Internal
-  task_id: Annotation<string>(),
+  taskId: Annotation<string>(),
   status: Annotation<string>(),
 });
 
@@ -25,7 +31,7 @@ export function CibaPollerGraph(params: CibaPollerParams) {
   async function checkStatus(state: CibaState) {
     try {
       // TODO: use CIBA expiration to stop the scheduler and resume the agent
-      const res = await CIBAAuthorizer.check(state.auth_req_id);
+      const res = await CIBAAuthorizer.check(state.cibaResponse.auth_req_id);
 
       // TODO: store the AT in the store
 
@@ -44,7 +50,7 @@ export function CibaPollerGraph(params: CibaPollerParams) {
           apiUrl: process.env.LANGGRAPH_API_URL || "http://localhost:54367",
         });
         await langgraph.crons.createForThread(
-          state.thread_id,
+          state.threadId,
           Auth0Graphs.CIBA_POLLER
         );
       }
@@ -65,7 +71,7 @@ export function CibaPollerGraph(params: CibaPollerParams) {
     });
 
     try {
-      await langgraph.runs.wait(state.thread_id, state.agent_to_resume, {
+      await langgraph.runs.wait(state.threadId, state.onResumeInvoke, {
         command: {
           resume: state.status,
         },

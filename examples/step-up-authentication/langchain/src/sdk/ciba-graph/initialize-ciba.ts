@@ -57,7 +57,7 @@ export const initializeCIBA =
         );
       }
 
-      if (!cibaParams?.onResumeCall) {
+      if (!cibaParams?.onResumeInvoke) {
         throw new Error(
           `[${Auth0Nodes.AUTH0_CIBA}] "scheduler" must be a "function" or an "string".`
         );
@@ -82,14 +82,14 @@ export const initializeCIBA =
       );
 
       const scheduler = cibaParams?.scheduler;
-      const onResumeCall = cibaParams?.onResumeCall!;
+      const onResumeInvoke = cibaParams?.onResumeInvoke!;
       const threadId = config?.metadata?.thread_id as string;
       const schedulerParams = {
         userId: config?.configurable?.user_id,
         cibaGraphId: Auth0Graphs.CIBA_POLLER,
         cibaResponse,
         threadId,
-        onResumeCall,
+        onResumeInvoke,
       };
 
       // Use Custom Scheduler
