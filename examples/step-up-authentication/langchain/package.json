@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "start": "npx tsx src/index.ts",
-    "start:api": "npx tsx ../sample-api/app.ts"
+    "start:api": "npx tsx ../sample-api/app.ts",
+    "langgraph:up": "npx @langchain/langgraph-cli dev --port 54367",
+    "scheduler:up": "npx tsx src/services/scheduler.ts"
   },
   "author": {
     "name": "Auth0 Inc.",
@@ -15,10 +17,21 @@
   "dependencies": {
     "@auth0/ai": "@auth0/ai:*",
     "@langchain/core": "^0.3.19",
-    "@langchain/langgraph": "^0.2.24",
+    "@langchain/langgraph": "^0.2.46",
+    "@langchain/langgraph-sdk": "^0.0.42",
     "@langchain/openai": "^0.3.14",
+    "body-parser": "^1.20.3",
     "dotenv": "^16.4.7",
     "enquirer": "^2.4.1",
+    "express": "^4.21.2",
+    "nanoid": "^5.1.0",
+    "node-cron": "^3.0.3",
+    "node-persist": "^4.0.4",
     "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/body-parser": "^1.19.5",
+    "@types/node-cron": "^3.0.11",
+    "@types/node-persist": "^3.1.8"
   }
 }

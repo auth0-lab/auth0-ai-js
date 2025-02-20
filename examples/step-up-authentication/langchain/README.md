@@ -20,6 +20,9 @@ AUDIENCE=http://localhost:8081
 
 # OpenAI
 OPENAI_API_KEY="openai-api-key"
+
+# Langchain
+LANGGRAPH_API_URL="http://localhost:54367"
 ```
 
 ### How to run it

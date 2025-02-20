@@ -1,5 +1,8 @@
 import { AuthenticationClient } from "auth0";
-import { AuthorizeResponse } from "auth0/dist/cjs/auth/backchannel";
+import {
+  AuthorizeResponse,
+  TokenResponse,
+} from "auth0/dist/cjs/auth/backchannel";
 import * as jose from "jose";
 
 import { Credentials } from "../credentials";
@@ -20,6 +23,13 @@ export type CibaAuthorizerOptions = {
   request_expiry?: string;
   subjectIssuerContext?: string;
 };
+
+export enum CibaAuthorizerCheckResponse {
+  PENDING = "pending",
+  APPROVED = "approved",
+  REJECTED = "rejected",
+  EXPIRED = "expired",
+}
 
 /**
  * Requests authorization by prompting the user via an out-of-band channel from
@@ -43,15 +53,15 @@ export class CIBAAuthorizer {
     });
   }
 
-  private async _authorize<I>(
+  private async _start<I>(
     params: CibaAuthorizerOptions,
     toolContext?: I
-  ): Promise<Credentials> {
+  ): Promise<AuthorizeResponse> {
     const authorizeParams = {
       scope: params.scope,
       binding_message: "",
       userId: "",
-      audience: params.audience,
+      audience: params.audience || "",
       request_expiry: params.request_expiry,
       subjectIssuerContext: params.subjectIssuerContext,
     };
@@ -76,7 +86,46 @@ export class CIBAAuthorizer {
 
     const response = await this.auth0.backchannel.authorize(authorizeParams);
 
-    return await this.poll(response);
+    return response;
+  }
+
+  private async _check(
+    auth_req_id: string
+  ): Promise<{ token: TokenResponse | null; status: string }> {
+    const response: { token: TokenResponse | null; status: string } = {
+      token: null,
+      status: "pending",
+    };
+
+    try {
+      const result = await this.auth0.backchannel.backchannelGrant({
+        auth_req_id,
+      });
+
+      response.status = CibaAuthorizerCheckResponse.APPROVED;
+      response.token = result;
+    } catch (e: any) {
+      if (e.error == "invalid_request") {
+        response.status = CibaAuthorizerCheckResponse.EXPIRED;
+      }
+
+      if (e.error == "access_denied") {
+        response.status = CibaAuthorizerCheckResponse.REJECTED;
+      }
+
+      if (e.error == "authorization_pending") {
+        response.status = CibaAuthorizerCheckResponse.PENDING;
+      }
+    }
+
+    return response;
+  }
+
+  private async _authorize<I>(
+    params: CibaAuthorizerOptions,
+    toolContext?: I
+  ): Promise<Credentials> {
+    return await this.poll(await this._start(params, toolContext));
   }
 
   private async poll(params: AuthorizeResponse): Promise<Credentials> {
@@ -144,6 +193,19 @@ export class CIBAAuthorizer {
     }
 
     return { accessToken: credentials.accessToken.value, claims } as AuthParams;
+  }
+
+  static async start(
+    options: CibaAuthorizerOptions,
+    params?: AuthorizerParams
+  ) {
+    const authorizer = new CIBAAuthorizer(params);
+    return authorizer._start(options);
+  }
+
+  static async check(auth_req_id: string, params?: AuthorizerParams) {
+    const authorizer = new CIBAAuthorizer(params);
+    return authorizer._check(auth_req_id);
   }
 
   static create(params?: AuthorizerParams): CibaInstance {

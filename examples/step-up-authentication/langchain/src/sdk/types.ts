@@ -1,0 +1,13 @@
+export enum Auth0Nodes {
+  AUTH0_CIBA_HITL = "AUTH0_CIBA_HITL",
+  AUTH0_CIBA = "AUTH0_CIBA",
+}
+
+export enum Auth0Graphs {
+  CIBA_POLLER = "AUTH0_CIBA_POLLER",
+}
+
+export enum HumanResponse {
+  APPROVED = "approved",
+  REJECTED = "rejected",
+}

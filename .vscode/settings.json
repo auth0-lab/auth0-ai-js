@@ -37,7 +37,7 @@
       "orderLevel": 30
     }
   ],
-  "[typescriptreact]": {
+  "[typescript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   }
 }

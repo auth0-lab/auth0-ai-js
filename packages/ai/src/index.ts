@@ -1,6 +1,6 @@
 import { AuthParams } from "./authorizers";
 
-export type { AuthParams } from "./authorizers";
+export type { AuthParams, AuthorizerParams } from "./authorizers";
 export * from "./authorizers/ciba-authorizer";
 export * from "./authorizers/device-authorizer";
 export * from "./authorizers/fga-authorizer";
