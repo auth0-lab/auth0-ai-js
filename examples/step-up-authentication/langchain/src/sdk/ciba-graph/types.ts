@@ -12,6 +12,7 @@ export interface State {
 export type SchedulerParams = {
   userId: string;
   threadId: string;
+  toolId?: string;
   onResumeInvoke: string;
   cibaGraphId: string;
   cibaResponse: {

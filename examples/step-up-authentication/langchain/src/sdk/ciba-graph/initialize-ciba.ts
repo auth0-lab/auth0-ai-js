@@ -85,10 +85,11 @@ export const initializeCIBA =
       const onResumeInvoke = cibaParams?.onResumeInvoke!;
       const threadId = config?.metadata?.thread_id as string;
       const schedulerParams = {
+        toolId: tool.id,
         userId: config?.configurable?.user_id,
         cibaGraphId: Auth0Graphs.CIBA_POLLER,
-        cibaResponse,
         threadId,
+        cibaResponse,
         onResumeInvoke,
       };
 

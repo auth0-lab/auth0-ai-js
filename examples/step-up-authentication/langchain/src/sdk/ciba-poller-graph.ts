@@ -1,13 +1,28 @@
 import { CIBAAuthorizer, CibaAuthorizerCheckResponse } from "@auth0/ai";
-import { Annotation, END, START, StateGraph } from "@langchain/langgraph";
+import {
+  Annotation,
+  END,
+  LangGraphRunnableConfig,
+  START,
+  StateGraph,
+} from "@langchain/langgraph";
 import { Client } from "@langchain/langgraph-sdk";
 
-import { Auth0Graphs } from "./types";
+import { Auth0Graphs, Auth0StoreKey } from "./types";
 
 type CibaResponse = {
   auth_req_id: string;
   expires_in: number;
   interval: number;
+};
+
+type TokenResponse = {
+  access_token: string;
+  refresh_token?: string;
+  id_token: string;
+  token_type?: string;
+  expires_in: number;
+  scope: string;
 };
 
 const CibaPollerAnnotation = Annotation.Root({
@@ -18,7 +33,9 @@ const CibaPollerAnnotation = Annotation.Root({
 
   // Internal
   taskId: Annotation<string>(),
+  toolId: Annotation<string>(),
   status: Annotation<string>(),
+  tokenResponse: Annotation<TokenResponse>(),
 });
 
 type CibaState = typeof CibaPollerAnnotation.State;
@@ -33,8 +50,7 @@ export function CibaPollerGraph(params: CibaPollerParams) {
       // TODO: use CIBA expiration to stop the scheduler and resume the agent
       const res = await CIBAAuthorizer.check(state.cibaResponse.auth_req_id);
 
-      // TODO: store the AT in the store
-
+      state.tokenResponse = res.token;
       state.status = res.status;
     } catch (e) {
       console.error(e);
@@ -65,12 +81,30 @@ export function CibaPollerGraph(params: CibaPollerParams) {
     return state;
   }
 
-  async function resumeAgent(state: CibaState) {
+  async function resumeAgent(
+    state: CibaState,
+    config: LangGraphRunnableConfig
+  ) {
     const langgraph = new Client({
       apiUrl: process.env.LANGGRAPH_API_URL || "http://localhost:54367",
     });
 
     try {
+      if (state.status === CibaAuthorizerCheckResponse.APPROVED) {
+        const store = config.store!;
+
+        await store.put(
+          [Auth0StoreKey, state.threadId, state.userId, state.toolId],
+          "access_token",
+          {
+            credentials: {
+              token_type: state.tokenResponse.token_type,
+              access_token: state.tokenResponse.access_token,
+            },
+          }
+        );
+      }
+
       await langgraph.runs.wait(state.threadId, state.onResumeInvoke, {
         command: {
           resume: state.status,
