@@ -5,6 +5,7 @@ export type * from "./credentials";
 export * from "./authorizers/ciba-authorizer";
 export * from "./authorizers/device-authorizer";
 export * from "./authorizers/fga-authorizer";
+export * from "./authorizers/fedconn-authorizer";
 export * from "./errors";
 
 export const usePipeline = <I, O>(
