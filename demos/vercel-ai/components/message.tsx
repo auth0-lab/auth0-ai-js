@@ -171,7 +171,7 @@ const PurePreviewMessage = ({
                           key={toolCallId}
                           addToolResult={toolInterrupt.addToolResult}
                           connection={toolInterrupt.connection}
-                          scopes={toolInterrupt.scopes}
+                          scopes={toolInterrupt.requiredScopes}
                           connectWidget={{
                             icon: (
                               <div className="bg-gray-200 p-3 rounded-lg flex-wrap">
