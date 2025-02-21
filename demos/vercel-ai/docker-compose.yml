@@ -1,0 +1,24 @@
+services:
+  pg:
+    container_name: pg
+    image: pgvector/pgvector:pg16
+    ports:
+      - "${PGPORT}:5432"
+    environment:
+      - POSTGRES_USER=${PGUSER}
+      - POSTGRES_PASSWORD=${PGPASSWORD}
+      - POSTGRES_DB=${PGDATABASE}
+      - TZ=${PGTZ:-UTC}
+      - PGTZ=${PGTZ:-UTC}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - market0
+    restart: always
+
+volumes:
+  pgdata:
+
+networks:
+  market0:
+    driver: bridge
