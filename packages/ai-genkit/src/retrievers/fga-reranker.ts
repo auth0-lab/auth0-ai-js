@@ -137,8 +137,7 @@ export class FGAReranker {
     const response = await this.fgaClient.batchCheck(
       { checks },
       {
-        consistency:
-          this.consistency || ConsistencyPreference.HigherConsistency,
+        consistency: this.consistency,
       }
     );
 
