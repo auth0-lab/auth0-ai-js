@@ -1,5 +1,6 @@
 import "dotenv/config";
 
+import { Credentials } from "@auth0/ai";
 import { RunnableToolLike } from "@langchain/core/runnables";
 import { StructuredToolInterface } from "@langchain/core/tools";
 import {
@@ -11,7 +12,6 @@ import {
 
 import { CIBAGraph } from "./ciba-graph";
 import { CIBAGraphOptions, CIBAOptions } from "./ciba-graph/types";
-import { Auth0StoreKey } from "./types";
 
 type Auth0StateType = {
   error: string;
@@ -22,17 +22,14 @@ export const Auth0State = Annotation.Root({
 });
 
 export async function getAccessToken(config: LangGraphRunnableConfig) {
-  const store = config.store!;
-  const { thread_id, user_id, tool_call_id } = config.configurable!;
-  let accessToken = "";
+  let accessToken: string | null = null;
 
   try {
-    const data = await store.get(
-      [Auth0StoreKey, thread_id, user_id, tool_call_id],
-      "access_token"
-    );
+    const credentials: Credentials | null = config.configurable?._credentials;
 
-    accessToken = data?.value.credentials.access_token;
+    if (credentials) {
+      accessToken = credentials.accessToken.value;
+    }
   } catch (e) {
     console.error(e);
   }

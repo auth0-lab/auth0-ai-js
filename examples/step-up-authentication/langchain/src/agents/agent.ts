@@ -1,8 +1,6 @@
 import {
   Annotation,
   END,
-  InMemoryStore,
-  LangGraphRunnableConfig,
   MemorySaver,
   MessagesAnnotation,
   START,
@@ -20,20 +18,8 @@ const model = new ChatOpenAI({
   model: "gpt-4o",
 }).bindTools([weatherTool, buyTool]);
 
-const callLLM = async (
-  state: typeof MessagesAnnotation.State,
-  config: LangGraphRunnableConfig
-) => {
+const callLLM = async (state: typeof MessagesAnnotation.State) => {
   const response = await model.invoke(state.messages);
-
-  const store = config.store!;
-  await store.put(
-    ["auth0-ai", "thread_id", "user_id", "tool_id"],
-    "access_token",
-    {
-      at: "xxxxx",
-    }
-  );
 
   return { messages: [response] };
 };
@@ -87,9 +73,7 @@ const stateGraph = a0.protect(
 );
 
 const memory = new MemorySaver();
-const inMemoryStore = new InMemoryStore();
 
 export const graph = stateGraph.compile({
   checkpointer: memory,
-  store: inMemoryStore,
 });

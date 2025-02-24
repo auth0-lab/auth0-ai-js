@@ -1,15 +1,9 @@
 import { z } from "zod";
 
 import { tool } from "@langchain/core/tools";
-import { LangGraphRunnableConfig } from "@langchain/langgraph";
 
 export const weatherTool = tool(
-  async (input: { city: string }, config: LangGraphRunnableConfig) => {
-    //
-    const store = config.store!;
-
-    console.log(await store.get(["auth0"], "xxx"));
-
+  async (input: { city: string }) => {
     console.log("----");
     console.log(`Searching for: ${input.city}`);
     console.log("----");

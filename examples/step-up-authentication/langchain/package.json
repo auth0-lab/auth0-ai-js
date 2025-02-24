@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "npx @langchain/langgraph-cli dev --port 54367",
+    "start": "npx @langchain/langgraph-cli up",
+    "dev": "npx @langchain/langgraph-cli dev --port 54367",
     "start:api": "npx tsx ../sample-api/app.ts",
     "scheduler:up": "npx tsx src/services/scheduler.ts"
   },

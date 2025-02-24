@@ -1,14 +1,12 @@
-import { CIBAAuthorizer, CibaAuthorizerCheckResponse } from "@auth0/ai";
 import {
-  Annotation,
-  END,
-  LangGraphRunnableConfig,
-  START,
-  StateGraph,
-} from "@langchain/langgraph";
+  CIBAAuthorizer,
+  CibaAuthorizerCheckResponse,
+  Credentials,
+} from "@auth0/ai";
+import { Annotation, END, START, StateGraph } from "@langchain/langgraph";
 import { Client } from "@langchain/langgraph-sdk";
 
-import { Auth0Graphs, Auth0StoreKey } from "./types";
+import { Auth0Graphs } from "./types";
 
 type CibaResponse = {
   auth_req_id: string;
@@ -81,31 +79,29 @@ export function CibaPollerGraph(params: CibaPollerParams) {
     return state;
   }
 
-  async function resumeAgent(
-    state: CibaState,
-    config: LangGraphRunnableConfig
-  ) {
+  async function resumeAgent(state: CibaState) {
     const langgraph = new Client({
       apiUrl: process.env.LANGGRAPH_API_URL || "http://localhost:54367",
     });
+    let _credentials: Credentials | null = null;
 
     try {
       if (state.status === CibaAuthorizerCheckResponse.APPROVED) {
-        const store = config.store!;
-
-        await store.put(
-          [Auth0StoreKey, state.threadId, state.userId, state.toolId],
-          "access_token",
-          {
-            credentials: {
-              token_type: state.tokenResponse.token_type,
-              access_token: state.tokenResponse.access_token,
-            },
-          }
-        );
+        _credentials = {
+          accessToken: {
+            type: state.tokenResponse.token_type || "bearer",
+            value: state.tokenResponse.access_token,
+          },
+        };
       }
 
       await langgraph.runs.wait(state.threadId, state.onResumeInvoke, {
+        config: {
+          configurable: {
+            // this is only for this run / threadid
+            _credentials,
+          },
+        },
         command: {
           resume: state.status,
         },

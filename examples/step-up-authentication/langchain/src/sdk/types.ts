@@ -7,8 +7,6 @@ export enum Auth0Graphs {
   CIBA_POLLER = "AUTH0_CIBA_POLLER",
 }
 
-export const Auth0StoreKey = "auth0-ai";
-
 export enum HumanResponse {
   APPROVED = "approved",
   REJECTED = "rejected",
