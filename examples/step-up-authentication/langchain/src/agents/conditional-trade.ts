@@ -38,7 +38,20 @@ async function shouldContinue(state) {
   return "tools";
 }
 
+/**
+ * Checks the condition of a given state and config, and performs actions based on the status.
+ *
+ * @param state - The current state object containing task information.
+ * @param config - The configuration object for LangGraphRunnable, containing the store.
+ * @returns A promise that resolves to the updated state or an object containing messages with tool calls.
+ *
+ * @see {@link https://langchain-ai.github.io/langgraphjs/how-tos/force-calling-a-tool-first/#define-the-graph}
+ */
 async function checkCondition(state, config: LangGraphRunnableConfig) {
+  //
+  // This function should contains the logic to check if the stock condition is met.
+  //
+
   const store = config.store;
   const data = await store?.get([state.taskId], "status");
 
@@ -51,7 +64,7 @@ async function checkCondition(state, config: LangGraphRunnableConfig) {
     await store?.put([state.taskId], "status", { status: "processing" });
   }
 
-  // https://langchain-ai.github.io/langgraphjs/how-tos/force-calling-a-tool-first/#define-the-graph
+  // Calling the trade tool to initiate the trade
   return {
     messages: [
       new AIMessage({
@@ -81,6 +94,12 @@ async function stopScheduler(state) {
   return state;
 }
 
+/**
+ * Notifies the user about the trade.
+ *
+ * @param {any} state - The current state of the trade.
+ * @returns {any} The updated state after notification.
+ */
 function notifyUser(state) {
   console.log("----");
   console.log(`Notifying the user about the trade.`);
@@ -89,19 +108,29 @@ function notifyUser(state) {
   return state;
 }
 
-// Initialize Auth0AI
 const auth0AI = new Auth0AI();
 
-// Initialize CIBA with Auth0AI
-const ciba = auth0AI.withCiba({
-  onApproveGoTo: "tools",
-  onRejectGoTo: "stopScheduler",
-  onResumeInvoke: "conditional-trade",
-  scope: "stock:trade",
+/**
+ * Configures the CIBA flow with Auth0 AI.
+ *
+ * @param {object} options - The configuration options for CIBA.
+ * @param {string} options.audience - The audience for the CIBA flow, typically the API identifier.
+ * @param {object} options.config - Additional configuration for the CIBA flow.
+ * @param {string} options.config.onResumeInvoke - The identifier for the agent to invoke upon resuming the flow.
+ * @param {function} options.config.scheduler - A custom scheduler function to handle scheduling logic.
+ * @param {object} input - The input object passed to the scheduler function.
+ * @param {string} input.cibaGraphId - The unique identifier for the CIBA graph.
+ *
+ * @returns {object} - The initialized CIBA flow instance.
+ */
+const ciba = auth0AI.withCIBA({
   audience: process.env["AUDIENCE"],
-  scheduler: async (input) => {
-    // Custom scheduler
-    await SchedulerClient().schedule(input.cibaGraphId, { input });
+  config: {
+    onResumeInvoke: "conditional-trade",
+    scheduler: async (input) => {
+      // Custom scheduler
+      await SchedulerClient().schedule(input.cibaGraphId, { input });
+    },
   },
 });
 
@@ -112,8 +141,22 @@ const StateAnnotation = Annotation.Root({
   data: Annotation<ConditionalTrade>(),
 });
 
-// Protect the graph with CIBA
-const stateGraph = ciba.protect(
+/**
+ * Initializes and registers a state graph for conditional trade operations using CIBA.
+ *
+ * The state graph consists of the following nodes:
+ * - `checkCondition`: Evaluates whether the trade condition is met.
+ * - `notifyUser`: Notifies the user about the trade status.
+ * - `stopScheduler`: Stops the scheduler if the trade is acepted or rejected.
+ * - `tools`: A tool node that handles the trade tool with CIBA protection.
+ *
+ * The `tools` node uses the `tradeTool` with CIBA protection, which includes:
+ * - `onApproveGoTo`: Transitions to the `tools` node if the trade is approved.
+ * - `onRejectGoTo`: Transitions to the `stopScheduler` node if the trade is rejected.
+ * - `scope`: Specifies the required scope for the trade operation (`stock:trade`).
+ * - `binding_message`: Generates a message asking the user if they want to buy a specified quantity of a stock ticker.
+ */
+const stateGraph = ciba.registerNodes(
   new StateGraph(StateAnnotation)
     .addNode("checkCondition", checkCondition)
     .addNode("notifyUser", notifyUser)
@@ -121,8 +164,10 @@ const stateGraph = ciba.protect(
     .addNode(
       "tools",
       new ToolNode([
-        // Protected by CIBA
-        ciba.withCIBA(tradeTool, {
+        ciba.protectTool(tradeTool, {
+          onApproveGoTo: "tools",
+          onRejectGoTo: "stopScheduler",
+          scope: "stock:trade",
           binding_message: async (_) => {
             return `Do you want to buy ${_.qty} ${_.ticker}`;
           },

@@ -42,7 +42,7 @@ export class Auth0AI<N extends string> {
     this.config = config;
   }
 
-  withCiba(options?: CIBAGraphOptions<N>) {
+  withCIBA(options?: CIBAGraphOptions<N>) {
     this._graph = new CIBAGraph(options, this.config);
 
     return this._graph;

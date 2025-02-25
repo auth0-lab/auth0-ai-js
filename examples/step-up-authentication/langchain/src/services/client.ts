@@ -3,7 +3,7 @@ export function SchedulerClient(url?: string) {
     schedule: async (graphId: string, data: any) => {
       try {
         // TODO: add authentication
-        fetch(url || `http://localhost:5555/schedule/${graphId}`, {
+        await fetch(url || `http://localhost:5555/schedule/${graphId}`, {
           method: "POST",
           body: JSON.stringify(data),
           headers: {
@@ -17,7 +17,7 @@ export function SchedulerClient(url?: string) {
     stop: async (taskId: string) => {
       try {
         // TODO: add authentication
-        fetch(url || `http://localhost:5555/schedule/${taskId}`, {
+        await fetch(url || `http://localhost:5555/schedule/${taskId}`, {
           method: "DELETE",
         });
       } catch (e) {

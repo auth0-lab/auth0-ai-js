@@ -51,13 +51,13 @@ export const initializeCIBA =
         );
       }
 
-      if (!cibaParams?.scheduler) {
+      if (!cibaParams?.config.scheduler) {
         throw new Error(
           `[${Auth0Nodes.AUTH0_CIBA}] "scheduler" must be a "function" or an "string".`
         );
       }
 
-      if (!cibaParams?.onResumeInvoke) {
+      if (!cibaParams?.config.onResumeInvoke) {
         throw new Error(
           `[${Auth0Nodes.AUTH0_CIBA}] "scheduler" must be a "function" or an "string".`
         );
@@ -81,8 +81,8 @@ export const initializeCIBA =
         cibaGraph.getAuthorizerParams()
       );
 
-      const scheduler = cibaParams?.scheduler;
-      const onResumeInvoke = cibaParams?.onResumeInvoke!;
+      const scheduler = cibaParams?.config.scheduler;
+      const onResumeInvoke = cibaParams?.config.onResumeInvoke!;
       const threadId = config?.metadata?.thread_id as string;
       const schedulerParams = {
         toolId: tool.id,

@@ -6,6 +6,7 @@ import { LangGraphRunnableConfig } from "@langchain/langgraph";
 
 export const tradeTool = tool(
   async (input, config: LangGraphRunnableConfig) => {
+    // Get the access token
     const accessToken = getAccessToken(config);
 
     const headers = {

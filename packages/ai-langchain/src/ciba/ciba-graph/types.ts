@@ -42,8 +42,10 @@ export type CIBAGraphOptions<N extends string> = Omit<
   CIBAOptions<N>,
   "binding_message"
 > & {
-  onResumeInvoke: string;
-  scheduler: string | ((config: SchedulerParams) => Promise<void>);
+  config: {
+    onResumeInvoke: string;
+    scheduler: string | ((config: SchedulerParams) => Promise<void>);
+  };
 };
 
 export type ProtectedTool<N extends string = string> = {

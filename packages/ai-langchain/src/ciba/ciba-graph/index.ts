@@ -39,7 +39,7 @@ export class CIBAGraph<N extends string> {
     return this.authorizerParams;
   }
 
-  protect<
+  registerNodes<
     SD,
     S,
     U,
@@ -65,7 +65,7 @@ export class CIBAGraph<N extends string> {
     return graph;
   }
 
-  withCIBA(
+  protectTool(
     tool: StructuredToolInterface | RunnableToolLike,
     options: CIBAOptions<N>
   ) {
