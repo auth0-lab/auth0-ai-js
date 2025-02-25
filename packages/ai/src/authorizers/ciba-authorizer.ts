@@ -31,6 +31,16 @@ export enum CibaAuthorizerCheckResponse {
   EXPIRED = "expired",
 }
 
+function ensureOpenIdScope(scope: string): string {
+  const scopes = scope.trim().split(/\s+/);
+
+  if (!scopes.includes("openid")) {
+    scopes.unshift("openid");
+  }
+
+  return scopes.join(" ") || "openid";
+}
+
 /**
  * Requests authorization by prompting the user via an out-of-band channel from
  * the backend.
@@ -58,7 +68,7 @@ export class CIBAAuthorizer {
     toolContext?: I
   ): Promise<AuthorizeResponse> {
     const authorizeParams = {
-      scope: `openid ${params.scope}`,
+      scope: ensureOpenIdScope(params.scope),
       binding_message: "",
       userId: "",
       audience: params.audience || "",
