@@ -29,21 +29,21 @@ export type CIBAOptions<N extends string> = Omit<
   scope?: string;
   onApproveGoTo?: N;
   onRejectGoTo?: N;
-
-  authorizerConfig?: AuthorizerParams;
 };
 
 export interface ICIBAGraph<N extends string = string> {
   getTools(): ProtectedTool<N>[];
   getGraph(): StateGraph<N>;
+  getAuthorizerParams(): AuthorizerParams | undefined;
   getOptions(): CIBAGraphOptions<N> | undefined;
 }
 
-export type CIBAGraphOptions<N extends string> = {
-  ciba?: Omit<CIBAOptions<N>, "binding_message"> & {
-    onResumeInvoke: string;
-    scheduler: string | ((config: SchedulerParams) => Promise<void>);
-  };
+export type CIBAGraphOptions<N extends string> = Omit<
+  CIBAOptions<N>,
+  "binding_message"
+> & {
+  onResumeInvoke: string;
+  scheduler: string | ((config: SchedulerParams) => Promise<void>);
 };
 
 export type ProtectedTool<N extends string = string> = {

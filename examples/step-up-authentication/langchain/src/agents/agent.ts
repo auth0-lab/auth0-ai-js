@@ -1,5 +1,4 @@
 import {
-  Annotation,
   END,
   MemorySaver,
   MessagesAnnotation,
@@ -10,13 +9,11 @@ import { AIMessage } from "@langchain/langgraph-sdk";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
 import { ChatOpenAI } from "@langchain/openai";
 
-import { Auth0AI, Auth0State } from "../sdk";
-import { SchedulerClient } from "../services/client";
-import { buyTool, weatherTool } from "./tools";
+import { conditionalTrade, tradeTool } from "./tools";
 
 const model = new ChatOpenAI({
   model: "gpt-4o",
-}).bindTools([weatherTool, buyTool]);
+}).bindTools([tradeTool, conditionalTrade]);
 
 const callLLM = async (state: typeof MessagesAnnotation.State) => {
   const response = await model.invoke(state.messages);
@@ -35,45 +32,15 @@ function shouldContinue(state) {
   return "tools";
 }
 
-const a0 = new Auth0AI({
-  ciba: {
-    onApproveGoTo: "tools",
-    onRejectGoTo: "callLLM",
-    onResumeInvoke: "agent",
-    scheduler: async (config) => {
-      // Custom scheduler
-      await SchedulerClient().schedule(config);
-    },
-  },
-});
+const stateGraph = new StateGraph(MessagesAnnotation.spec)
+  .addNode("callLLM", callLLM)
+  .addNode("tools", new ToolNode([tradeTool, conditionalTrade]))
+  .addEdge(START, "callLLM")
+  .addEdge("tools", "callLLM")
+  .addConditionalEdges("callLLM", shouldContinue);
 
-const StateAnnotation = Annotation.Root({
-  ...MessagesAnnotation.spec,
-  ...Auth0State.spec,
-});
-
-const stateGraph = a0.protect(
-  new StateGraph(StateAnnotation)
-    .addNode("callLLM", callLLM)
-    .addNode(
-      "tools",
-      new ToolNode([
-        weatherTool,
-        // Protected by CIBA
-        a0.withCIBA(buyTool, {
-          binding_message: async (_) => {
-            return `Do you want to buy ${_.qty} ${_.ticker}`;
-          },
-        }),
-      ])
-    )
-    .addEdge(START, "callLLM")
-    .addEdge("tools", "callLLM")
-    .addConditionalEdges("callLLM", a0.withAuth(shouldContinue))
-);
-
-const memory = new MemorySaver();
+const checkpointer = new MemorySaver();
 
 export const graph = stateGraph.compile({
-  checkpointer: memory,
+  checkpointer,
 });

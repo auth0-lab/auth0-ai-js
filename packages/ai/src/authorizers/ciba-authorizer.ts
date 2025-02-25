@@ -58,7 +58,7 @@ export class CIBAAuthorizer {
     toolContext?: I
   ): Promise<AuthorizeResponse> {
     const authorizeParams = {
-      scope: params.scope,
+      scope: `openid ${params.scope}`,
       binding_message: "",
       userId: "",
       audience: params.audience || "",

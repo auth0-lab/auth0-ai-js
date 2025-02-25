@@ -1,3 +1,4 @@
+import { AuthorizerParams } from "@auth0/ai";
 import { AIMessage } from "@langchain/core/messages";
 import { RunnableToolLike } from "@langchain/core/runnables";
 import { StructuredToolInterface } from "@langchain/core/tools";
@@ -12,9 +13,14 @@ export class CIBAGraph<N extends string> {
   private graph;
   private options?: CIBAGraphOptions<N>;
   private tools: ProtectedTool<N>[] = [];
+  private authorizerParams: AuthorizerParams | undefined;
 
-  constructor(options?: CIBAGraphOptions<N>) {
+  constructor(
+    options?: CIBAGraphOptions<N>,
+    authorizerParams?: AuthorizerParams
+  ) {
     this.options = options;
+    this.authorizerParams = authorizerParams;
   }
 
   getTools() {
@@ -27,6 +33,10 @@ export class CIBAGraph<N extends string> {
 
   getOptions() {
     return this.options;
+  }
+
+  getAuthorizerParams() {
+    return this.authorizerParams;
   }
 
   protect<
@@ -51,6 +61,8 @@ export class CIBAGraph<N extends string> {
 
         return Auth0Nodes.AUTH0_CIBA_HITL;
       });
+
+    return graph;
   }
 
   withCIBA(
@@ -60,7 +72,7 @@ export class CIBAGraph<N extends string> {
     // review tool options
     options = {
       // default options
-      ...this.options?.ciba,
+      ...this.options,
       // tool specific options
       ...options,
     };
@@ -74,6 +86,8 @@ export class CIBAGraph<N extends string> {
     }
 
     this.tools.push({ toolName: tool.name, options });
+
+    return tool;
   }
 
   withAuth<F extends (...args: any[]) => any>(fn: F) {
@@ -87,7 +101,11 @@ export class CIBAGraph<N extends string> {
       }
 
       // Call default function if no tool calls
-      if (!lastMessage.tool_calls || lastMessage.tool_calls.length === 0) {
+      if (
+        !lastMessage ||
+        !lastMessage.tool_calls ||
+        lastMessage.tool_calls.length === 0
+      ) {
         return fn(...args);
       }
 

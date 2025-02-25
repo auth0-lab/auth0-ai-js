@@ -1,11 +1,9 @@
-import { SchedulerParams } from "../sdk/types";
-
 export function SchedulerClient(url?: string) {
   return {
-    schedule: async (data: SchedulerParams) => {
+    schedule: async (graphId: string, data: any) => {
       try {
         // TODO: add authentication
-        fetch(url || "http://localhost:5555/schedule", {
+        fetch(url || `http://localhost:5555/schedule/${graphId}`, {
           method: "POST",
           body: JSON.stringify(data),
           headers: {

@@ -1,4 +1,5 @@
-import { CibaPollerGraph } from "../sdk/ciba-poller-graph";
+import { CibaPollerGraph } from "@auth0/ai-langchain";
+
 import { SchedulerClient } from "../services/client";
 
 const cibaGraph = CibaPollerGraph({

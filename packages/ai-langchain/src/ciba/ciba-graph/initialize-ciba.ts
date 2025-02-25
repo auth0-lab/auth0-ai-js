@@ -11,7 +11,7 @@ export const initializeCIBA =
   (cibaGraph: ICIBAGraph) =>
   async (state: State, config?: RunnableConfig): Promise<any> => {
     try {
-      const cibaParams = cibaGraph.getOptions()?.ciba;
+      const cibaParams = cibaGraph.getOptions();
       const tools = cibaGraph.getTools();
       const toolDefinition = getToolDefinition(state, tools);
 
@@ -78,7 +78,7 @@ export const initializeCIBA =
           audience: cibaOptions.audience,
           binding_message: bindingMessage,
         },
-        cibaGraph.getOptions()?.ciba?.authorizerConfig
+        cibaGraph.getAuthorizerParams()
       );
 
       const scheduler = cibaParams?.scheduler;
