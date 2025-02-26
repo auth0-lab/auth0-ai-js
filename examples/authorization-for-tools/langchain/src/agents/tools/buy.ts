@@ -17,9 +17,11 @@ const useFGA = fga({
 export const buyTool = tool(
   useFGA(async ({ allowed }, { ticker, qty }) => {
     if (allowed) {
+      // send email confirmation
       return { ticker, qty };
     }
 
+    // send email confirmation
     return `The user is not allowed to buy ${ticker}.`;
   }),
   {

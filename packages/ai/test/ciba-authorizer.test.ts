@@ -120,7 +120,7 @@ describe("CIBAAuthorizer", () => {
       scope: "openid",
       binding_message: "dynamic-message",
       userId: "dynamic-user-id",
-      audience: undefined,
+      audience: "",
       request_expiry: undefined,
       subjectIssuerContext: undefined,
     });

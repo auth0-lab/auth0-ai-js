@@ -6,7 +6,7 @@ import { ChatOpenAI } from "@langchain/openai";
 import { systemPrompt } from "../system";
 import { buyTool } from "./tools/buy";
 
-const model = new ChatOpenAI({ model: "gpt-4" });
+const model = new ChatOpenAI({ model: "gpt-4o-mini" });
 
 export const graph = createReactAgent({
   llm: model,
