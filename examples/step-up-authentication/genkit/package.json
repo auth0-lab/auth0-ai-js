@@ -14,7 +14,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "genkit": "^0.9.12",
-    "@auth0/ai": "@auth0/ai:*",
+    "@auth0/ai": "*",
     "dotenv": "^16.4.7",
     "enquirer": "^2.4.1",
     "zod": "^3.24.1"
