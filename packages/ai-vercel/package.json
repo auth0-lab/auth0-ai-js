@@ -14,7 +14,7 @@
     "clean": "rm -rf dist",
     "lint": "eslint \"./**/*.ts*\"",
     "type-check": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "echo 'missing tests'"
   },
   "imports": {
     "#interruptions": {

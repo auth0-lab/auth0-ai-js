@@ -14,7 +14,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@ai-sdk/openai": "^1.1.9",
-    "@auth0/ai": "@auth0/ai:*",
+    "@auth0/ai": "*",
     "ai": "^4.1.35",
     "dotenv": "^16.4.7",
     "enquirer": "^2.4.1"

@@ -13,7 +13,7 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "@auth0/ai": "@auth0/ai:*",
+    "@auth0/ai": "*",
     "dotenv": "^16.4.7",
     "llamaindex": "^0.8.32",
     "enquirer": "^2.4.1",
