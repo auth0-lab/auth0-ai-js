@@ -1,6 +1,8 @@
+import { FederatedConnections } from "@auth0/ai";
+
 import { Interruption } from "#interruptions";
 
-import { asyncLocalStorage } from "./asyncLocalStorage";
+const { asyncLocalStorage } = FederatedConnections;
 
 /**
  * Error thrown when a tool call requires an access token for an external service.
@@ -25,24 +27,21 @@ export class FederatedConnectionError extends Interruption {
    */
   public readonly requiredScopes: string[];
 
-  constructor(
-    message: string,
-  ) {
+  constructor(message: string) {
     const store = asyncLocalStorage.getStore();
 
     if (!store) {
-      throw new Error('FederatedConnectionError created outside of a tool call with Federated Connection.');
+      throw new Error(
+        "FederatedConnectionError created outside of a tool call with Federated Connection."
+      );
     }
 
-    super(message, store.context.toolCallId, 'FEDERATED_CONNECTION_ERROR');
+    super(message, store.context.toolCallId, "FEDERATED_CONNECTION_ERROR");
 
     this.name = this.constructor.name;
     this.connection = store.connection;
     this.scopes = store.scopes;
-    this.requiredScopes = [
-      ...store.currentScopes || [],
-      ...store.scopes
-    ];
+    this.requiredScopes = [...(store.currentScopes || []), ...store.scopes];
 
     // this.missingScopes = missingScopes;
     if (Error.captureStackTrace) {
