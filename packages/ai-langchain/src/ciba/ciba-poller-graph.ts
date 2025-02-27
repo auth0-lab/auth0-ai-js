@@ -1,25 +1,15 @@
-import {
-  CIBAAuthorizer,
-  CibaAuthorizerCheckResponse,
-  Credentials,
-} from "@auth0/ai";
+import { CIBAAuthorizer, CibaAuthorizerCheckResponse, Credentials } from "@auth0/ai";
 import { Annotation, END, START, StateGraph } from "@langchain/langgraph";
 import { Client } from "@langchain/langgraph-sdk";
 
-import { Auth0Graphs } from "./types";
-
-type CibaResponse = {
-  auth_req_id: string;
-  expires_in: number;
-  interval: number;
-};
+import { Auth0Graphs, CibaResponse } from "./types";
 
 type TokenResponse = {
-  access_token: string;
-  refresh_token?: string;
-  id_token: string;
-  token_type?: string;
-  expires_in: number;
+  accessToken: string;
+  refreshToken?: string;
+  idToken: string;
+  tokenType?: string;
+  expiresIn: number;
   scope: string;
 };
 
@@ -46,7 +36,7 @@ export function CibaPollerGraph(params: CibaPollerParams) {
   async function checkStatus(state: CibaState) {
     try {
       // TODO: use CIBA expiration to stop the scheduler and resume the agent
-      const res = await CIBAAuthorizer.check(state.cibaResponse.auth_req_id);
+      const res = await CIBAAuthorizer.check(state.cibaResponse.authReqId);
 
       state.tokenResponse = res.token;
       state.status = res.status;
@@ -89,8 +79,8 @@ export function CibaPollerGraph(params: CibaPollerParams) {
       if (state.status === CibaAuthorizerCheckResponse.APPROVED) {
         _credentials = {
           accessToken: {
-            type: state.tokenResponse.token_type || "bearer",
-            value: state.tokenResponse.access_token,
+            type: state.tokenResponse.tokenType || "bearer",
+            value: state.tokenResponse.accessToken,
           },
         };
       }
