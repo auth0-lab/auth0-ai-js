@@ -39,7 +39,7 @@ import { auth0 } from "./auth0";
 
 export const withCalendarFreeBusyAccess = auth0AI.withFederatedConnection({
   // A function to retrieve the refresh token of the context.
-  getRefreshToken: async () => {
+  refreshToken: async () => {
     const session = await auth0.getSession();
     const refreshToken = session?.tokenSet.refreshToken!;
     return refreshToken;

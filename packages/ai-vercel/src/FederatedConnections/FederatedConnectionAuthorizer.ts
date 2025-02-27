@@ -13,7 +13,7 @@ export class FederatedConnectionAuthorizer extends FederatedConnections.Federate
 > {
   protected override validateToken(tokenResponse: TokenResponse): void {
     try {
-      this.validateToken(tokenResponse);
+      super.validateToken(tokenResponse);
     } catch (err) {
       if (
         err instanceof Error &&

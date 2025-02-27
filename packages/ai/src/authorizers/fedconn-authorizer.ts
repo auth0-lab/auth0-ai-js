@@ -51,7 +51,7 @@ export abstract class FederatedConnectionAuthorizerBase<
     private params: FederatedConnectionAuthorizerParams<ToolExecuteArgs>
   ) {}
 
-  protected validateToken(tokenResponse: TokenResponse) {
+  protected validateToken(tokenResponse?: TokenResponse) {
     const store = asyncLocalStorage.getStore();
     if (!store) {
       throw new Error(
@@ -82,7 +82,7 @@ export abstract class FederatedConnectionAuthorizerBase<
 
   protected async getAccessToken(
     ...toolContext: ToolExecuteArgs
-  ): Promise<TokenResponse> {
+  ): Promise<TokenResponse | undefined> {
     const exchangeParams = {
       grant_type:
         "urn:auth0:params:oauth:grant-type:token-exchange:federated-connection-access-token",
@@ -105,25 +105,11 @@ export abstract class FederatedConnectionAuthorizerBase<
     });
 
     if (!res.ok) {
-      throw new Error(`Unable to get an access token: ${await res.text()}`);
+      return;
     }
 
     return res.json();
   }
-
-  // static async authorize<TContext>(
-  //   options: FederatedConnectionAuthorizerOptions<TContext>,
-  //   toolContext: TContext,
-  //   params?: AuthorizerParams
-  // ) {
-  //   const authorizer = new FederatedConnectionAuthorizer(params);
-  //   const tokenResponse = await authorizer.getAccessToken(options, toolContext);
-  //   const validateToken = options.validateToken ?? true;
-  //   if (validateToken) {
-  //     authorizer.validateToken(options, tokenResponse);
-  //   }
-  //   return tokenResponse;
-  // }
 
   protected wrapExecute(
     getContext: (...args: ToolExecuteArgs) => any,
@@ -135,7 +121,7 @@ export abstract class FederatedConnectionAuthorizerBase<
       const storeValue = {
         getAccessToken: () => {
           this.validateToken(tokenResponse);
-          return tokenResponse.access_token;
+          return tokenResponse!.access_token;
         },
         context: await getContext(...args),
         scopes: this.params.scopes,
