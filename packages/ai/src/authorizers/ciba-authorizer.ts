@@ -1,26 +1,18 @@
 import { AuthenticationClient } from "auth0";
-import {
-  AuthorizeResponse,
-  TokenResponse,
-} from "auth0/dist/cjs/auth/backchannel";
 import * as jose from "jose";
 
 import { Credentials } from "../credentials";
-import {
-  AccessDeniedError,
-  AuthorizationRequestExpiredError,
-  UserDoesNotHavePushNotificationsError,
-} from "../errors";
+import { AccessDeniedError, AuthorizationRequestExpiredError, UserDoesNotHavePushNotificationsError } from "../errors";
 import { AuthorizerParams, AuthParams, ToolWithAuthHandler } from "./";
 
 type StringOrFn = (params: any) => Promise<string>;
 
 export type CibaAuthorizerOptions = {
   userId: string | StringOrFn;
-  binding_message: string | StringOrFn;
+  bindingMessage: string | StringOrFn;
   scope: string;
   audience?: string;
-  request_expiry?: string;
+  requestExpiry?: string;
   subjectIssuerContext?: string;
 };
 
@@ -30,6 +22,21 @@ export enum CibaAuthorizerCheckResponse {
   REJECTED = "rejected",
   EXPIRED = "expired",
 }
+
+export type AuthorizeResponse = {
+  authReqId: string;
+  expiresIn: number;
+  interval: number;
+};
+
+export type TokenResponse = {
+  accessToken: string;
+  refreshToken?: string;
+  idToken: string;
+  tokenType?: string;
+  expiresIn: number;
+  scope: string;
+};
 
 function ensureOpenIdScope(scope: string): string {
   const scopes = scope.trim().split(/\s+/);
@@ -72,18 +79,18 @@ export class CIBAAuthorizer {
       binding_message: "",
       userId: "",
       audience: params.audience || "",
-      request_expiry: params.request_expiry,
+      request_expiry: params.requestExpiry,
       subjectIssuerContext: params.subjectIssuerContext,
     };
 
-    if (typeof params.binding_message === "function") {
-      authorizeParams.binding_message = await params.binding_message(
+    if (typeof params.bindingMessage === "function") {
+      authorizeParams.binding_message = await params.bindingMessage(
         toolContext as I
       );
     }
 
-    if (typeof params.binding_message === "string") {
-      authorizeParams.binding_message = params.binding_message;
+    if (typeof params.bindingMessage === "string") {
+      authorizeParams.binding_message = params.bindingMessage;
     }
 
     if (typeof params.userId === "function") {
@@ -96,11 +103,15 @@ export class CIBAAuthorizer {
 
     const response = await this.auth0.backchannel.authorize(authorizeParams);
 
-    return response;
+    return {
+      authReqId: response.auth_req_id,
+      expiresIn: response.expires_in,
+      interval: response.interval,
+    };
   }
 
   private async _check(
-    auth_req_id: string
+    authReqId: string
   ): Promise<{ token: TokenResponse | null; status: string }> {
     const response: { token: TokenResponse | null; status: string } = {
       token: null,
@@ -109,11 +120,18 @@ export class CIBAAuthorizer {
 
     try {
       const result = await this.auth0.backchannel.backchannelGrant({
-        auth_req_id,
+        auth_req_id: authReqId,
       });
 
       response.status = CibaAuthorizerCheckResponse.APPROVED;
-      response.token = result;
+      response.token = {
+        accessToken: result.access_token,
+        idToken: result.id_token,
+        expiresIn: result.expires_in,
+        scope: result.scope,
+        refreshToken: result.refresh_token,
+        tokenType: result.token_type,
+      };
     } catch (e: any) {
       if (e.error == "invalid_request") {
         response.status = CibaAuthorizerCheckResponse.EXPIRED;
@@ -145,7 +163,7 @@ export class CIBAAuthorizer {
         try {
           const elapsedSeconds = (Date.now() - startTime) / 1000;
 
-          if (elapsedSeconds >= params.expires_in) {
+          if (elapsedSeconds >= params.expiresIn) {
             clearInterval(interval);
             return reject(
               new AuthorizationRequestExpiredError(
@@ -155,7 +173,7 @@ export class CIBAAuthorizer {
           }
 
           const response = await this.auth0.backchannel.backchannelGrant({
-            auth_req_id: params.auth_req_id,
+            auth_req_id: params.authReqId,
           });
 
           const credentials = {
@@ -213,9 +231,9 @@ export class CIBAAuthorizer {
     return authorizer._start(options);
   }
 
-  static async check(auth_req_id: string, params?: AuthorizerParams) {
+  static async check(authReqId: string, params?: AuthorizerParams) {
     const authorizer = new CIBAAuthorizer(params);
-    return authorizer._check(auth_req_id);
+    return authorizer._check(authReqId);
   }
 
   static create(params?: AuthorizerParams): CibaInstance {

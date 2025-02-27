@@ -12,4 +12,10 @@ export enum HumanResponse {
   REJECTED = "rejected",
 }
 
+export type CibaResponse = {
+  authReqId: string;
+  expiresIn: number;
+  interval: number;
+};
+
 export type { SchedulerParams } from "./ciba-graph/types";

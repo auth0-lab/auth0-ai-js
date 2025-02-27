@@ -154,7 +154,7 @@ const StateAnnotation = Annotation.Root({
  * - `onApproveGoTo`: Transitions to the `tools` node if the trade is approved.
  * - `onRejectGoTo`: Transitions to the `stopScheduler` node if the trade is rejected.
  * - `scope`: Specifies the required scope for the trade operation (`stock:trade`).
- * - `binding_message`: Generates a message asking the user if they want to buy a specified quantity of a stock ticker.
+ * - `bindingMessage`: Generates a message asking the user if they want to buy a specified quantity of a stock ticker.
  */
 const stateGraph = ciba.registerNodes(
   new StateGraph(StateAnnotation)
@@ -168,7 +168,7 @@ const stateGraph = ciba.registerNodes(
           onApproveGoTo: "tools",
           onRejectGoTo: "stopScheduler",
           scope: "stock:trade",
-          binding_message: async (_) => {
+          bindingMessage: async (_) => {
             return `Do you want to buy ${_.qty} ${_.ticker}`;
           },
         }),

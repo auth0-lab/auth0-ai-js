@@ -2,6 +2,8 @@ import { AuthorizerParams, CibaAuthorizerOptions } from "@auth0/ai";
 import { StateGraph } from "@langchain/langgraph";
 import { AIMessage, ToolMessage } from "@langchain/langgraph-sdk";
 
+import { CibaResponse } from "../types";
+
 export interface State {
   messages: (AIMessage | ToolMessage)[];
   auth0?: {
@@ -15,11 +17,7 @@ export type SchedulerParams = {
   toolId?: string;
   onResumeInvoke: string;
   cibaGraphId: string;
-  cibaResponse: {
-    auth_req_id: string;
-    expires_in: number;
-    interval: number;
-  };
+  cibaResponse: CibaResponse;
 };
 
 export type CIBAOptions<N extends string> = Omit<
@@ -40,7 +38,7 @@ export interface ICIBAGraph<N extends string = string> {
 
 export type CIBAGraphOptions<N extends string> = Omit<
   CIBAOptions<N>,
-  "binding_message"
+  "bindingMessage"
 > & {
   config: {
     onResumeInvoke: string;

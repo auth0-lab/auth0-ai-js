@@ -63,12 +63,12 @@ export const initializeCIBA =
         );
       }
 
-      if (typeof cibaOptions.binding_message === "function") {
-        bindingMessage = await cibaOptions.binding_message(tool.args);
+      if (typeof cibaOptions.bindingMessage === "function") {
+        bindingMessage = await cibaOptions.bindingMessage(tool.args);
       }
 
-      if (typeof cibaOptions.binding_message === "string") {
-        bindingMessage = cibaOptions.binding_message;
+      if (typeof cibaOptions.bindingMessage === "string") {
+        bindingMessage = cibaOptions.bindingMessage;
       }
 
       const cibaResponse = await CIBAAuthorizer.start(
@@ -76,7 +76,7 @@ export const initializeCIBA =
           userId: config?.configurable?.user_id,
           scope: cibaOptions.scope || "openid",
           audience: cibaOptions.audience,
-          binding_message: bindingMessage,
+          bindingMessage: bindingMessage,
         },
         cibaGraph.getAuthorizerParams()
       );

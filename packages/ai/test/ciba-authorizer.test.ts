@@ -1,10 +1,7 @@
 import { AuthenticationClient } from "auth0";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import {
-  CIBAAuthorizer,
-  CibaAuthorizerOptions,
-} from "../src/authorizers/ciba-authorizer";
+import { CIBAAuthorizer, CibaAuthorizerOptions } from "../src/authorizers/ciba-authorizer";
 
 vi.mock("auth0");
 
@@ -32,7 +29,7 @@ describe("CIBAAuthorizer", () => {
   it("should authorize and return credentials", async () => {
     const options: CibaAuthorizerOptions = {
       userId: "test-user",
-      binding_message: "test-message",
+      bindingMessage: "test-message",
       scope: "openid",
     };
 
@@ -66,7 +63,7 @@ describe("CIBAAuthorizer", () => {
   it("should handle access denied error", async () => {
     const options: CibaAuthorizerOptions = {
       userId: "test-user",
-      binding_message: "test-message",
+      bindingMessage: "test-message",
       scope: "openid",
     };
 
@@ -92,7 +89,7 @@ describe("CIBAAuthorizer", () => {
   it("should call authorize with function parameters", async () => {
     const options: CibaAuthorizerOptions = {
       userId: async () => "dynamic-user-id",
-      binding_message: async () => "dynamic-message",
+      bindingMessage: async () => "dynamic-message",
       scope: "openid",
     };
 

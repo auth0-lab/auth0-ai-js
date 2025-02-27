@@ -1,7 +1,7 @@
 import "dotenv/config";
 
-import { tool } from "ai";
-import { z } from "zod";
+import { FunctionTool } from "llamaindex";
+import z from "zod";
 
 import { AccessDeniedError, CIBAAuthorizer } from "@auth0/ai";
 
@@ -9,23 +9,21 @@ import { Context } from "../context";
 
 const ciba = CIBAAuthorizer.create();
 
-export const buy = (context: Context) => {
+export const buyTool = (context: Context) => {
   const useCiba = ciba({
     userId: context.userId,
-    binding_message: async ({ ticker, qty }) =>
+    bindingMessage: async ({ ticker, qty }) =>
       `Do you want to buy ${qty} shares of ${ticker}`,
     scope: "openid buy:stocks",
     audience: process.env["AUDIENCE"]!,
   });
 
-  return tool({
-    description: "Use this function to buy stock",
-    parameters: z.object({
-      ticker: z.string(),
-      qty: z.number(),
-    }),
-    execute: useCiba(
-      async ({ accessToken }, { ticker, qty }) => {
+  return FunctionTool.from(
+    useCiba(
+      async (
+        { accessToken },
+        { ticker, qty }: { ticker: string; qty: number }
+      ) => {
         const headers = {
           "Content-Type": "application/json",
         };
@@ -56,5 +54,13 @@ export const buy = (context: Context) => {
         return e.message;
       }
     ),
-  });
+    {
+      name: "buy",
+      description: "Use this function to buy stock",
+      parameters: z.object({
+        ticker: z.string(),
+        qty: z.number(),
+      }),
+    }
+  );
 };

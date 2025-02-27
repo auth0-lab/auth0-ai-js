@@ -1,30 +1,36 @@
-import "dotenv/config";
-
-import { FunctionTool } from "llamaindex";
-import z from "zod";
+import { Genkit, z } from "genkit";
+import { Context } from "src/context";
 
 import { AccessDeniedError, CIBAAuthorizer } from "@auth0/ai";
 
-import { Context } from "../context";
-
 const ciba = CIBAAuthorizer.create();
 
-export const buyTool = (context: Context) => {
+export function buyTool(ai: Genkit) {
   const useCiba = ciba({
-    userId: context.userId,
-    binding_message: async ({ ticker, qty }) =>
+    userId: async () => {
+      const data = ai.currentSession<Context>();
+      return data.state?.userId!;
+    },
+    bindingMessage: async ({ ticker, qty }) =>
       `Do you want to buy ${qty} shares of ${ticker}`,
     scope: "openid buy:stocks",
     audience: process.env["AUDIENCE"]!,
   });
 
-  return FunctionTool.from(
+  return ai.defineTool(
+    {
+      name: "buy",
+      description: "Use this function to buy stock",
+      inputSchema: z.object({
+        ticker: z.string(),
+        qty: z.number(),
+      }),
+      outputSchema: z.string(),
+    },
     useCiba(
-      async (
-        { accessToken },
-        { ticker, qty }: { ticker: string; qty: number }
-      ) => {
+      async ({ accessToken }, { ticker, qty }) => {
         const headers = {
+          Authorization: "",
           "Content-Type": "application/json",
         };
         const body = {
@@ -53,14 +59,6 @@ export const buyTool = (context: Context) => {
 
         return e.message;
       }
-    ),
-    {
-      name: "buy",
-      description: "Use this function to buy stock",
-      parameters: z.object({
-        ticker: z.string(),
-        qty: z.number(),
-      }),
-    }
+    )
   );
-};
+}
