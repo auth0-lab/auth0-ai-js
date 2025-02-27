@@ -61,7 +61,7 @@ export class FGARetriever extends BaseRetriever {
     super(retrieverFields);
     this.buildQuery = buildQuery;
     this.retriever = retriever;
-    this.consistency = consistency;
+    this.consistency = consistency || ConsistencyPreference.HigherConsistency;
     this.fgaClient =
       fgaClient ||
       new OpenFgaClient({
@@ -156,8 +156,7 @@ export class FGARetriever extends BaseRetriever {
     const response = await this.fgaClient.batchCheck(
       { checks },
       {
-        consistency:
-          this.consistency || ConsistencyPreference.HigherConsistency,
+        consistency: this.consistency,
       }
     );
 
