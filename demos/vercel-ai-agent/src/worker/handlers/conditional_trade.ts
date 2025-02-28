@@ -59,7 +59,13 @@ export const conditionalTrade = async (
     });
     console.log(`${r.text}`);
   } catch (err) {
-    console.log(err instanceof Error ? err.message : "");
+    if (err instanceof Error) {
+      console.log(err instanceof Error ? err.message : "");
+      if ("final" in err && err.final) {
+        console.log("Final error, do not retry.");
+        return;
+      }
+    }
     throw err;
   }
 };
