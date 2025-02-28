@@ -5,12 +5,13 @@ export type { AsyncStorageValue } from "./asyncLocalStorage";
 
 export { asyncLocalStorage };
 
-export type FederatedConnectionAuthorizerParams<ToolExecuteArgs extends any[]> =
-  {
-    refreshToken: (...args: ToolExecuteArgs) => Promise<string> | string;
-    scopes: string[];
-    connection: string;
-  };
+export type FederatedConnectionAuthorizerParams<ToolExecuteArgs extends any[]> = {
+  refreshToken:
+    | string
+    | ((...args: ToolExecuteArgs) => Promise<string> | string);
+  scopes: string[];
+  connection: string;
+};
 
 /**
  * Requests authorization to a third party service via Federated Connection.

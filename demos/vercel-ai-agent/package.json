@@ -1,0 +1,44 @@
+{
+  "name": "vercel-ai-agent",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "queue-job": "tsx --env-file=.env.local src/queue/index.ts",
+    "worker": "tsx --env-file=.env.local src/worker/index.ts",
+    "docker:up": "docker compose --env-file .env.local up -d",
+    "docker:down": "docker compose --env-file .env.local down -v"
+  },
+  "author": {
+    "name": "Auth0 Inc.",
+    "url": "https://auth0.com"
+  },
+  "license": "Apache-2.0",
+  "description": "",
+  "dependencies": {
+    "@ai-sdk/fireworks": "^0.1.8",
+    "@ai-sdk/openai": "1.1.9",
+    "@ai-sdk/provider-utils": "^2.1.8",
+    "@ai-sdk/ui-utils": "^1.1.14",
+    "@auth0/ai-vercel": "@auth0/ai-vercel:*",
+    "ai": "4.1.41",
+    "bullmq": "^5.41.5",
+    "date-fns": "^4.1.0",
+    "dotenv": "^16.4.5",
+    "ioredis": "^5.5.0",
+    "ms": "^2.1.3",
+    "nodemailer": "^6.10.0",
+    "z": "^1.0.9",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.8.6",
+    "@types/nodemailer": "^6.4.17",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "14.2.5",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-import-resolver-typescript": "^3.6.3",
+    "eslint-plugin-tailwindcss": "^3.17.5",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.3"
+  }
+}
