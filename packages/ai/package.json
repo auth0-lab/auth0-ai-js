@@ -28,6 +28,11 @@
       "types": "./dist/authorizers/federated-connections/index.d.ts",
       "import": "./dist/authorizers/federated-connections/index.mjs",
       "require": "./dist/authorizers/federated-connections/index.js"
+    },
+    "./CIBA": {
+      "types": "./dist/authorizers/ciba/index.d.ts",
+      "import": "./dist/authorizers/ciba/index.mjs",
+      "require": "./dist/authorizers/ciba/index.js"
     }
   },
   "files": [

@@ -1,13 +1,18 @@
 import { Tool } from "ai";
 import { AuthenticationClient, AuthenticationClientOptions } from "auth0";
 
+import { CIBAAuthorizer } from "./CIBA";
 import { FederatedConnectionAuthorizer } from "./FederatedConnections";
 
-type FederatedConnectionAuthorizerParams =
-  Partial<Pick<AuthenticationClientOptions, 'domain' | 'clientSecret' | 'clientId'>>;
+type FederatedConnectionAuthorizerParams = Partial<
+  Pick<AuthenticationClientOptions, "domain" | "clientSecret" | "clientId">
+>;
 
-type ToolWrapper = ReturnType<FederatedConnectionAuthorizer['authorizer']>;
-type FederatedConnectionParams = ConstructorParameters<typeof FederatedConnectionAuthorizer>[1];
+type ToolWrapper = ReturnType<FederatedConnectionAuthorizer["authorizer"]>;
+type FederatedConnectionParams = ConstructorParameters<
+  typeof FederatedConnectionAuthorizer
+>[1];
+type CIBAParams = ConstructorParameters<typeof CIBAAuthorizer>[1];
 
 export class Auth0AI {
   readonly domain: string;
@@ -39,19 +44,24 @@ export class Auth0AI {
     });
   }
 
-  withFederatedConnection(
-    params: FederatedConnectionParams,
-  ): ToolWrapper;
+  withCIBA(params: CIBAParams): ToolWrapper;
 
-  withFederatedConnection(
-    params: FederatedConnectionParams,
-    tool: Tool
-  ): Tool;
+  withCIBA(params: CIBAParams, tool: Tool): Tool;
 
-  withFederatedConnection(
-    params: FederatedConnectionParams,
-    tool?: Tool
-  ) {
+  withCIBA(params: CIBAParams, tool?: Tool) {
+    const fc = new CIBAAuthorizer(this, params);
+    const authorizer = fc.authorizer();
+    if (tool) {
+      return authorizer(tool);
+    }
+    return authorizer;
+  }
+
+  withFederatedConnection(params: FederatedConnectionParams): ToolWrapper;
+
+  withFederatedConnection(params: FederatedConnectionParams, tool: Tool): Tool;
+
+  withFederatedConnection(params: FederatedConnectionParams, tool?: Tool) {
     const fc = new FederatedConnectionAuthorizer(this, params);
     const authorizer = fc.authorizer();
     if (tool) {
