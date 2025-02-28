@@ -1,6 +1,4 @@
-import { FederatedConnections } from "@auth0/ai";
-
-const { asyncLocalStorage } = FederatedConnections;
+import { asyncLocalStorage } from "@auth0/ai/FederatedConnections";
 
 export const getFederatedConnectionAccessToken = () => {
   const t = asyncLocalStorage.getStore();
