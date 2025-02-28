@@ -23,6 +23,11 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
+    },
+    "./FederatedConnections": {
+      "types": "./dist/authorizers/federated-connections/index.d.ts",
+      "import": "./dist/authorizers/federated-connections/index.mjs",
+      "require": "./dist/authorizers/federated-connections/index.js"
     }
   },
   "files": [

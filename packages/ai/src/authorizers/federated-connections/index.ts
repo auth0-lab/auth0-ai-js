@@ -1,5 +1,9 @@
-import { TokenResponse } from "auth0/dist/cjs/auth/tokenExchange";
-import { AsyncLocalStorage } from "node:async_hooks";
+import { TokenResponse } from "../../TokenResponse";
+import { asyncLocalStorage } from "./asyncLocalStorage";
+
+export type { AsyncStorageValue } from "./asyncLocalStorage";
+
+export { asyncLocalStorage };
 
 export type FederatedConnectionAuthorizerParams<ToolExecuteArgs extends any[]> =
   {
@@ -7,34 +11,6 @@ export type FederatedConnectionAuthorizerParams<ToolExecuteArgs extends any[]> =
     scopes: string[];
     connection: string;
   };
-
-export type AsyncStorageValue<TContext> = {
-  getAccessToken: () => string;
-
-  /**
-   * The tool execution context.
-   */
-  context: TContext;
-
-  /**
-   * The federated connection name.
-   */
-  connection: string;
-
-  /**
-   * The scopes required to access the federated connection.
-   */
-  scopes: string[];
-
-  /**
-   * The scopes that the current access token has.
-   */
-  currentScopes?: string[];
-};
-
-export const asyncLocalStorage = new AsyncLocalStorage<
-  AsyncStorageValue<any>
->();
 
 /**
  * Requests authorization to a third party service via Federated Connection.

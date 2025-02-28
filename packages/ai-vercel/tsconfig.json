@@ -7,7 +7,7 @@
     "forceConsistentCasingInFileNames": true,
     "inlineSources": false,
     "isolatedModules": true,
-    "moduleResolution": "node",
+    "moduleResolution": "nodenext",
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "preserveWatchOutput": true,
@@ -21,7 +21,7 @@
       "dom",
       "ES2018"
     ],
-    "module": "ESNext",
+    "module": "NodeNext",
     "target": "ES2018",
     "outDir": "./dist",
     "baseUrl": ".",

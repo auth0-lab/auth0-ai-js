@@ -1,14 +1,14 @@
 import { Tool, ToolExecutionOptions } from "ai";
-import { TokenResponse } from "auth0/dist/cjs/auth/tokenExchange";
 import { Schema, z } from "zod";
 
-import { FederatedConnections } from "@auth0/ai";
+import { TokenResponse } from "@auth0/ai";
+import { FederatedConnectionAuthorizerBase } from "@auth0/ai/FederatedConnections";
 
 import { FederatedConnectionError } from "./FederatedConnectionError";
 
 type Parameters = z.ZodTypeAny | Schema<any>;
 
-export class FederatedConnectionAuthorizer extends FederatedConnections.FederatedConnectionAuthorizerBase<
+export class FederatedConnectionAuthorizer extends FederatedConnectionAuthorizerBase<
   [any, ToolExecutionOptions]
 > {
   protected override validateToken(tokenResponse: TokenResponse): void {

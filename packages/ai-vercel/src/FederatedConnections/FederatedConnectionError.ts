@@ -1,8 +1,6 @@
-import { FederatedConnections } from "@auth0/ai";
+import { asyncLocalStorage } from "@auth0/ai/FederatedConnections";
 
 import { Interruption } from "#interruptions";
-
-const { asyncLocalStorage } = FederatedConnections;
 
 /**
  * Error thrown when a tool call requires an access token for an external service.
