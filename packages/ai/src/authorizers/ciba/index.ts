@@ -270,10 +270,8 @@ export class CIBAAuthorizerBase<ToolExecuteArgs extends any[]> {
           ...args
         );
       }
-      const credentials = await this.getCredentials(authorizeResponse);
 
       const storeValue: AsyncStorageValue<any> = {
-        credentials,
         context: getContext(...args),
       };
 
@@ -284,6 +282,8 @@ export class CIBAAuthorizerBase<ToolExecuteArgs extends any[]> {
       }
 
       return asyncLocalStorage.run(storeValue, async () => {
+        const credentials = await this.getCredentials(authorizeResponse);
+        storeValue.credentials = credentials;
         return execute(...args);
       });
     };
