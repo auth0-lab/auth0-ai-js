@@ -1,4 +1,4 @@
-import { asyncLocalStorage } from "@auth0/ai/FederatedConnections";
+import { asyncLocalStorage } from "@auth0/ai/CIBA";
 
 import { Interruption } from "#interruptions";
 
