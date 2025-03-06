@@ -1,17 +1,18 @@
 import { TokenResponse } from "../../TokenResponse";
-import { asyncLocalStorage } from "./asyncLocalStorage";
+import { asyncLocalStorage, AsyncStorageValue } from "./asyncLocalStorage";
 
 export type { AsyncStorageValue } from "./asyncLocalStorage";
 
 export { asyncLocalStorage };
 
-export type FederatedConnectionAuthorizerParams<ToolExecuteArgs extends any[]> = {
-  refreshToken:
-    | string
-    | ((...args: ToolExecuteArgs) => Promise<string> | string);
-  scopes: string[];
-  connection: string;
-};
+export type FederatedConnectionAuthorizerParams<ToolExecuteArgs extends any[]> =
+  {
+    refreshToken:
+      | string
+      | ((...args: ToolExecuteArgs) => Promise<string> | string);
+    scopes: string[];
+    connection: string;
+  };
 
 /**
  * Requests authorization to a third party service via Federated Connection.
@@ -42,7 +43,7 @@ export abstract class FederatedConnectionAuthorizerBase<
       );
     }
 
-    const currentScopes = tokenResponse.scope.split(" ");
+    const currentScopes = (tokenResponse.scope ?? "").split(" ");
     const missingScopes = this.params.scopes.filter(
       (s) => !currentScopes.includes(s)
     );
@@ -101,13 +102,7 @@ export abstract class FederatedConnectionAuthorizerBase<
     execute: (...args: ToolExecuteArgs) => any
   ): (...args: ToolExecuteArgs) => any {
     return async (...args: ToolExecuteArgs) => {
-      const tokenResponse = await this.getAccessToken(...args);
-
-      const storeValue = {
-        getAccessToken: () => {
-          this.validateToken(tokenResponse);
-          return tokenResponse!.access_token;
-        },
+      const asyncStore: AsyncStorageValue<any> = {
         context: await getContext(...args),
         scopes: this.params.scopes,
         connection: this.params.connection,
@@ -119,7 +114,10 @@ export abstract class FederatedConnectionAuthorizerBase<
         );
       }
 
-      return asyncLocalStorage.run(storeValue, async () => {
+      return asyncLocalStorage.run(asyncStore, async () => {
+        const tokenResponse = await this.getAccessToken(...args);
+        this.validateToken(tokenResponse);
+        asyncStore.accessToken = tokenResponse!.access_token;
         return execute(...args);
       });
     };

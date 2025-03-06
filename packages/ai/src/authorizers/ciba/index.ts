@@ -63,27 +63,11 @@ export type CIBAAuthorizerParams<ToolExecuteArgs extends any[]> = {
   ) => Promise<void>;
 };
 
-export enum CibaAuthorizerCheckResponse {
-  PENDING = "pending",
-  APPROVED = "approved",
-  REJECTED = "rejected",
-  EXPIRED = "expired",
-}
-
 export type AuthorizeResponse = {
   authReqId: string;
   requestedAt: number;
   expiresIn: number;
   interval: number;
-};
-
-export type TokenResponse = {
-  accessToken: string;
-  refreshToken?: string;
-  idToken: string;
-  tokenType?: string;
-  expiresIn: number;
-  scope: string;
 };
 
 function ensureOpenIdScope(scope: string): string {
