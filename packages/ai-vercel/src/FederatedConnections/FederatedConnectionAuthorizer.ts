@@ -31,7 +31,7 @@ export class FederatedConnectionAuthorizer extends FederatedConnectionAuthorizer
     ): Tool<PARAMETERS, RESULT> => {
       return {
         ...t,
-        execute: this.wrapExecute((params, ctx) => ctx, t.execute!),
+        execute: this.protect((params, ctx) => ctx, t.execute!),
       };
     };
   }

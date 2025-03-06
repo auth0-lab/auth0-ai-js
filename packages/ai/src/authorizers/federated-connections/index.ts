@@ -5,12 +5,13 @@ export type { AsyncStorageValue } from "./asyncLocalStorage";
 
 export { asyncLocalStorage };
 
-export type FederatedConnectionAuthorizerParams<ToolExecuteArgs extends any[]> =
-  {
-    refreshToken: (...args: ToolExecuteArgs) => Promise<string> | string;
-    scopes: string[];
-    connection: string;
-  };
+export type FederatedConnectionAuthorizerParams<ToolExecuteArgs extends any[]> = {
+  refreshToken:
+    | string
+    | ((...args: ToolExecuteArgs) => Promise<string> | string);
+  scopes: string[];
+  connection: string;
+};
 
 /**
  * Requests authorization to a third party service via Federated Connection.
@@ -87,7 +88,15 @@ export abstract class FederatedConnectionAuthorizerBase<
     return res.json();
   }
 
-  protected wrapExecute(
+  /**
+   *
+   * Wraps the execute method of an AI tool to handle Federated Connections authorization.
+   *
+   * @param getContext - A function that returns the context of the tool execution.
+   * @param execute - The tool execute method.
+   * @returns The wrapped execute method.
+   */
+  protected protect(
     getContext: (...args: ToolExecuteArgs) => any,
     execute: (...args: ToolExecuteArgs) => any
   ): (...args: ToolExecuteArgs) => any {

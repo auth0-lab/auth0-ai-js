@@ -11,6 +11,9 @@
       "directory": "demos/vercel-ai"
     },
     {
+      "directory": "demos/vercel-ai-agent"
+    },
+    {
       "pattern": "packages/*"
     }
   ],

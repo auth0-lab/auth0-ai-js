@@ -1,0 +1,23 @@
+services:
+  redis:
+    container_name: redis
+    image: redis:6
+    ports:
+      - "${REDISPORT}:6379"
+    networks:
+      - vercel-ai-agent
+    restart: always
+
+  maildev:
+    container_name: maildev
+    image: maildev/maildev
+    ports:
+      - "${MAILDEV_HTTP_PORT}:1080"
+      - "${SMTP_PORT}:1025"
+    networks:
+      - vercel-ai-agent
+    restart: always
+
+networks:
+  vercel-ai-agent:
+    driver: bridge
