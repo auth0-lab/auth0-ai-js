@@ -7,5 +7,5 @@ export const getFederatedConnectionAccessToken = () => {
       "The tool must be wrapped with the withThirdPartyAPIAccess function."
     );
   }
-  return t.getAccessToken();
+  return t.accessToken;
 };

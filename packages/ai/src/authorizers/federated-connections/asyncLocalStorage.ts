@@ -1,7 +1,10 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 
 export type AsyncStorageValue<TContext> = {
-  getAccessToken: () => string;
+  /**
+   * The Federated Connection access token.
+   */
+  accessToken?: string;
 
   /**
    * The tool execution context.
