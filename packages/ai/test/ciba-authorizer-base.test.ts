@@ -8,18 +8,10 @@ import {
   AuthorizationRequestExpiredError,
 } from "../src/errors";
 
-class CIBAAuthorizerMockImpl extends CIBAAuthorizerBase<[string]> {
-  public protect(
-    getContext: (args_0: string) => any,
-    execute: (args_0: string) => any
-  ): (args_0: string) => any {
-    return super.protect(getContext, execute);
-  }
-}
 vi.mock("auth0");
 
 describe("CIBAAuthorizerBase", () => {
-  let authorizer: CIBAAuthorizerMockImpl;
+  let authorizer: CIBAAuthorizerBase<[string]>;
   const mockParams = {
     userID: "user123",
     bindingMessage: "test-binding",
@@ -44,7 +36,7 @@ describe("CIBAAuthorizerBase", () => {
   });
 
   beforeEach(() => {
-    authorizer = new CIBAAuthorizerMockImpl(
+    authorizer = new CIBAAuthorizerBase(
       {
         domain: "test.auth0.com",
         clientId: "test-client",
@@ -56,7 +48,7 @@ describe("CIBAAuthorizerBase", () => {
 
   describe("constructor", () => {
     it("should initialize with explicit params", () => {
-      const auth = new CIBAAuthorizerMockImpl(
+      const auth = new CIBAAuthorizerBase(
         {
           domain: "custom.auth0.com",
           clientId: "custom-client",
@@ -64,7 +56,7 @@ describe("CIBAAuthorizerBase", () => {
         },
         mockParams
       );
-      expect(auth).toBeInstanceOf(CIBAAuthorizerMockImpl);
+      expect(auth).toBeInstanceOf(CIBAAuthorizerBase);
     });
 
     it("should fallback to environment variables", () => {
@@ -72,7 +64,7 @@ describe("CIBAAuthorizerBase", () => {
       process.env.AUTH0_CLIENT_ID = "env-client";
       process.env.AUTH0_CLIENT_SECRET = "env-secret";
 
-      const auth = new CIBAAuthorizerMockImpl({}, mockParams);
+      const auth = new CIBAAuthorizerBase({}, mockParams);
       expect(auth).toBeInstanceOf(CIBAAuthorizerBase);
     });
   });

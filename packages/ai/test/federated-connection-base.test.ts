@@ -5,25 +5,16 @@ import {
   FederatedConnectionAuthorizerBase,
 } from "../src/authorizers/federated-connections";
 
-class FedConnMockImpl extends FederatedConnectionAuthorizerBase<[string]> {
-  public protect(
-    getContext: (args_0: string) => any,
-    execute: (args_0: string) => any
-  ): (args_0: string) => any {
-    return super.protect(getContext, execute);
-  }
-}
-
 const fetchMock = vi.fn();
 
 vi.stubGlobal("fetch", fetchMock);
 
 describe("FederatedConnectionAuthorizerBase", () => {
-  let authorizer: FedConnMockImpl;
+  let authorizer: FederatedConnectionAuthorizerBase<[string]>;
   const mockParams = {
     connection: "test-connection",
     scopes: ["read:calendar"],
-    refreshToken: vi.fn(),
+    refreshToken: vi.fn().mockResolvedValue("test-refresh-token"),
   };
 
   afterEach(() => {
@@ -31,7 +22,7 @@ describe("FederatedConnectionAuthorizerBase", () => {
   });
 
   beforeEach(() => {
-    authorizer = new FedConnMockImpl(
+    authorizer = new FederatedConnectionAuthorizerBase<[string]>(
       {
         domain: "test.auth0.com",
         clientId: "test-client",
@@ -43,7 +34,7 @@ describe("FederatedConnectionAuthorizerBase", () => {
 
   describe("constructor", () => {
     it("should initialize with explicit params", () => {
-      const auth = new FedConnMockImpl(
+      const auth = new FederatedConnectionAuthorizerBase<[string]>(
         {
           domain: "custom.auth0.com",
           clientId: "custom-client",
@@ -51,7 +42,7 @@ describe("FederatedConnectionAuthorizerBase", () => {
         },
         mockParams
       );
-      expect(auth).toBeInstanceOf(FedConnMockImpl);
+      expect(auth).toBeInstanceOf(FederatedConnectionAuthorizerBase<[string]>);
     });
   });
 
@@ -184,6 +175,7 @@ describe("FederatedConnectionAuthorizerBase", () => {
           "connection": "test-connection",
           "grant_type": "urn:auth0:params:oauth:grant-type:token-exchange:federated-connection-access-token",
           "requested_token_type": "http://auth0.com/oauth/token-type/federated-connection-access-token",
+          "subject_token": "test-refresh-token",
           "subject_token_type": "urn:ietf:params:oauth:token-type:refresh_token",
         }
       `);
