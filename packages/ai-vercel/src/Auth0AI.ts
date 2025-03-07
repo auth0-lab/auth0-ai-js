@@ -4,7 +4,7 @@ import { AuthenticationClient, AuthenticationClientOptions } from "auth0";
 import { CIBAAuthorizer } from "./CIBA";
 import { FederatedConnectionAuthorizer } from "./FederatedConnections";
 
-type FederatedConnectionAuthorizerParams = Partial<
+type AuthorizerParams = Partial<
   Pick<AuthenticationClientOptions, "domain" | "clientSecret" | "clientId">
 >;
 
@@ -20,7 +20,7 @@ export class Auth0AI {
   readonly clientSecret: string;
   readonly authClient: AuthenticationClient;
 
-  constructor(params: FederatedConnectionAuthorizerParams = {}) {
+  constructor(params: AuthorizerParams = {}) {
     const domain = params.domain || process.env.AUTH0_DOMAIN;
     const clientId = params.clientId || process.env.AUTH0_CLIENT_ID;
     const clientSecret = params.clientSecret || process.env.AUTH0_CLIENT_SECRET;

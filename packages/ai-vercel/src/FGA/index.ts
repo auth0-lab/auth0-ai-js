@@ -1,0 +1,1 @@
+export { FGAAuthorizer } from "./FGAAuthorizer";
