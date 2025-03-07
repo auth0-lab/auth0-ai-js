@@ -1,3 +1,5 @@
+import { AuthorizationRequired } from "src/errors";
+
 import { TokenResponse } from "../../TokenResponse";
 import { asyncLocalStorage, AsyncStorageValue } from "./asyncLocalStorage";
 
@@ -17,9 +19,7 @@ export type FederatedConnectionAuthorizerParams<ToolExecuteArgs extends any[]> =
 /**
  * Requests authorization to a third party service via Federated Connection.
  */
-export abstract class FederatedConnectionAuthorizerBase<
-  ToolExecuteArgs extends any[]
-> {
+export class FederatedConnectionAuthorizerBase<ToolExecuteArgs extends any[]> {
   constructor(
     private readonly auth0: {
       domain: string;
@@ -28,6 +28,10 @@ export abstract class FederatedConnectionAuthorizerBase<
     },
     private params: FederatedConnectionAuthorizerParams<ToolExecuteArgs>
   ) {}
+
+  protected handleAuthorizationErrors(err: AuthorizationRequired) {
+    throw err;
+  }
 
   protected validateToken(tokenResponse?: TokenResponse) {
     const store = asyncLocalStorage.getStore();
@@ -38,7 +42,7 @@ export abstract class FederatedConnectionAuthorizerBase<
     }
 
     if (!tokenResponse) {
-      throw new Error(
+      throw new AuthorizationRequired(
         `Authorization required to access the Federated Connection: ${this.params.connection}`
       );
     }
@@ -50,7 +54,7 @@ export abstract class FederatedConnectionAuthorizerBase<
     store.currentScopes = currentScopes;
 
     if (missingScopes.length > 0) {
-      throw new Error(
+      throw new AuthorizationRequired(
         `Authorization required to access the Federated Connection: ${
           this.params.connection
         }. Missing scopes: ${missingScopes.join(", ")}`
@@ -61,16 +65,22 @@ export abstract class FederatedConnectionAuthorizerBase<
   protected async getAccessToken(
     ...toolContext: ToolExecuteArgs
   ): Promise<TokenResponse | undefined> {
+    const subjectToken =
+      typeof this.params.refreshToken === "string"
+        ? this.params.refreshToken
+        : await this.params.refreshToken(...toolContext);
+
+    if (!subjectToken) {
+      return;
+    }
+
     const exchangeParams = {
       grant_type:
         "urn:auth0:params:oauth:grant-type:token-exchange:federated-connection-access-token",
       client_id: this.auth0.clientId,
       client_secret: this.auth0.clientSecret,
       subject_token_type: "urn:ietf:params:oauth:token-type:refresh_token",
-      subject_token:
-        typeof this.params.refreshToken === "string"
-          ? this.params.refreshToken
-          : await this.params.refreshToken(...toolContext),
+      subject_token: subjectToken,
       connection: this.params.connection,
       requested_token_type:
         "http://auth0.com/oauth/token-type/federated-connection-access-token",
@@ -97,7 +107,7 @@ export abstract class FederatedConnectionAuthorizerBase<
    * @param execute - The tool execute method.
    * @returns The wrapped execute method.
    */
-  protected protect(
+  protect(
     getContext: (...args: ToolExecuteArgs) => any,
     execute: (...args: ToolExecuteArgs) => any
   ): (...args: ToolExecuteArgs) => any {
@@ -115,10 +125,17 @@ export abstract class FederatedConnectionAuthorizerBase<
       }
 
       return asyncLocalStorage.run(asyncStore, async () => {
-        const tokenResponse = await this.getAccessToken(...args);
-        this.validateToken(tokenResponse);
-        asyncStore.accessToken = tokenResponse!.access_token;
-        return execute(...args);
+        try {
+          const tokenResponse = await this.getAccessToken(...args);
+          this.validateToken(tokenResponse);
+          asyncStore.accessToken = tokenResponse!.access_token;
+          return execute(...args);
+        } catch (err) {
+          if (err instanceof AuthorizationRequired) {
+            return this.handleAuthorizationErrors(err);
+          }
+          throw err;
+        }
       });
     };
   }

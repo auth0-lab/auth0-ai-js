@@ -177,57 +177,6 @@ export class CIBAAuthorizerBase<ToolExecuteArgs extends any[]> {
     }
   }
 
-  // private async poll(params: AuthorizeResponse): Promise<Credentials> {
-  //   return new Promise((resolve, reject) => {
-  //     const startTime = Date.now();
-  //     const interval = setInterval(async () => {
-  //       try {
-  //         const elapsedSeconds = (Date.now() - startTime) / 1000;
-
-  //         if (elapsedSeconds >= params.expiresIn) {
-  //           clearInterval(interval);
-  //           return reject(
-  //             new AuthorizationRequestExpiredError(
-  //               "Authorization request has expired"
-  //             )
-  //           );
-  //         }
-
-  //         const response = await this.auth0.backchannel.backchannelGrant({
-  //           auth_req_id: params.authReqId,
-  //         });
-
-  //         const credentials = {
-  //           accessToken: {
-  //             type: response.token_type || "bearer",
-  //             value: response.access_token,
-  //           },
-  //         };
-
-  //         clearInterval(interval);
-
-  //         return resolve(credentials);
-  //       } catch (e: any) {
-  //         if (e.error == "invalid_request") {
-  //           clearInterval(interval);
-  //           return reject(
-  //             new UserDoesNotHavePushNotificationsError(e.error_description)
-  //           );
-  //         }
-
-  //         if (e.error == "access_denied") {
-  //           clearInterval(interval);
-  //           return reject(new AccessDeniedError(e.error_description));
-  //         }
-
-  //         if (e.error == "authorization_pending") {
-  //           return;
-  //         }
-  //       }
-  //     }, params.interval * 1000);
-  //   });
-  // }
-
   /**
    *
    * Wraps the execute method of a AI tool to handle CIBA authorization.
@@ -236,7 +185,7 @@ export class CIBAAuthorizerBase<ToolExecuteArgs extends any[]> {
    * @param execute - The tool execute method.
    * @returns The wrapped execute method.
    */
-  protected protect(
+  protect(
     getContext: (...args: ToolExecuteArgs) => any,
     execute: (...args: ToolExecuteArgs) => any
   ): (...args: ToolExecuteArgs) => any {

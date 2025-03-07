@@ -25,3 +25,10 @@ export class AuthorizationPending extends Error {
     this.name = AuthorizationPending.name;
   }
 }
+
+export class AuthorizationRequired extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = AuthorizationRequired.name;
+  }
+}
