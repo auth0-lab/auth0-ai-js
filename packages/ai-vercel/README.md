@@ -97,6 +97,69 @@ export const checkUsersCalendar = withCalendarFreeBusyAccess(
 );
 ```
 
+
+## CIBA: Client Initiated Backchannel Authentication
+
+```javascript
+import { auth0 } from "./auth0";
+
+export const buyStockAuthorizer = auth0AI.withCIBA({
+  //Same parameters passed to the tool execute function
+  userID: (params: { userID: string }, ctx) => params.userID,
+
+  //The message the user will see on the notification
+  bindingMessage: "Confirm the purchase",
+
+  //The scopes and audience to request
+  scope: "openid stock:trade",
+  audience: "http://localhost:8081",
+
+  //Store the authorization response
+  storeAuthorizationResponse: async (
+    response: AuthorizeResponse,
+    { tradeID }: { tradeID: string }
+  ) => {
+    // eg
+    // await db.set(`auth_response:${tradeID}`, JSON.stringify(response));
+  },
+
+  //Retrieve the authorization response
+  getAuthorizationResponse: async ({ tradeID }: { tradeID: string }) => {
+    //eg
+    // return db.get(`auth_response:${tradeID}`);
+  },
+});
+```
+
+Then wrap the tool as follows:
+
+```js
+export const purchaseStock = buyStockAuthorizer({
+  description: "Execute an stock purchase given stock ticker and quantity",
+  parameters: z.object({
+    tradeID: z.string().uuid().describe('The unique identifier for the trade provided by the user'),
+    userID: z.string().describe('The user ID of the user who created the conditional trade'),
+    ticker: z.string().describe('The stock ticker to trade'),
+    qty: z.number().int().positive().describe('The quantity of shares to trade'),
+  }),
+  execute: async (
+    {
+      userID,
+      ticker,
+      qty,
+    }: {
+      userID: string;
+      ticker: string;
+      qty: number;
+    }
+  ): Promise<string> => {
+    const credentials = getCIBACredentials();
+    //use credentials.accessToken to call the stock API.
+    return `Just bought ${qty} shares of ${ticker} for ${userID}`;
+  },
+})
+```
+
 ## FGA
 
 ```javascript
