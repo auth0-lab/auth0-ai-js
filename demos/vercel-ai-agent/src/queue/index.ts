@@ -57,9 +57,9 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       qty: Math.floor(Math.random() * 100),
 
       tradeID: id,
-      userID: "google-oauth2|115593114228687151710",
 
-      email: "jose@okta.com",
+      userID: process.env.TEST_USER_ID as string,
+      email: process.env.TEST_USER_EMAIL as string,
 
       condition: {
         metric: "PE",
