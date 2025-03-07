@@ -97,6 +97,44 @@ export const checkUsersCalendar = withCalendarFreeBusyAccess(
 );
 ```
 
+## FGA
+
+```javascript
+import { FGA_AI } from "@auth0/ai-vercel";
+
+const auth0AI = new FGA_AI({
+  apiScheme,
+  apiHost
+  storeId,
+  credentials: {
+    method: CredentialsMethod.ClientCredentials,
+    config: {
+      apiTokenIssuer,
+      clientId,
+      clientSecret,
+    },
+  },
+});
+// Alternatively you can use env variables: `FGA_API_SCHEME`, `FGA_API_HOST`, `FGA_STORE_ID`, `FGA_API_TOKEN_ISSUER`, `FGA_CLIENT_ID` and `FGA_CLIENT_SECRET`
+```
+
+Then initialize the tool wrapper:
+
+```js
+const authorizedTool = fgaAI.withFGA({
+  buildQuery: async ({userID, doc}) => ({ user: userID, object: doc, relation: 'read' })
+}, myAITool);
+
+// Or create a wrapper to apply to tools later
+const authorizer = fgaAI.withFGA({
+  buildQuery: async ({userID, doc}) => ({ user: userID, object: doc, relation: 'read' })
+});
+
+const authorizedTool = authorizer(myAITool);
+```
+
+Note: the parameter gives to the `buildQuery` function are the same provided to the tool's `execute` function.
+
 ## Interruptions
 
 This library includes infrastructure code within the AI SDK to handle a concept called **Interruptions**.

@@ -1,6 +1,2 @@
-export {
-  FederatedConnectionAuthorizer,
-  getFederatedConnectionAccessToken,
-  FederatedConnectionError
-} from './FederatedConnections';
-export { Auth0AI } from './Auth0AI';
+export { Auth0AI } from "./Auth0AI";
+export { FGA_AI } from "./FGA_AI";

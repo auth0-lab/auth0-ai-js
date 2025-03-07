@@ -1,5 +1,5 @@
-import { AuthorizationRequired } from "src/errors";
-
+import { AuthorizationRequired } from "../../errors";
+import { AuthorizerToolParameter, resolveParameter } from "../../parameters";
 import { TokenResponse } from "../../TokenResponse";
 import { asyncLocalStorage, AsyncStorageValue } from "./asyncLocalStorage";
 
@@ -9,11 +9,9 @@ export { asyncLocalStorage };
 
 export type FederatedConnectionAuthorizerParams<ToolExecuteArgs extends any[]> =
   {
-    refreshToken:
-      | string
-      | ((...args: ToolExecuteArgs) => Promise<string> | string);
-    scopes: string[];
-    connection: string;
+    refreshToken: AuthorizerToolParameter<ToolExecuteArgs, string>;
+    scopes: AuthorizerToolParameter<ToolExecuteArgs, string[]>;
+    connection: AuthorizerToolParameter<ToolExecuteArgs, string>;
   };
 
 /**
@@ -48,9 +46,8 @@ export class FederatedConnectionAuthorizerBase<ToolExecuteArgs extends any[]> {
     }
 
     const currentScopes = (tokenResponse.scope ?? "").split(" ");
-    const missingScopes = this.params.scopes.filter(
-      (s) => !currentScopes.includes(s)
-    );
+    const { scopes } = store;
+    const missingScopes = scopes.filter((s) => !currentScopes.includes(s));
     store.currentScopes = currentScopes;
 
     if (missingScopes.length > 0) {
@@ -65,10 +62,10 @@ export class FederatedConnectionAuthorizerBase<ToolExecuteArgs extends any[]> {
   protected async getAccessToken(
     ...toolContext: ToolExecuteArgs
   ): Promise<TokenResponse | undefined> {
-    const subjectToken =
-      typeof this.params.refreshToken === "string"
-        ? this.params.refreshToken
-        : await this.params.refreshToken(...toolContext);
+    const subjectToken = await resolveParameter(
+      this.params.refreshToken,
+      toolContext
+    );
 
     if (!subjectToken) {
       return;
@@ -114,8 +111,8 @@ export class FederatedConnectionAuthorizerBase<ToolExecuteArgs extends any[]> {
     return async (...args: ToolExecuteArgs) => {
       const asyncStore: AsyncStorageValue<any> = {
         context: await getContext(...args),
-        scopes: this.params.scopes,
-        connection: this.params.connection,
+        scopes: await resolveParameter(this.params.scopes, args),
+        connection: await resolveParameter(this.params.connection, args),
       };
 
       if (asyncLocalStorage.getStore()) {

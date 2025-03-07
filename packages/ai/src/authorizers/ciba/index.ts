@@ -1,5 +1,6 @@
 import { AuthenticationClient } from "auth0";
 import { AsyncLocalStorage } from "node:async_hooks";
+import { AuthorizerToolParameter, resolveParameter } from "src/parameters";
 
 import { AuthorizerParams } from "../";
 import { Credentials } from "../../credentials";
@@ -23,27 +24,9 @@ export const asyncLocalStorage = new AsyncLocalStorage<
   AsyncStorageValue<any>
 >();
 
-type ParameterToolRetriever<
-  ToolExecuteArgs extends any[],
-  TResult extends (AuthorizeResponse | undefined) | string = string
-> = TResult | ((...args: ToolExecuteArgs) => Promise<TResult> | TResult);
-
-const retrieveParameter = <
-  ToolExecuteArgs extends any[],
-  TResult extends (AuthorizeResponse | undefined) | string = string
->(
-  resolver: ParameterToolRetriever<ToolExecuteArgs, TResult>,
-  context: ToolExecuteArgs
-): TResult | Promise<TResult> => {
-  if (typeof resolver !== "function") {
-    return resolver;
-  }
-  return resolver(...context);
-};
-
 export type CIBAAuthorizerParams<ToolExecuteArgs extends any[]> = {
-  userID: ParameterToolRetriever<ToolExecuteArgs>;
-  bindingMessage: ParameterToolRetriever<ToolExecuteArgs>;
+  userID: AuthorizerToolParameter<ToolExecuteArgs>;
+  bindingMessage: AuthorizerToolParameter<ToolExecuteArgs>;
   scope: string;
   audience?: string;
   requestExpiry?: string;
@@ -52,7 +35,7 @@ export type CIBAAuthorizerParams<ToolExecuteArgs extends any[]> = {
   /**
    * Given a tool context returns the authorization request data.
    */
-  getAuthorizationResponse: ParameterToolRetriever<
+  getAuthorizationResponse: AuthorizerToolParameter<
     ToolExecuteArgs,
     AuthorizeResponse | undefined
   >;
@@ -118,12 +101,12 @@ export class CIBAAuthorizerBase<ToolExecuteArgs extends any[]> {
       subjectIssuerContext: this.params.subjectIssuerContext,
     };
 
-    authorizeParams.binding_message = await retrieveParameter(
+    authorizeParams.binding_message = await resolveParameter(
       this.params.bindingMessage,
       toolContext
     );
 
-    authorizeParams.userId = await retrieveParameter(
+    authorizeParams.userId = await resolveParameter(
       this.params.userID,
       toolContext
     );
@@ -190,7 +173,7 @@ export class CIBAAuthorizerBase<ToolExecuteArgs extends any[]> {
     execute: (...args: ToolExecuteArgs) => any
   ): (...args: ToolExecuteArgs) => any {
     return async (...args: ToolExecuteArgs) => {
-      let authorizeResponse = await retrieveParameter(
+      let authorizeResponse = await resolveParameter(
         this.params.getAuthorizationResponse,
         args
       );

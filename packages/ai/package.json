@@ -33,6 +33,11 @@
       "types": "./dist/authorizers/ciba/index.d.ts",
       "import": "./dist/authorizers/ciba/index.mjs",
       "require": "./dist/authorizers/ciba/index.js"
+    },
+    "./FGA": {
+      "types": "./dist/authorizers/fga/index.d.ts",
+      "import": "./dist/authorizers/fga/index.mjs",
+      "require": "./dist/authorizers/fga/index.js"
     }
   },
   "files": [
