@@ -17,10 +17,10 @@
   "dependencies": {
     "@ai-sdk/fireworks": "^0.1.8",
     "@ai-sdk/openai": "1.1.9",
-    "@ai-sdk/provider-utils": "^2.1.8",
+    "@ai-sdk/provider-utils": "^2.1.11",
     "@ai-sdk/ui-utils": "^1.1.14",
     "@auth0/ai-vercel": "@auth0/ai-vercel:*",
-    "ai": "4.1.41",
+    "ai": "4.1.54",
     "bullmq": "^5.41.5",
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.5",
