@@ -12,7 +12,7 @@ export type CibaAuthorizerOptions = {
   bindingMessage: string | StringOrFn;
   scope: string;
   audience?: string;
-  requestExpiry?: string;
+  requestExpiry?: number;
 };
 
 export enum CibaAuthorizerCheckResponse {
@@ -78,7 +78,7 @@ export class CIBAAuthorizer {
       binding_message: "",
       userId: "",
       audience: params.audience || "",
-      request_expiry: params.requestExpiry,
+      request_expiry: params.requestExpiry?.toString(),
     };
 
     if (typeof params.bindingMessage === "function") {
