@@ -1,16 +1,15 @@
 import "dotenv/config";
 
-import { tool } from "ai";
 import { z } from "zod";
 
-import { FGAAuthorizer } from "@auth0/ai";
+import { FGA_AI } from "@auth0/ai-vercel";
 
 import { Context } from "../context";
 
-const fga = FGAAuthorizer.create();
+const fgaAI = new FGA_AI();
 
 export const buy = (context: Context) => {
-  const useFGA = fga({
+  const useFGA = fgaAI.withFGA({
     buildQuery: async ({ ticker }) => {
       return {
         user: `user:${context.userId}`,
@@ -19,20 +18,19 @@ export const buy = (context: Context) => {
         context: { current_time: new Date().toISOString() },
       };
     },
+    onUnauthorized({ ticker }) {
+      return `The user is not allowed to buy ${ticker}.`;
+    },
   });
 
-  return tool({
+  return useFGA({
     description: "Use this function to buy stock",
     parameters: z.object({
       ticker: z.string(),
       qty: z.number(),
     }),
-    execute: useFGA(async ({ allowed }, { ticker, qty }) => {
-      if (allowed) {
-        return { ticker, qty };
-      }
-
-      return `The user is not allowed to buy ${ticker}.`;
-    }),
+    execute: async ({ ticker, qty }) => {
+      return `Purchased ${qty} shares of ${ticker}`;
+    },
   });
 };
