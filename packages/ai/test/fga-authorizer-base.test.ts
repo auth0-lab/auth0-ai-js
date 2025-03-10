@@ -85,7 +85,6 @@ describe("FGAAuthorizerBase", () => {
 
     it("should initialize with provided parameters", async () => {
       const params: FGAAuthorizerParams = {
-        name: "custom_fga",
         apiUrl: "https://custom.api.url",
         storeId: "custom_store_id",
         credentials: {
@@ -135,7 +134,6 @@ describe("FGAAuthorizerBase", () => {
       process.env.FGA_CLIENT_SECRET = "env_client_secret";
 
       const params: FGAAuthorizerParams = {
-        name: "partial_fga",
         storeId: "partial_store_id",
       };
 
@@ -170,9 +168,7 @@ describe("FGAAuthorizerBase", () => {
     it("should handle missing environment variables gracefully", async () => {
       process.env.FGA_STORE_ID = "env_store_id";
 
-      const params: FGAAuthorizerParams = {
-        name: "partial_fga",
-      };
+      const params: FGAAuthorizerParams = {};
 
       const buildQueryMock = vi.fn().mockResolvedValue({
         user: "user",
@@ -213,7 +209,6 @@ describe("FGAAuthorizerBase", () => {
       buildQuery.mockResolvedValue(toolParameters);
       const authorizer = new FGAAuthorizerBase(
         {
-          name: "test_fga",
           storeId: "test_store_id",
         },
         {
@@ -250,7 +245,6 @@ describe("FGAAuthorizerBase", () => {
       buildQuery.mockResolvedValue(toolParameters);
       const authorizer = new FGAAuthorizerBase(
         {
-          name: "test_fga",
           storeId: "test_store_id",
         },
         {
@@ -295,7 +289,6 @@ describe("FGAAuthorizerBase", () => {
       onUnauthorized.mockResolvedValue("User not allowed");
       const authorizer = new FGAAuthorizerBase(
         {
-          name: "test_fga",
           storeId: "test_store_id",
         },
         {
@@ -330,174 +323,4 @@ describe("FGAAuthorizerBase", () => {
     });
   });
 
-  // it("should authorize and allow handler execution when allowed is true", async () => {
-
-  // describe("Authorization Flow via create method", () => {
-  //   it("should authorize and allow handler execution when allowed is true", async () => {
-  //     const params: FGAAuthorizerParams = {
-  //       name: "test_fga",
-  //       storeId: "test_store_id",
-  //     };
-
-  //     mockCheck.mockResolvedValue({ allowed: true });
-
-  //     const createAuthorizer = FGAAuthorizer.create(params);
-
-  //     const buildQueryMock = vi.fn().mockResolvedValue({
-  //       user: "user",
-  //       relation: "relation",
-  //       object: "object",
-  //     } as ClientCheckRequest);
-
-  //     const options: FGAAuthorizerOptions = {
-  //       buildQuery: buildQueryMock,
-  //     };
-
-  //     const handler: ToolWithAuthHandler<{ allowed?: boolean }, string, any> =
-  //       vi.fn().mockResolvedValue("handler_result");
-
-  //     const wrappedHandler = createAuthorizer(options)(handler);
-
-  //     const input: any = { userId: "user123", resourceId: "res456" };
-
-  //     const result = await wrappedHandler(input, undefined);
-
-  //     // Assertions
-  //     expect(buildQueryMock).toHaveBeenCalledWith(input);
-  //     expect(OpenFgaClient).toHaveBeenCalled();
-  //     expect(mockCheck).toHaveBeenCalledWith(
-  //       { user: "user", relation: "relation", object: "object" },
-  //       { consistency: ConsistencyPreference.HigherConsistency }
-  //     );
-  //     expect(handler).toHaveBeenCalledWith({ allowed: true }, input, undefined);
-  //     expect(result).toBe("handler_result");
-  //   });
-
-  //   it("should authorize and pass allowed as false when authorization fails", async () => {
-  //     const params: FGAAuthorizerParams = {
-  //       name: "test_fga",
-  //       storeId: "test_store_id",
-  //     };
-
-  //     mockCheck.mockResolvedValue({ allowed: false });
-
-  //     const createAuthorizer = FGAAuthorizer.create(params);
-
-  //     const buildQueryMock = vi.fn().mockResolvedValue({
-  //       user: "user",
-  //       relation: "relation",
-  //       object: "object",
-  //     } as ClientCheckRequest);
-
-  //     const options: FGAAuthorizerOptions = {
-  //       buildQuery: buildQueryMock,
-  //     };
-
-  //     const handler: ToolWithAuthHandler<{ allowed?: boolean }, string, any> =
-  //       vi.fn().mockResolvedValue("handler_result");
-
-  //     const wrappedHandler = createAuthorizer(options)(handler);
-
-  //     const input: any = { userId: "user123", resourceId: "res456" };
-
-  //     const result = await wrappedHandler(input, undefined);
-
-  //     // Assertions
-  //     expect(buildQueryMock).toHaveBeenCalledWith(input);
-  //     expect(OpenFgaClient).toHaveBeenCalled();
-  //     expect(mockCheck).toHaveBeenCalledWith(
-  //       { user: "user", relation: "relation", object: "object" },
-  //       { consistency: ConsistencyPreference.HigherConsistency }
-  //     );
-  //     expect(handler).toHaveBeenCalledWith(
-  //       { allowed: false },
-  //       input,
-  //       undefined
-  //     );
-  //     expect(result).toBe("handler_result");
-  //   });
-
-  //   it("should propagate errors from authorization", async () => {
-  //     const params: FGAAuthorizerParams = {
-  //       name: "test_fga",
-  //       storeId: "test_store_id",
-  //     };
-
-  //     mockCheck.mockRejectedValue(new Error("FGA check failed"));
-
-  //     const createAuthorizer = FGAAuthorizer.create(params);
-
-  //     const buildQueryMock = vi.fn().mockResolvedValue({
-  //       user: "user",
-  //       relation: "relation",
-  //       object: "object",
-  //     } as ClientCheckRequest);
-
-  //     const options: FGAAuthorizerOptions = {
-  //       buildQuery: buildQueryMock,
-  //     };
-
-  //     const handler: ToolWithAuthHandler<{ allowed?: boolean }, string, any> =
-  //       vi.fn();
-
-  //     const wrappedHandler = createAuthorizer(options)(handler);
-
-  //     const input: any = { userId: "user123", resourceId: "res456" };
-
-  //     await expect(wrappedHandler(input, undefined)).resolves.toBe(
-  //       "The user is not allowed to perform the action."
-  //     );
-
-  //     // Assertions
-  //     expect(buildQueryMock).toHaveBeenCalledWith(input);
-  //     expect(OpenFgaClient).toHaveBeenCalled();
-  //     expect(mockCheck).toHaveBeenCalledWith(
-  //       { user: "user", relation: "relation", object: "object" },
-  //       { consistency: ConsistencyPreference.HigherConsistency }
-  //     );
-  //     expect(handler).not.toHaveBeenCalled();
-  //   });
-
-  //   it("should handle undefined toolContext gracefully", async () => {
-  //     const params: FGAAuthorizerParams = {
-  //       name: "test_fga",
-  //       storeId: "test_store_id",
-  //     };
-
-  //     mockCheck.mockResolvedValue({ allowed: true });
-
-  //     const createAuthorizer = FGAAuthorizer.create(params);
-
-  //     const buildQueryMock = vi.fn().mockResolvedValue({
-  //       user: "user",
-  //       relation: "relation",
-  //       object: "object",
-  //     } as ClientCheckRequest);
-
-  //     const options: FGAAuthorizerOptions = {
-  //       buildQuery: buildQueryMock,
-  //     };
-
-  //     const handler: ToolWithAuthHandler<{ allowed?: boolean }, string, any> =
-  //       vi.fn().mockResolvedValue("handler_result");
-
-  //     const wrappedHandler = createAuthorizer(options)(handler);
-
-  //     const result = await wrappedHandler(undefined as any, undefined);
-
-  //     // Assertions
-  //     expect(buildQueryMock).toHaveBeenCalledWith({});
-  //     expect(OpenFgaClient).toHaveBeenCalled();
-  //     expect(mockCheck).toHaveBeenCalledWith(
-  //       { user: "user", relation: "relation", object: "object" },
-  //       { consistency: ConsistencyPreference.HigherConsistency }
-  //     );
-  //     expect(handler).toHaveBeenCalledWith(
-  //       { allowed: true },
-  //       undefined,
-  //       undefined
-  //     );
-  //     expect(result).toBe("handler_result");
-  //   });
-  // });
 });

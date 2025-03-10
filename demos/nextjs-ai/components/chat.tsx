@@ -39,8 +39,8 @@ export default function Chat() {
                   if (
                     state === "call" &&
                     toolInterrupt &&
-                    toolInterrupt.toolCallId === toolCallId
-                    // && FEDERATED_CONNECTION_INTERRUPTION
+                    toolInterrupt.toolCallId === toolCallId &&
+                    toolInterrupt.code === 'FEDERATED_CONNECTION_ERROR'
                   ) {
                     return (
                       <EnsureAPIAccessPopup
