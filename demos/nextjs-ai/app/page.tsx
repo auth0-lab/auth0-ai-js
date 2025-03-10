@@ -1,8 +1,17 @@
+/* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
+import UserButton from "@/components/auth0/user-button";
 import Chat from "@/components/chat";
+import { auth0 } from "@/lib/auth0";
 
-export default function Home() {
+export default async function Home() {
+  const session = await auth0.getSession();
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
+    <div className="font-[family-name:var(--font-geist-sans)]">
+      <header className="w-full max-w-7xl h-14 mx-auto flex items-center justify-between border-b border-gray-200">
+        <div className="font-semibold">Auth0 AI | Demo</div>
+        <UserButton user={session?.user!} logoutUrl="/auth/logout" />
+      </header>
       <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start w-full">
         <Chat />
       </main>

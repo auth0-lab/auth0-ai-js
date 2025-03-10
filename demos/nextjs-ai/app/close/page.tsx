@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+import { Button } from "@/components/ui/button";
+
 export default function PopupClosePage() {
   const [isClosing, setIsClosing] = useState(true);
 
@@ -28,7 +30,7 @@ export default function PopupClosePage() {
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="text-center">
         <p className="mb-4 text-lg">You can now close this window.</p>
-        <button onClick={handleClose}>Close</button>
+        <Button onClick={handleClose}>Close</Button>
       </div>
     </div>
   );
