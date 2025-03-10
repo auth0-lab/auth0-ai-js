@@ -1,8 +1,10 @@
 import { Tool } from "ai";
 
+import { FGAAuthorizerBase } from "@auth0/ai/FGA";
+
 import { FGAAuthorizer } from "./FGA";
 
-type FGAAuthorizerParams = ConstructorParameters<typeof FGAAuthorizer>[0];
+type FGAAuthorizerParams = ConstructorParameters<typeof FGAAuthorizerBase>[0];
 type ToolWrapper = ReturnType<FGAAuthorizer["authorizer"]>;
 type FGAParams = ConstructorParameters<typeof FGAAuthorizer>[1];
 
@@ -22,20 +24,18 @@ type FGAParams = ConstructorParameters<typeof FGAAuthorizer>[1];
  *
  * // Wrap an existing tool
  * const authorizedTool = fgaAI.withFGA({
- *   modelName: 'gpt-4',
- *   userID: 'user123'
+ *  buildQuery: async ({userID, doc}) => ({ user: userID, object: doc, relation: 'read' })
  * }, myAITool);
  *
  * // Or create a wrapper to apply to tools later
  * const authorizer = fgaAI.withFGA({
- *   modelName: 'gpt-4',
- *   userID: 'user123'
+ *  buildQuery: async ({userID, doc}) => ({ user: userID, object: doc, relation: 'read' })
  * });
  * const authorizedTool = authorizer(myAITool);
  * ```
  */
 export class FGA_AI {
-  constructor(private fgaParams: FGAAuthorizerParams) {}
+  constructor(private fgaParams?: FGAAuthorizerParams) {}
 
   withFGA(params: FGAParams): ToolWrapper;
 

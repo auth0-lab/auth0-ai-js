@@ -6,7 +6,6 @@ import {
 } from "@openfga/sdk";
 
 export type FGAAuthorizerParams = {
-  name: string;
   apiUrl?: string;
   storeId?: string;
   credentials?: {
@@ -26,14 +25,12 @@ export type FGAAuthorizerOptions<ToolExecuteArgs extends any[]> = {
 };
 
 export class FGAAuthorizerBase<ToolExecuteArgs extends any[]> {
-  name: string;
   fgaClient: OpenFgaClient;
 
   constructor(
     fgaClientParams: FGAAuthorizerParams | undefined | null,
     private authorizeOptions: FGAAuthorizerOptions<ToolExecuteArgs>
   ) {
-    this.name = fgaClientParams?.name || "fga";
     this.fgaClient = new OpenFgaClient({
       apiUrl:
         fgaClientParams?.apiUrl ||
