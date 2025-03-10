@@ -119,7 +119,6 @@ describe("CIBAAuthorizer", () => {
       userId: "dynamic-user-id",
       audience: "",
       request_expiry: undefined,
-      subjectIssuerContext: undefined,
     });
   });
 });

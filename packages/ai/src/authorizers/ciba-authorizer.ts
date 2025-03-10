@@ -13,7 +13,6 @@ export type CibaAuthorizerOptions = {
   scope: string;
   audience?: string;
   requestExpiry?: string;
-  subjectIssuerContext?: string;
 };
 
 export enum CibaAuthorizerCheckResponse {
@@ -80,7 +79,6 @@ export class CIBAAuthorizer {
       userId: "",
       audience: params.audience || "",
       request_expiry: params.requestExpiry,
-      subjectIssuerContext: params.subjectIssuerContext,
     };
 
     if (typeof params.bindingMessage === "function") {

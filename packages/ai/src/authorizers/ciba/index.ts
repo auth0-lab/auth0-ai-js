@@ -30,7 +30,6 @@ export type CIBAAuthorizerParams<ToolExecuteArgs extends any[]> = {
   scope: string;
   audience?: string;
   requestExpiry?: string;
-  subjectIssuerContext?: string;
 
   /**
    * Given a tool context returns the authorization request data.
@@ -98,7 +97,6 @@ export class CIBAAuthorizerBase<ToolExecuteArgs extends any[]> {
       userId: "",
       audience: this.params.audience || "",
       request_expiry: this.params.requestExpiry,
-      subjectIssuerContext: this.params.subjectIssuerContext,
     };
 
     authorizeParams.binding_message = await resolveParameter(
