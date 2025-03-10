@@ -1,10 +1,8 @@
-import { ToolExecutionError } from "ai";
-
 import { Interruption } from "#interruptions";
 
 export type errorHandler = (error: unknown) => string;
 
-export const InterruptionPrefix = 'AUTH0_AI_INTERRUPTION:';
+export const InterruptionPrefix = "AUTH0_AI_INTERRUPTION:";
 
 /**
  *
@@ -16,23 +14,21 @@ export const InterruptionPrefix = 'AUTH0_AI_INTERRUPTION:';
  * @returns
  */
 export const errorSerializer = (errHandler?: errorHandler): errorHandler => {
-  return (error: unknown) => {
-    console.log('errorSerializer called....');
+  return (error: any) => {
     let handledError: Interruption | undefined = undefined;
     if (error instanceof Interruption) {
       handledError = error;
-    } else if (error && error instanceof ToolExecutionError && error.cause instanceof Interruption) {
+    } else if (error && error.cause && error.cause instanceof Interruption) {
       handledError = error.cause;
     }
 
-    if (typeof handledError !== 'undefined') {
-      console.log('serializing error....');
+    if (typeof handledError !== "undefined") {
       const result = `${InterruptionPrefix}${JSON.stringify(handledError)}`;
       return result;
     } else if (errHandler) {
       return errHandler(error);
     } else {
-      return 'An error occurred.';
+      return "An error occurred.";
     }
   };
 };

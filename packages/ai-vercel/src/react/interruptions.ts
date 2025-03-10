@@ -1,5 +1,3 @@
-
-
 import { useState } from "react";
 
 import { useChat } from "@ai-sdk/react";
@@ -11,9 +9,9 @@ type UseChatWithInterruptionsReturnType = ReturnType<typeof useChat> & {
   toolInterrupt: Auth0InterruptionUI | null;
 };
 
-type UseChatParams = Parameters<typeof useChat>[0];
-
-type ErrorHandler = (userErrorHandler: (error: Error) => void) => (error: Error) => void;
+type ErrorHandler = (
+  userErrorHandler: (error: Error) => void
+) => (error: Error) => void;
 
 export type Auth0InterruptionUI = {
   code: string;
@@ -21,7 +19,7 @@ export type Auth0InterruptionUI = {
   name: string;
   addToolResult: (result: any) => void;
 
-  [key: string]: any
+  [key: string]: any;
   // connection: string;
   // scopes: Array<string>;
 };
@@ -29,12 +27,14 @@ export type Auth0InterruptionUI = {
 export const useInterruptions = (
   useChatCreator: (errorHandler: ErrorHandler) => UseChatReturnType
 ): UseChatWithInterruptionsReturnType => {
-  const [toolInterrupt, setToolInterrupt] = useState<Auth0InterruptionUI | null>(
-    null
-  );
+  const [toolInterrupt, setToolInterrupt] =
+    useState<Auth0InterruptionUI | null>(null);
 
-  const errorHandler: ErrorHandler = (userErrorHandler?: (error: Error) => void) => {
+  const errorHandler: ErrorHandler = (
+    userErrorHandler?: (error: Error) => void
+  ) => {
     return (error: Error) => {
+      console.log("Interruption error:", error.message);
       if (!error.message.startsWith(InterruptionPrefix)) {
         if (userErrorHandler) {
           userErrorHandler(error);
@@ -61,20 +61,20 @@ export const useInterruptions = (
 
   let messages = chat.messages;
   if (toolInterrupt) {
-    messages = messages.map(message => ({
+    messages = messages.map((message) => ({
       ...message,
-      parts: message.parts?.map(part =>
-        part.type === 'tool-invocation' &&
-          part.toolInvocation.toolCallId === toolInterrupt.toolCallId
+      parts: message.parts?.map((part) =>
+        part.type === "tool-invocation" &&
+        part.toolInvocation.toolCallId === toolInterrupt.toolCallId
           ? {
-            ...part,
-            toolInvocation: {
-              ...part.toolInvocation,
-              state: "call"
+              ...part,
+              toolInvocation: {
+                ...part.toolInvocation,
+                state: "call",
+              },
             }
-          }
           : part
-      )
+      ),
     }));
   }
 
@@ -82,6 +82,6 @@ export const useInterruptions = (
     ...chat,
     messages,
     addToolResult,
-    toolInterrupt
-  }
+    toolInterrupt,
+  };
 };
