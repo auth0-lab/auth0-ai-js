@@ -30,7 +30,10 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
+    "html-to-text": "^9.0.5",
     "llamaindex": "^0.9",
+    "lodash": "^4.17.21",
+    "magic-bytes.js": "^1.10.0",
     "z": "1.0.1"
   },
   "peerDependencies": {
