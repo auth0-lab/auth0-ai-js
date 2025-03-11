@@ -13,8 +13,8 @@ import { Weather } from "./weather";
 export default function Chat() {
   const { messages, handleSubmit, input, setInput, toolInterrupt } =
     useInterruptions((handler) =>
-      // eslint-disable-next-line react-hooks/rules-of-hooks
       useChat({
+        api: "/api/chat",
         experimental_throttle: 100,
         sendExtraMessageFields: true,
         generateId: generateUUID,
@@ -23,10 +23,12 @@ export default function Chat() {
     );
 
   return (
-    <div className="flex flex-col w-full max-w-md py-24 mx-auto stretch">
+    <div className="flex flex-col w-full max-w-4xl py-24 mx-auto stretch">
       {messages.map((message) => (
         <div key={message.id} className="whitespace-pre-wrap">
-          {message.role === "user" ? "User: " : "AI: "}
+          <span className="font-semibold">
+            {message.role === "user" ? "User: " : "AI: "}
+          </span>
           {message.content}
 
           {message.parts && message.parts.length > 0 && (
@@ -93,8 +95,9 @@ export default function Chat() {
 
       <form onSubmit={handleSubmit}>
         <input
-          className="fixed dark:bg-zinc-900 bottom-0 w-full max-w-md p-2 mb-8 border border-zinc-300 dark:border-zinc-800 rounded shadow-xl"
+          className="fixed dark:bg-zinc-900 bottom-0 w-full max-w-4xl p-2 mb-8 border border-zinc-300 dark:border-zinc-800 rounded shadow-xl"
           value={input}
+          autoFocus
           placeholder="Say something..."
           onChange={(e) => setInput(e.target.value)}
         />

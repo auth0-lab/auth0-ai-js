@@ -1,5 +1,8 @@
+import { Message } from "ai";
 import { ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+
+import { AIMessage, ChatMessage, HumanMessage } from "@langchain/core/messages";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -12,3 +15,13 @@ export function generateUUID(): string {
     return v.toString(16);
   });
 }
+
+export const convertVercelMessageToLangChainMessage = (message: Message) => {
+  if (message.role === "user") {
+    return new HumanMessage(message.content);
+  } else if (message.role === "assistant") {
+    return new AIMessage(message.content);
+  } else {
+    return new ChatMessage(message.content, message.role);
+  }
+};
