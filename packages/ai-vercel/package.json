@@ -49,7 +49,8 @@
   "dependencies": {
     "@auth0/ai": "*",
     "ai": "^4.1.54",
-    "auth0": "^4.18.0"
+    "auth0": "^4.18.0",
+    "z": "1.0.1"
   },
   "peerDependencies": {
     "react": "^19.0.0"
@@ -60,6 +61,6 @@
     "tsup": "^8.3.6",
     "typedoc": "^0.27.6",
     "typescript": "^5.7.3",
-    "vitest": "^2.1.3"
+    "vitest": "^3.0.8"
   }
 }
