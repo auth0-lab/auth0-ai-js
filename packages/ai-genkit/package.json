@@ -31,7 +31,8 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@auth0/ai": "*",
-    "genkit": "^0.9.12"
+    "genkit": "^0.9.12",
+    "z": "1.0.1"
   },
   "peerDependencies": {
     "@openfga/sdk": "^0.8.0"
@@ -41,6 +42,6 @@
     "tsup": "^8.3.6",
     "typedoc": "^0.27.6",
     "typescript": "^5.7.3",
-    "vitest": "^2.1.3"
+    "vitest": "^3.0.8"
   }
 }
