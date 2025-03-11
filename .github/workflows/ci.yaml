@@ -32,6 +32,10 @@ jobs:
         id: npm-ci
         run: npm ci
 
+      - name: Lint
+        id: npm-lint
+        run: npm run lint
+
       - name: Test build
         id: npm-build
         run: npm run build
@@ -39,3 +43,4 @@ jobs:
       - name: Test
         id: npm-test
         run: npm run test
+

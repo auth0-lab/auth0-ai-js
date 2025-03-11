@@ -1,5 +1,8 @@
+import { z } from "zod";
+
 import { Document, DocumentInterface } from "@langchain/core/documents";
 import { BaseRetriever } from "@langchain/core/retrievers";
+import { StructuredToolInterface, tool } from "@langchain/core/tools";
 import {
   ClientBatchCheckItem,
   ConsistencyPreference,
@@ -9,9 +12,6 @@ import {
 
 import type { BaseRetrieverInput } from "@langchain/core/retrievers";
 import type { CallbackManagerForRetrieverRun } from "@langchain/core/callbacks/manager";
-import { StructuredToolInterface, tool } from "@langchain/core/tools";
-import { z } from "zod";
-
 export type FGARetrieverCheckerFn = (
   doc: DocumentInterface<Record<string, any>>
 ) => ClientBatchCheckItem;
@@ -140,7 +140,7 @@ export class FGARetriever extends BaseRetriever {
     const permissionsMap = await this.checkPermissions(checks);
 
     return documents.filter(
-      (d, i) => permissionsMap.get(documentToObject.get(d) || "") === true
+      (d) => permissionsMap.get(documentToObject.get(d) || "") === true
     );
   }
 
@@ -179,6 +179,7 @@ export class FGARetriever extends BaseRetriever {
    * @returns StructuredToolInterface.
    */
   asJoinedStringTool(): StructuredToolInterface {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const retriever = this;
     return tool(
       async ({ query }) => {

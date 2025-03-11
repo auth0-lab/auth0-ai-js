@@ -1,12 +1,13 @@
-import { describe, it, expect, vi } from "vitest";
-import { genkit, Document } from "genkit";
-import { FGAReranker, auth0 } from "../src/retrievers/fga-reranker";
+import { Document, genkit } from "genkit";
+import { describe, expect, it, vi } from "vitest";
 
 import {
-  OpenFgaClient,
-  CredentialsMethod,
   ConsistencyPreference,
+  CredentialsMethod,
+  OpenFgaClient,
 } from "@openfga/sdk";
+
+import { auth0, FGAReranker } from "../src/retrievers/fga-reranker";
 
 describe("FGAReranker", async () => {
   process.env.FGA_CLIENT_ID = "client-id";
@@ -59,7 +60,6 @@ describe("FGAReranker", async () => {
   });
 
   it("should filter relevant documents based on permission", async () => {
-    // @ts-ignore
     mockClient.batchCheck = vi.fn().mockResolvedValue({
       result: [
         {
@@ -102,7 +102,6 @@ describe("FGAReranker", async () => {
   });
 
   it("should handle empty permission list", async () => {
-    // @ts-ignore
     mockClient.batchCheck = vi.fn().mockResolvedValue({ result: [] });
 
     const rankedDocuments = await ai.rerank({
@@ -121,7 +120,6 @@ describe("FGAReranker", async () => {
       Document.fromText("private content", { id: "public-doc" }),
     ];
 
-    // @ts-ignore
     mockClient.batchCheck = vi.fn().mockResolvedValue({
       result: [
         {
@@ -165,7 +163,6 @@ describe("FGAReranker", async () => {
   });
 
   it("should handle all documents being filtered out", async () => {
-    // @ts-ignore
     mockClient.batchCheck = vi.fn().mockResolvedValue({
       result: [
         {
@@ -197,7 +194,6 @@ describe("FGAReranker", async () => {
   });
 
   it("should handle batchCheck error gracefully", async () => {
-    // @ts-ignore
     mockClient.batchCheck = vi
       .fn()
       .mockRejectedValue(new Error("FGA API Error"));
@@ -223,7 +219,6 @@ describe("FGAReranker", async () => {
       }),
     ];
 
-    // @ts-ignore
     mockClient.batchCheck = vi.fn().mockResolvedValue({
       result: [
         {

@@ -11,7 +11,6 @@ export default [
   includeIgnoreFile(gitIgnore),
   { files: [
     "src/*.{js,mjs,cjs,ts}",
-    "test/*.{js,mjs,cjs,ts}",
   ] },
   { languageOptions: { globals: globals.browser } },
   pluginJs.configs.recommended,

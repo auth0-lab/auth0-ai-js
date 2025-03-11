@@ -1,14 +1,17 @@
-import { describe, it, expect, vi } from "vitest";
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+import { BaseRetriever, NodeWithScore } from "llamaindex";
+import { describe, expect, it, vi } from "vitest";
+
+import {
+  ConsistencyPreference,
+  CredentialsMethod,
+  OpenFgaClient,
+} from "@openfga/sdk";
+
 import {
   FGARetriever,
   FGARetrieverCheckerFn,
 } from "../src/retrievers/fga-retriever";
-import {
-  OpenFgaClient,
-  CredentialsMethod,
-  ConsistencyPreference,
-} from "@openfga/sdk";
-import { BaseRetriever, NodeWithScore } from "llamaindex";
 
 describe("FGARetriever", () => {
   process.env.FGA_CLIENT_ID = "client-id";
@@ -65,7 +68,6 @@ describe("FGARetriever", () => {
   });
 
   it("retrieves and filters nodes based on permissions", async () => {
-    // @ts-ignore
     mockClient.batchCheck = vi.fn().mockResolvedValue({
       result: [
         {
@@ -94,7 +96,7 @@ describe("FGARetriever", () => {
   });
 
   it("should handle empty document list", async () => {
-    // @ts-ignore
+    // @ts-expect-error
     args.retriever.retrieve.mockResolvedValue([]);
     const retriever = FGARetriever.create(args, mockClient);
 
@@ -104,7 +106,6 @@ describe("FGARetriever", () => {
 
   it("should handle empty permission list", async () => {
     const retriever = FGARetriever.create(args, mockClient);
-    // @ts-ignore
     mockClient.batchCheck = vi.fn().mockResolvedValue({ result: [] });
 
     const result = await retriever.retrieve({ query: "test" });
@@ -124,11 +125,10 @@ describe("FGARetriever", () => {
       } as unknown as NodeWithScore,
     ];
 
-    // @ts-ignore
+    // @ts-expect-error
     args.retriever.retrieve.mockResolvedValue(duplicateDocuments);
 
     const retriever = FGARetriever.create(args, mockClient);
-    // @ts-ignore
     mockClient.batchCheck = vi.fn().mockResolvedValue({
       result: [
         {
@@ -166,7 +166,6 @@ describe("FGARetriever", () => {
 
   it("should handle all documents being filtered out", async () => {
     const retriever = FGARetriever.create(args, mockClient);
-    // @ts-ignore
     mockClient.batchCheck = vi.fn().mockResolvedValue({
       result: [
         { request: { object: "doc:public-doc" }, allowed: false },
@@ -179,7 +178,6 @@ describe("FGARetriever", () => {
   });
 
   it("should handle batchCheck error gracefully", async () => {
-    // @ts-ignore
     mockClient.batchCheck = vi
       .fn()
       .mockRejectedValue(new Error("FGA API Error"));

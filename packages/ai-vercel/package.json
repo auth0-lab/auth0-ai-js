@@ -12,7 +12,7 @@
     "build": "tsup",
     "build:watch": "tsup --watch",
     "clean": "rm -rf dist",
-    "lint": "eslint \"./**/*.ts*\"",
+    "lint": "eslint .",
     "type-check": "tsc --noEmit",
     "test": "vitest run"
   },
@@ -56,8 +56,10 @@
     "react": "^19.0.0"
   },
   "devDependencies": {
+    "@eslint/compat": "^1.2.7",
     "@types/node": "^22.10.6",
     "@types/react": "^19.0.10",
+    "eslint": "^9.22.0",
     "tsup": "^8.3.6",
     "typedoc": "^0.27.6",
     "typescript": "^5.7.3",
