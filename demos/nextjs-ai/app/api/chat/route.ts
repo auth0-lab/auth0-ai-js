@@ -1,5 +1,6 @@
 import { createDataStreamResponse, Message, streamText } from "ai";
 
+import { buyStock } from "@/lib/ai/tools/buy-stock";
 import { checkUsersCalendar } from "@/lib/ai/tools/check-user-calendar";
 import { getWeather } from "@/lib/ai/tools/get-weather";
 import { generateUUID } from "@/lib/utils";
@@ -30,9 +31,14 @@ export async function POST(request: Request) {
         messages,
         maxSteps: 5,
 
-        experimental_activeTools: ["getWeather", "checkUsersCalendar"],
+        experimental_activeTools: [
+          "getWeather",
+          "checkUsersCalendar",
+          "buyStock",
+        ],
         experimental_generateMessageId: generateUUID,
         tools: {
+          buyStock,
           getWeather,
           checkUsersCalendar,
         },
