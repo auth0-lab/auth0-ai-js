@@ -12,7 +12,7 @@
     "lint": "eslint \"./**/*.ts*\"",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
-    "semantic-release": "npx --no semantic-release -e semantic-release-monorepo"
+    "semantic-release": "npx --no semantic-release -- -e semantic-release-monorepo --dry-run"
   },
   "author": {
     "name": "Auth0 Inc.",
