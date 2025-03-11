@@ -11,7 +11,8 @@
     "clean": "rm -rf dist",
     "lint": "eslint \"./**/*.ts*\"",
     "type-check": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "semantic-release": "npx --no semantic-release -e semantic-release-monorepo"
   },
   "author": {
     "name": "Auth0 Inc.",
