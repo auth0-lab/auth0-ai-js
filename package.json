@@ -5,9 +5,13 @@
     "build": "turbo run build",
     "clean": "turbo run clean",
     "test": "turbo run test",
-    "lint": "turbo run lint"
+    "lint": "turbo run lint",
+    "prepare": "node .husky/install.mjs"
   },
   "devDependencies": {
+    "@commitlint/config-conventional": "^19.8.0",
+    "commitlint": "^19.8.0",
+    "husky": "^9.1.7",
     "turbo": "^2.3.4"
   },
   "packageManager": "npm@9.8.0",

@@ -8,18 +8,20 @@ on:
     branches:
       - main
 
-permissions:
-  contents: read
+
 
 jobs:
-  test-packages:
-    name: Package Tests
+  ci:
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - name: Checkout
         id: checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         id: setup-node
@@ -31,6 +33,10 @@ jobs:
       - name: Install Dependencies
         id: npm-ci
         run: npm ci
+
+      - name: Validate Commits Messages
+        if: github.event_name == 'pull_request'
+        run: npx --no-install commitlint --verbose --from ${{ github.event.pull_request.head.sha }}~${{ github.event.pull_request.commits }} --to ${{ github.event.pull_request.head.sha }}
 
       - name: Lint
         id: npm-lint
