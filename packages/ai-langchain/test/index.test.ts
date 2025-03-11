@@ -1,12 +1,15 @@
-import { describe, it, expect, vi } from "vitest";
-import { FGARetriever } from "../src/retrievers/fga-retriever";
-import {
-  OpenFgaClient,
-  CredentialsMethod,
-  ConsistencyPreference,
-} from "@openfga/sdk";
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+import { describe, expect, it, vi } from "vitest";
+
 import { Document } from "@langchain/core/documents";
 import { BaseRetriever } from "@langchain/core/retrievers";
+import {
+  ConsistencyPreference,
+  CredentialsMethod,
+  OpenFgaClient,
+} from "@openfga/sdk";
+
+import { FGARetriever } from "../src/retrievers/fga-retriever";
 
 describe("FGARetriever", () => {
   process.env.FGA_CLIENT_ID = "client-id";
@@ -64,9 +67,8 @@ describe("FGARetriever", () => {
 
   it("should filter documents based on permissions", async () => {
     const retriever = FGARetriever.create(args, mockClient);
-    // @ts-ignore
+    // @ts-expect-error
     mockRetriever._getRelevantDocuments.mockResolvedValue(mockDocuments);
-    // @ts-ignore
     mockClient.batchCheck = vi.fn().mockResolvedValue({
       result: [
         {
@@ -94,7 +96,7 @@ describe("FGARetriever", () => {
 
   it("should handle empty document list", async () => {
     const retriever = FGARetriever.create(args, mockClient);
-    // @ts-ignore
+    // @ts-expect-error
     mockRetriever._getRelevantDocuments.mockResolvedValue([]);
 
     const result = await retriever.invoke("test query");
@@ -103,9 +105,8 @@ describe("FGARetriever", () => {
 
   it("should handle empty permission list", async () => {
     const retriever = FGARetriever.create(args, mockClient);
-    // @ts-ignore
+    // @ts-expect-error
     mockRetriever._getRelevantDocuments.mockResolvedValue(mockDocuments);
-    // @ts-ignore
     mockClient.batchCheck = vi.fn().mockResolvedValue({ result: [] });
 
     const result = await retriever.invoke("test query");
@@ -126,9 +127,8 @@ describe("FGARetriever", () => {
     ];
 
     const retriever = FGARetriever.create(args, mockClient);
-    // @ts-ignore
+    // @ts-expect-error
     mockRetriever._getRelevantDocuments.mockResolvedValue(duplicateDocuments);
-    // @ts-ignore
     mockClient.batchCheck = vi.fn().mockResolvedValue({
       result: [
         {
@@ -166,9 +166,8 @@ describe("FGARetriever", () => {
 
   it("should handle all documents being filtered out", async () => {
     const retriever = FGARetriever.create(args, mockClient);
-    // @ts-ignore
+    // @ts-expect-error
     mockRetriever._getRelevantDocuments.mockResolvedValue(mockDocuments);
-    // @ts-ignore
     mockClient.batchCheck = vi.fn().mockResolvedValue({
       result: [
         { request: { object: "doc:public-doc" }, allowed: false },
@@ -182,9 +181,8 @@ describe("FGARetriever", () => {
 
   it("should return joined string of filtered doc content", async () => {
     const retriever = FGARetriever.create(args, mockClient);
-    // @ts-ignore
+    // @ts-expect-error
     mockRetriever._getRelevantDocuments.mockResolvedValue(mockDocuments);
-    // @ts-ignore
     mockClient.batchCheck = vi.fn().mockResolvedValue({
       result: [
         {
@@ -212,7 +210,6 @@ describe("FGARetriever", () => {
   });
 
   it("should handle batchCheck error gracefully", async () => {
-    // @ts-ignore
     mockClient.batchCheck = vi
       .fn()
       .mockRejectedValue(new Error("FGA API Error"));

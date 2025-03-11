@@ -4,8 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "start": "next start",
-    "lint": "next lint"
+    "start": "next start"
   },
   "author": {
     "name": "Auth0 Inc.",

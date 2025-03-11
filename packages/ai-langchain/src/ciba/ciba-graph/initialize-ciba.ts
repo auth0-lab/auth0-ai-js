@@ -82,6 +82,7 @@ export const initializeCIBA =
       );
 
       const scheduler = cibaParams?.config.scheduler;
+      // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
       const onResumeInvoke = cibaParams?.config.onResumeInvoke!;
       const threadId = config?.metadata?.thread_id as string;
       const schedulerParams = {
