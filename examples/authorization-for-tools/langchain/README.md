@@ -34,13 +34,30 @@ LANGGRAPH_API_URL="http://localhost:54367"
 2. Running Langraph
 
    ```sh
-   npm run langgraph:up
+   npm run start
    ```
 
-3. Running the example
-   ```sh
-   npm start
+3. LangGraph Studio: Configuring the assitant
+
+   3.1 Click on `Manage Assistants`
+
+   ![](https://cdn.auth0.com/website/auth0-lab/ai/sdks/01-langchain-auth-tools.png)
+
+   3.2 Create a new assistant
+
+   ![](https://cdn.auth0.com/website/auth0-lab/ai/sdks/02-langchain-auth-tools.png)
+
+   Use the following data:
+
+   ```json
+   {
+     "user_id": "john"
+   }
    ```
+
+   3.3 Run it!
+
+   ![](https://cdn.auth0.com/website/auth0-lab/ai/sdks/03-langchain-auth-tools.png)
 
 ## License
 

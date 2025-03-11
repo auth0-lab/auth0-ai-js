@@ -36,7 +36,7 @@ export interface ICIBAGraph<N extends string = string> {
   getOptions(): CIBAGraphOptions<N> | undefined;
 }
 
-export type CIBAGraphOptions<N extends string> = Omit<
+export type CIBAGraphOptions<N extends string = string> = Omit<
   CIBAOptions<N>,
   "bindingMessage"
 > & {

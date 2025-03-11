@@ -12,11 +12,95 @@ This SDK provides Okta FGA as a [retriever](https://js.langchain.com/docs/concep
 $ npm install @auth0/ai-langchain
 ```
 
-## Usage
+## Authorization for Tools
 
-Example [RAG Application](../../examples/langchain/retrievers-with-fga).
+Example [Authorization for tools](../../examples/authorization-for-tools/langchain/).
 
-Create a Retriever instance using the `FGAReranker.create` method.
+1. Create an instance of Auth0 AI:
+
+```ts
+import { Auth0AI } from "@auth0/ai-langchain";
+
+const auth0AI = new Auth0AI.FGA();
+```
+
+**Note**: Here, you can configure and specify your FGA credentials. By `default`, they are read from environment variables:
+
+```sh
+FGA_STORE_ID="<fga-store-id>"
+FGA_CLIENT_ID="<fga-client-id>"
+FGA_CLIENT_SECRET="<fga-client-secret>"
+```
+
+2. Define the FGA query:
+
+```ts
+const useFGA = auth0AI.withFGA({
+  buildQuery: async (params, ctx) => {
+    return {
+      user: `user:${ctx.configurable?.user_id}`,
+      object: `asset:${params.ticker}`,
+      relation: "can_buy",
+      context: { current_time: new Date().toISOString() },
+    };
+  },
+  onUnauthorized(params) {
+    console.log("onUnauthorized", params);
+    return `The user is not allowed to buy ${params.ticker}.`;
+  },
+});
+```
+
+**Note**: The parameters given to the `buildQuery` function are the same as those provided to the tool function.
+
+3. Putting it all together
+
+```ts
+import { z } from "zod";
+
+import { Auth0AI } from "@auth0/ai-langchain";
+import { tool } from "@langchain/core/tools";
+
+// 1. Auth0 AI Instance
+const auth0AI = new Auth0AI.FGA();
+
+// 2. Defining FGA query
+const useFGA = auth0AI.withFGA({
+  buildQuery: async (params, ctx) => {
+    return {
+      user: `user:${ctx.configurable?.user_id}`,
+      object: `asset:${params.ticker}`,
+      relation: "can_buy",
+      context: { current_time: new Date().toISOString() },
+    };
+  },
+  onUnauthorized(params) {
+    console.log("onUnauthorized", params);
+    return `The user is not allowed to buy ${params.ticker}.`;
+  },
+});
+
+// 3. Tool definition
+export const buyTool = tool(
+  useFGA(async ({ ticker, qty }) => {
+    return `Purchased ${qty} shares of ${ticker}`;
+  }),
+  {
+    name: "buy",
+    description: "Use this function to buy stock",
+    schema: z.object({
+      ticker: z.string(),
+      qty: z.number(),
+    }),
+  }
+);
+```
+
+## RAG with FGA
+
+Example [RAG Application](../../examples/authorization-for-rag/langchain/).
+
+Create a Retriever instance using the `FGARetriever.create` method.
 
 ```typescript
 // From examples/langchain/retrievers-with-fga

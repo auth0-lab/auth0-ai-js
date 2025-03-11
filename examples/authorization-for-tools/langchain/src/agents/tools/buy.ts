@@ -1,28 +1,28 @@
 import { z } from "zod";
 
-import { FGAAuthorizer } from "@auth0/ai";
+import { Auth0AI } from "@auth0/ai-langchain";
 import { tool } from "@langchain/core/tools";
 
-const fga = FGAAuthorizer.create();
+const auth0AI = new Auth0AI.FGA();
 
-const useFGA = fga({
-  buildQuery: async (params) => ({
-    user: `user:${params.configurable.userId}`,
-    object: `asset:${params.ticker}`,
-    relation: "can_buy",
-    context: { current_time: new Date().toISOString() },
-  }),
+const useFGA = auth0AI.withFGA({
+  buildQuery: async (params, ctx) => {
+    return {
+      user: `user:${ctx.configurable?.user_id}`,
+      object: `asset:${params.ticker}`,
+      relation: "can_buy",
+      context: { current_time: new Date().toISOString() },
+    };
+  },
+  onUnauthorized(params) {
+    console.log("onUnauthorized", params);
+    return `The user is not allowed to buy ${params.ticker}.`;
+  },
 });
 
 export const buyTool = tool(
-  useFGA(async ({ allowed }, { ticker, qty }) => {
-    if (allowed) {
-      // send email confirmation
-      return { ticker, qty };
-    }
-
-    // send email confirmation
-    return `The user is not allowed to buy ${ticker}.`;
+  useFGA(async ({ ticker, qty }) => {
+    return `Purchased ${qty} shares of ${ticker}`;
   }),
   {
     name: "buy",
