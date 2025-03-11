@@ -29,9 +29,12 @@ FGA_CLIENT_SECRET="<fga-client-secret>"
    ```
 
 2. Running the example
+
    ```sh
    npm start
    ```
+
+3. Type `buy 10 shares of ATKO`
 
 ## License
 
