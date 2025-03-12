@@ -4,7 +4,6 @@ import { FGAAuthorizerBase } from "@auth0/ai/FGA";
 import { RunnableFunc } from "@langchain/core/runnables";
 import { ToolRunnableConfig } from "@langchain/core/tools";
 
-// type Parameters = z.ZodTypeAny | Schema<any>;
 export type ZodObjectAny = z.ZodObject<any, any, any, any>;
 
 /**

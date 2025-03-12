@@ -1,13 +1,13 @@
 import { Genkit, z } from "genkit";
 
-import { FGAAuthorizer } from "@auth0/ai";
+import { Auth0AI } from "@auth0/ai-genkit";
 
 import { Context } from "../context";
 
-const fga = FGAAuthorizer.create();
+const auth0AI = new Auth0AI.FGA();
 
 export function buyTool(ai: Genkit) {
-  const useFGA = fga({
+  const useFGA = auth0AI.withFGA({
     buildQuery: async ({ ticker }) => {
       const data = ai.currentSession<Context>();
 
@@ -17,6 +17,9 @@ export function buyTool(ai: Genkit) {
         relation: "can_buy",
         context: { current_time: new Date().toISOString() },
       };
+    },
+    onUnauthorized(params) {
+      return `The user is not allowed to buy ${params.ticker}.`;
     },
   });
 
@@ -30,12 +33,8 @@ export function buyTool(ai: Genkit) {
       }),
       outputSchema: z.string(),
     },
-    useFGA(async ({ allowed }, { ticker, qty }) => {
-      if (allowed) {
-        return `${qty} of ${ticker} bought successfully`;
-      }
-
-      return `The user is not allowed to buy ${ticker}.`;
+    useFGA(async ({ ticker, qty }) => {
+      return `Purchased ${qty} shares of ${ticker}`;
     })
   );
 }

@@ -1,8 +1,11 @@
-import { JSONValue } from "llamaindex";
+import z from "zod";
 
 import { FGAAuthorizerBase } from "@auth0/ai/FGA";
 
-export type LlamaToolHandler<T> = (input: T) => JSONValue | Promise<JSONValue>;
+export type GenKitToolHandler<
+  I extends z.ZodTypeAny,
+  O extends z.ZodTypeAny
+> = (input: z.infer<I>) => Promise<z.infer<O>>;
 
 /**
  * The FGAAuthorizer class implements the FGA authorization control for a Vercel AI tool.
@@ -19,8 +22,10 @@ export class FGAAuthorizer extends FGAAuthorizerBase<[any, any]> {
    * @returns A tool authorizer.
    */
   authorizer() {
-    return <T>(t: LlamaToolHandler<T>): LlamaToolHandler<T> => {
-      return this.protect(t) as LlamaToolHandler<T>;
+    return <I extends z.ZodTypeAny, O extends z.ZodTypeAny>(
+      t: GenKitToolHandler<I, O>
+    ): GenKitToolHandler<I, O> => {
+      return this.protect(t) as GenKitToolHandler<I, O>;
     };
   }
 }

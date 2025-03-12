@@ -7,7 +7,7 @@
     "forceConsistentCasingInFileNames": true,
     "inlineSources": false,
     "isolatedModules": true,
-    "moduleResolution": "node",
+    "moduleResolution": "nodenext",
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "preserveWatchOutput": true,
@@ -15,10 +15,14 @@
     "strict": true,
     "types": ["@types/node", "vitest/globals"],
     "lib": ["dom", "ES2018"],
-    "module": "ESNext",
+    "module": "NodeNext",
     "target": "ES2018",
     "outDir": "./dist",
-    "baseUrl": "."
+    "baseUrl": ".",
+    "jsx": "react-jsx",
+    "paths": {
+      "#interruptions": ["src/interruptions"]
+    }
   },
   "include": ["src/**/*"],
   "types": ["@types/node"],
