@@ -80,4 +80,4 @@ This will give  you an additional `toolInterrupt` function that you can use to d
 
 ## Complete example
 
-For a complete example refer to [this demo](../../demos/vercel-ai/).
+For a complete example refer to [this demo](../../demos/nextjs-ai/).
