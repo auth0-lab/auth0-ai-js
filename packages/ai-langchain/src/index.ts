@@ -8,6 +8,7 @@ import { Annotation, LangGraphRunnableConfig } from "@langchain/langgraph";
 
 import { CIBAGraph } from "./ciba/ciba-graph";
 import { CIBAGraphOptions } from "./ciba/ciba-graph/types";
+import { FGA_AI } from "./FGA_AI";
 
 type Auth0StateType = {
   error: string;
@@ -34,17 +35,19 @@ export function getAccessToken(config: LangGraphRunnableConfig) {
   return accessToken;
 }
 
-export class Auth0AI<N extends string> {
-  private _graph: CIBAGraph<N>;
+export class Auth0AI {
+  private _graph: CIBAGraph | undefined;
   private config: AuthorizerParams | undefined;
 
   constructor(config?: AuthorizerParams) {
     this.config = config;
   }
 
-  withCIBA(options?: CIBAGraphOptions<N>) {
+  withCIBA(options?: CIBAGraphOptions) {
     this._graph = new CIBAGraph(options, this.config);
 
     return this._graph;
   }
+
+  static FGA = FGA_AI;
 }

@@ -1,4 +1,8 @@
-import { CIBAAuthorizer, CibaAuthorizerCheckResponse, Credentials } from "@auth0/ai";
+import {
+  CIBAAuthorizer,
+  CibaAuthorizerCheckResponse,
+  Credentials,
+} from "@auth0/ai";
 import { Annotation, END, START, StateGraph } from "@langchain/langgraph";
 import { Client } from "@langchain/langgraph-sdk";
 
@@ -38,7 +42,7 @@ export function CibaPollerGraph(params: CibaPollerParams) {
       // TODO: use CIBA expiration to stop the scheduler and resume the agent
       const res = await CIBAAuthorizer.check(state.cibaResponse.authReqId);
 
-      state.tokenResponse = res.token;
+      state.tokenResponse = res.token!;
       state.status = res.status;
     } catch (e) {
       console.error(e);

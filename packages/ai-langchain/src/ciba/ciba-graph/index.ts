@@ -9,8 +9,8 @@ import { initializeCIBA } from "./initialize-ciba";
 import { initializeHITL } from "./initialize-hitl";
 import { CIBAGraphOptions, CIBAOptions, ProtectedTool, State } from "./types";
 
-export class CIBAGraph<N extends string> {
-  private graph;
+export class CIBAGraph<N extends string = string> {
+  private graph: any;
   private options?: CIBAGraphOptions<N>;
   private tools: ProtectedTool<N>[] = [];
   private authorizerParams: AuthorizerParams | undefined;

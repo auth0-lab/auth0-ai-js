@@ -4,9 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "npx tsx src/index.ts",
-    "fga:init": "npx tsx ./scripts/fga-init.ts",
-    "langgraph:up": "npx @langchain/langgraph-cli dev --port 54367"
+    "start": "npx @langchain/langgraph-cli dev --port 54367",
+    "fga:init": "npx tsx ./scripts/fga-init.ts"
   },
   "author": {
     "name": "Auth0 Inc.",
@@ -15,6 +14,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@auth0/ai": "*",
+    "@auth0/ai-langchain": "*",
     "@langchain/core": "^0.3.19",
     "@langchain/langgraph": "^0.2.24",
     "@langchain/langgraph-sdk": "^0.0.42",

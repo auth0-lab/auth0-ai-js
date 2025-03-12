@@ -30,7 +30,7 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "@auth0/ai": "@auth0/ai:*",
+    "@auth0/ai": "*",
     "langchain": "^0.3.11",
     "z": "1.0.1"
   },
