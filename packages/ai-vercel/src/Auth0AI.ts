@@ -3,6 +3,7 @@ import { AuthenticationClient, AuthenticationClientOptions } from "auth0";
 
 import { CIBAAuthorizer } from "./CIBA";
 import { FederatedConnectionAuthorizer } from "./FederatedConnections";
+import { FGA_AI } from "./FGA_AI";
 
 type AuthorizerParams = Partial<
   Pick<AuthenticationClientOptions, "domain" | "clientSecret" | "clientId">
@@ -69,4 +70,6 @@ export class Auth0AI {
     }
     return authorizer;
   }
-};
+
+  static FGA = FGA_AI;
+}

@@ -2,14 +2,14 @@ import "dotenv/config";
 
 import { z } from "zod";
 
-import { FGA_AI } from "@auth0/ai-vercel";
+import { Auth0AI } from "@auth0/ai-vercel";
 
 import { Context } from "../context";
 
-const fgaAI = new FGA_AI();
+const auth0AI = new Auth0AI.FGA();
 
 export const buy = (context: Context) => {
-  const useFGA = fgaAI.withFGA({
+  const useFGA = auth0AI.withFGA({
     buildQuery: async ({ ticker }) => {
       return {
         user: `user:${context.userId}`,
