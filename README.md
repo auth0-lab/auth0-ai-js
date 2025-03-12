@@ -39,21 +39,32 @@ a person or organization. Common use cases include:
 - [`@auth0/ai-vercel`](https://github.com/auth0-lab/auth0-ai-js/tree/main/packages/ai-vercel) -
   Integration with [AI SDK](https://sdk.vercel.ai/) framework.
 
+- [`@auth0/ai-components`](https://github.com/auth0-lab/auth0-ai-js/tree/main/packages/ai-components) -
+  A library of React components to help integrate `@auth0/ai` with a UI.
+
 ## Running examples
+
+## Prepare the workspace
 
 1. Install depedencies for the workspace
 
    ```sh
-   $ npm install
+   npm install
    ```
 
 2. Run [Turbo](https://turbo.build/)
 
    ```sh
-   $ npm run build
+   npm run build
    ```
 
-3. Follow example instructions
+3. Follow the examples instructions below
+
+### Examples list
+
+- [**Async User Confirmation**](./examples/async-user-confirmation/README.md)
+- [**Authorization for RAG**](./examples/authorization-for-rag/README.md)
+- [**Authorization for Tools**](./examples/authorization-for-tools/README.md)
 
 ## Feedback
 

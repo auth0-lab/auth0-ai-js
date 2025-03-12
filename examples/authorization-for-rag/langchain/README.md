@@ -43,13 +43,13 @@ This example demonstrates how to combine [LangChain](https://js.langchain.com/do
 1. Install dependencies.
 
    ```sh
-   $ npm install
+   npm install
    ```
 
 2. Initialize the FGA model and tuples
 
    ```sh
-   $ npm run fga:init
+   npm run fga:init
    ```
 
 3. Running the example

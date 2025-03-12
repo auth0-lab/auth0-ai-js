@@ -8,7 +8,7 @@ This SDK provides Okta FGA as a [retriever](https://docs.llamaindex.ai/en/stable
 
 ## Install
 
-> [!WARNING] 
+> [!WARNING]
 > `@auth0/ai-llamaindex` is currently under development and it is not intended to be used in production, and therefore has no official support.
 
 ```
@@ -56,6 +56,23 @@ async function main() {
 main().catch(console.error);
 ```
 
+## Feedback
+
+### Contributing
+
+We appreciate feedback and contribution to this repo! Before you get started, please see the following:
+
+- [Auth0's general contribution guidelines](https://github.com/auth0/open-source-template/blob/master/GENERAL-CONTRIBUTING.md)
+- [Auth0's code of conduct guidelines](https://github.com/auth0/open-source-template/blob/master/CODE-OF-CONDUCT.md)
+
+### Raise an issue
+
+To provide feedback or report a bug, please [raise an issue on our issue tracker](https://github.com/auth0-lab/auth0-ai-python/issues).
+
+### Vulnerability Reporting
+
+Please do not report security vulnerabilities on the public GitHub issue tracker. The [Responsible Disclosure Program](https://auth0.com/responsible-disclosure-policy) details the procedure for disclosing security issues.
+
 ---
 
 <p align="center">
@@ -68,3 +85,4 @@ main().catch(console.error);
 <p align="center">Auth0 is an easy to implement, adaptable authentication and authorization platform. To learn more checkout <a href="https://auth0.com/why-auth0">Why Auth0?</a></p>
 <p align="center">
 This project is licensed under the Apache 2.0 license. See the <a href="/LICENSE"> LICENSE</a> file for more info.</p>
+

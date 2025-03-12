@@ -25,7 +25,7 @@ FGA_CLIENT_SECRET="<fga-client-secret>"
 1. Install dependencies. If you want to run with local dependencies follow root instructions.
 
    ```sh
-   $ npm install
+   npm install
    ```
 
 2. Running the example

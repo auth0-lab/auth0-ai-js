@@ -6,7 +6,7 @@ This SDK provides Okta FGA as a [reranker](https://firebase.google.com/docs/genk
 
 ## Install
 
-> [!WARNING] 
+> [!WARNING]
 > `@auth0/ai-genkit` is currently under development and it is not intended to be used in production, and therefore has no official support.
 
 ```
@@ -69,6 +69,23 @@ const demoFlow = ai.defineFlow(
  */
 console.log(await demoFlow("Show me forecast for ZEKO?"));
 ```
+
+## Feedback
+
+### Contributing
+
+We appreciate feedback and contribution to this repo! Before you get started, please see the following:
+
+- [Auth0's general contribution guidelines](https://github.com/auth0/open-source-template/blob/master/GENERAL-CONTRIBUTING.md)
+- [Auth0's code of conduct guidelines](https://github.com/auth0/open-source-template/blob/master/CODE-OF-CONDUCT.md)
+
+### Raise an issue
+
+To provide feedback or report a bug, please [raise an issue on our issue tracker](https://github.com/auth0-lab/auth0-ai-python/issues).
+
+### Vulnerability Reporting
+
+Please do not report security vulnerabilities on the public GitHub issue tracker. The [Responsible Disclosure Program](https://auth0.com/responsible-disclosure-policy) details the procedure for disclosing security issues.
 
 ---
 

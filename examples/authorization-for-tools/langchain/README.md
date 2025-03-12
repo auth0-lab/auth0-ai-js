@@ -28,7 +28,7 @@ LANGGRAPH_API_URL="http://localhost:54367"
 1. Install dependencies. If you want to run with local dependencies follow root instructions.
 
    ```sh
-   $ npm install
+   npm install
    ```
 
 2. Running Langraph

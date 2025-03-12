@@ -14,4 +14,20 @@ This process ensures that users maintain control over significant actions initia
 
 ### Examples
 
-> Coming soon
+Explore the following examples demonstrating the integration of **Auth0's Async User confirmation** with **LangChain**, **LlamaIndex**, **Genkit**, and others:
+
+- **LangChain:**  
+  An implementation showcasing how to implement **Human in the Loop** using `@auth0/ai` with LangChain to enforce User Authorization Confirmation on tool executions.  
+  [View Example](/examples/async-user-confirmation/langchain/)
+
+- **LlamaIndex:**  
+  An implementation showcasing how to implement **Human in the Loop** using `@auth0/ai` with LlamaIndex to enforce User Authorization Confirmation on tool executions.  
+  [View Example](/examples/async-user-confirmation/llamaindex/)
+
+- **Genkit:**  
+  An implementation showcasing how to implement **Human in the Loop** using `@auth0/ai` with Genkit to enforce User Authorization Confirmation on tool executions.  
+  [View Example](/examples/async-user-confirmation/genkit/)
+
+- **AI SDK:**  
+  An implementation showcasing how to implement **Human in the Loop** using `@auth0/ai` with AI SDK to enforce User Authorization Confirmation on tool executions.  
+  [View Example](/examples/async-user-confirmation/ai-sdk/)
