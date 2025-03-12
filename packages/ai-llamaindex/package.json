@@ -35,7 +35,7 @@
     "llamaindex": "^0.9",
     "lodash": "^4.17.21",
     "magic-bytes.js": "^1.10.0",
-    "z": "1.0.1"
+    "z": "1.0.9"
   },
   "peerDependencies": {
     "@openfga/sdk": "^0.8.0"
