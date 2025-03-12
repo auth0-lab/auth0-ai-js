@@ -36,6 +36,9 @@ a person or organization. Common use cases include:
 - [`@auth0/ai-langchain`](https://github.com/auth0-lab/auth0-ai-js/tree/main/packages/ai-langchain) -
   Integration with [LangchainJS](https://js.langchain.com/docs/introduction/) framework.
 
+- [`@auth0/ai-vercel`](https://github.com/auth0-lab/auth0-ai-js/tree/main/packages/ai-vercel) -
+  Integration with [AI SDK](https://sdk.vercel.ai/) framework.
+
 ## Running examples
 
 1. Install depedencies for the workspace

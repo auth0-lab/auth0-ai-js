@@ -8,7 +8,8 @@ This SDK provides Okta FGA as a [retriever](https://docs.llamaindex.ai/en/stable
 
 ## Install
 
-> [!WARNING] > `@auth0/ai-llamaindex` is currently under development and not yet published to npm.
+> [!WARNING] 
+> `@auth0/ai-llamaindex` is currently under development and it is not intended to be used in production, and therefore has no official support.
 
 ```
 $ npm install @auth0/ai-llamaindex

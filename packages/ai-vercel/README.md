@@ -4,7 +4,8 @@
 
 ## Install
 
-> [!WARNING] > `@auth0/ai-vercel` is currently under development and not yet published to npm.
+> [!WARNING] 
+> `@auth0/ai-vercel` is currently under development and it is not intended to be used in production, and therefore has no official support.
 
 ```
 $ npm install @auth0/ai-vercel
@@ -13,13 +14,14 @@ $ npm install @auth0/ai-vercel
 ## Usage
 
 Initialize the SDK with your Auth0 credentials:
+
 ```javascript
 import { Auth0AI } from "@auth0/ai-vercel";
 
 const auth0AI = new Auth0AI({
   domain: "YOUR_AUTH0_DOMAIN",
   clientId: "YOUR_AUTH_CLIENT_ID",
-  clientSecret: "YOUR_AUTH_CLIENT_SECRET"
+  clientSecret: "YOUR_AUTH_CLIENT_SECRET",
 });
 
 // Alternatively you can use the `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID` and `AUTH0_CLIENT_SECRET`
@@ -32,7 +34,6 @@ The federated connections feature of Auth0 can be used to progresively request s
 The `Auth0AI` class provides a method to request scopes for a given connection.
 
 First initialize the Federated Connection Authorizer as follows:
-
 
 ```javascript
 import { auth0 } from "./auth0";
@@ -54,11 +55,15 @@ export const withCalendarFreeBusyAccess = auth0AI.withFederatedConnection({
 Then use the `withCalendarFreeBusyAccess` to wrap the tool and use `getFederatedConnectionAccessToken` from the SDK to get the access token.
 
 ```javascript
-import { FederatedConnectionError, getFederatedConnectionAccessToken } from "@auth0/ai-vercel";
+import {
+  FederatedConnectionError,
+  getFederatedConnectionAccessToken,
+} from "@auth0/ai-vercel";
 
 export const checkUsersCalendar = withCalendarFreeBusyAccess(
   tool({
-    description: "Check user availability on a given date time on their calendar",
+    description:
+      "Check user availability on a given date time on their calendar",
     parameters: z.object({
       date: z.coerce.date(),
     }),
@@ -87,7 +92,11 @@ export const checkUsersCalendar = withCalendarFreeBusyAccess(
             `Authorization required to access the Federated Connection`
           );
         }
-        throw new Error(`Invalid response from Google Calendar API: ${response.status} - ${await response.text()}`);
+        throw new Error(
+          `Invalid response from Google Calendar API: ${
+            response.status
+          } - ${await response.text()}`
+        );
       }
 
       const busyResp = await response.json();
@@ -96,7 +105,6 @@ export const checkUsersCalendar = withCalendarFreeBusyAccess(
   })
 );
 ```
-
 
 ## CIBA: Client Initiated Backchannel Authentication
 
@@ -137,27 +145,34 @@ Then wrap the tool as follows:
 export const purchaseStock = buyStockAuthorizer({
   description: "Execute an stock purchase given stock ticker and quantity",
   parameters: z.object({
-    tradeID: z.string().uuid().describe('The unique identifier for the trade provided by the user'),
-    userID: z.string().describe('The user ID of the user who created the conditional trade'),
-    ticker: z.string().describe('The stock ticker to trade'),
-    qty: z.number().int().positive().describe('The quantity of shares to trade'),
+    tradeID: z
+      .string()
+      .uuid()
+      .describe("The unique identifier for the trade provided by the user"),
+    userID: z
+      .string()
+      .describe("The user ID of the user who created the conditional trade"),
+    ticker: z.string().describe("The stock ticker to trade"),
+    qty: z
+      .number()
+      .int()
+      .positive()
+      .describe("The quantity of shares to trade"),
   }),
-  execute: async (
-    {
-      userID,
-      ticker,
-      qty,
-    }: {
-      userID: string;
-      ticker: string;
-      qty: number;
-    }
-  ): Promise<string> => {
+  execute: async ({
+    userID,
+    ticker,
+    qty,
+  }: {
+    userID: string,
+    ticker: string,
+    qty: number,
+  }): Promise<string> => {
     const credentials = getCIBACredentials();
     //use credentials.accessToken to call the stock API.
     return `Just bought ${qty} shares of ${ticker} for ${userID}`;
   },
-})
+});
 ```
 
 ## FGA
@@ -184,13 +199,24 @@ const auth0AI = new FGA_AI({
 Then initialize the tool wrapper:
 
 ```js
-const authorizedTool = fgaAI.withFGA({
-  buildQuery: async ({userID, doc}) => ({ user: userID, object: doc, relation: 'read' })
-}, myAITool);
+const authorizedTool = fgaAI.withFGA(
+  {
+    buildQuery: async ({ userID, doc }) => ({
+      user: userID,
+      object: doc,
+      relation: "read",
+    }),
+  },
+  myAITool
+);
 
 // Or create a wrapper to apply to tools later
 const authorizer = fgaAI.withFGA({
-  buildQuery: async ({userID, doc}) => ({ user: userID, object: doc, relation: 'read' })
+  buildQuery: async ({ userID, doc }) => ({
+    user: userID,
+    object: doc,
+    relation: "read",
+  }),
 });
 
 const authorizedTool = authorizer(myAITool);
@@ -213,4 +239,7 @@ Read [Setup Interruptions](./SETUP_INTERRUPTIONS.md) for more information.
 ## License
 
 `@auth0/ai-vercel` is [Apache-2.0 Licensed](./LICENSE).
+
+```
+
 ```
