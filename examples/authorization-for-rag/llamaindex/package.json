@@ -14,8 +14,8 @@
     "fga:init": "npx tsx ./scripts/fga-init.ts"
   },
   "dependencies": {
-    "@auth0/ai-llamaindex": "*",
-    "llamaindex": "^0.8.31",
+    "@auth0/ai-llamaindex": "@auth0/ai-llamaindex:*",
+    "llamaindex": "^0.8.32",
     "@openfga/sdk": "^0.8.0"
   }
 }

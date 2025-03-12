@@ -1,6 +1,13 @@
 import "dotenv/config";
 
-import { ConsistencyPreference, CredentialsMethod, OpenFgaClient, TypeName } from "@openfga/sdk";
+import { endOfMonth, startOfMonth } from "date-fns";
+
+import {
+  ConsistencyPreference,
+  CredentialsMethod,
+  OpenFgaClient,
+  TypeName,
+} from "@openfga/sdk";
 
 async function asyncFilter<T>(
   arr: T[],
@@ -86,7 +93,7 @@ async function main() {
     conditions: {
       is_trading_window_closed: {
         name: "is_trading_window_closed",
-        expression: "current_time > to || current_time < from",
+        expression: "current_time > from && current_time < to",
         parameters: {
           current_time: { type_name: TypeName.Timestamp },
           from: { type_name: TypeName.Timestamp },
@@ -118,8 +125,8 @@ async function main() {
       condition: {
         name: "is_trading_window_closed",
         context: {
-          from: "2023-01-01T00:00:00Z",
-          to: "2023-02-01T00:00:00Z",
+          from: startOfMonth(new Date()).toISOString(),
+          to: endOfMonth(new Date()).toISOString(),
         },
       },
     },
