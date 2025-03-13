@@ -1,4 +1,4 @@
-export * from "./retrievers/fga-retriever";
+export * from "./FGA/fga-retriever";
 
 export { CibaPollerGraph } from "./ciba/ciba-poller-graph";
 export type { SchedulerParams } from "./ciba/ciba-graph/types";

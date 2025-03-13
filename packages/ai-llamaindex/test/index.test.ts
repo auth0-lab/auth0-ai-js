@@ -8,10 +8,7 @@ import {
   OpenFgaClient,
 } from "@openfga/sdk";
 
-import {
-  FGARetriever,
-  FGARetrieverCheckerFn,
-} from "../src/retrievers/fga-retriever";
+import { FGARetriever, FGARetrieverCheckerFn } from "../src/FGA/fga-retriever";
 
 describe("FGARetriever", () => {
   process.env.FGA_CLIENT_ID = "client-id";

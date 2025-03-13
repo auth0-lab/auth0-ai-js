@@ -4,7 +4,7 @@
 
 import { FGA_AI } from "./FGA_AI";
 
-export * from "./retrievers/fga-retriever";
+export * from "./FGA/fga-retriever";
 
 export class Auth0AI {
   static FGA = FGA_AI;

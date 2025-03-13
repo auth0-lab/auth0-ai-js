@@ -7,7 +7,7 @@ import {
   OpenFgaClient,
 } from "@openfga/sdk";
 
-import { auth0, FGAReranker } from "../src/retrievers/fga-reranker";
+import { auth0, FGAReranker } from "../src/FGA/fga-reranker";
 
 describe("FGAReranker", async () => {
   process.env.FGA_CLIENT_ID = "client-id";

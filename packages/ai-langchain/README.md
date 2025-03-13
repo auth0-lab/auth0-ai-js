@@ -2,12 +2,23 @@
 
 `@auth0/ai-langchain` is an SDK for building secure AI-powered applications using [Auth0](https://www.auth0.ai/), [Okta FGA](https://docs.fga.dev/) and [LangChain](https://js.langchain.com/docs/tutorials/).
 
-This SDK provides Okta FGA as a [retriever](https://js.langchain.com/docs/concepts/retrievers/) for RAG applications. The retriever allows filtering documents based on access control checks defined in Okta FGA. This retriever performs batch checks on retrieved documents, returning only the ones that pass the specified access criteria.
+## Features
+
+### FGA Retriever
+
+Provides Okta FGA as a [retriever](https://js.langchain.com/docs/concepts/retrievers/) for RAG applications. The retriever allows filtering documents based on access control checks defined in Okta FGA. This retriever performs batch checks on retrieved documents, returning only the ones that pass the specified access criteria.
+
+### FGA Authorizer
+
+Provides Okta FGA as a tool authorizer that protects the tool execution with FGA.
+
+### Async Authorizer
+
+Provides Async User Authorizer for tools using [Client Initiated Backchannel Authentication (CIBA)](https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html).
 
 ## Install
 
-> [!WARNING] 
-> `@auth0/ai-langchain` is currently under development and it is not intended to be used in production, and therefore has no official support.
+> [!WARNING] > `@auth0/ai-langchain` is currently under development and it is not intended to be used in production, and therefore has no official support.
 
 ```
 $ npm install @auth0/ai-langchain

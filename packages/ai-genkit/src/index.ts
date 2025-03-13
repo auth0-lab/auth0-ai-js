@@ -1,6 +1,6 @@
 import { FGA_AI } from "./FGA_AI";
 
-export { FGAReranker, auth0 } from "./retrievers/fga-reranker";
+export { FGAReranker, auth0 } from "./FGA/fga-reranker";
 
 // references:
 // https://firebase.google.com/docs/genkit/auth
