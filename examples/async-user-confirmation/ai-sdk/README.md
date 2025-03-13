@@ -2,6 +2,10 @@
 
 ## Getting Started
 
+### Prerequisites
+
+- An OpenAI account and API key create one [here](https://platform.openai.com).
+
 #### `.env` file
 
 ```sh
@@ -27,7 +31,7 @@ OPENAI_API_KEY="openai-api-key"
 1. Install dependencies. If you want to run with local dependencies follow root instructions.
 
    ```sh
-   $ npm install
+   npm install
    ```
 
 2. Running the API

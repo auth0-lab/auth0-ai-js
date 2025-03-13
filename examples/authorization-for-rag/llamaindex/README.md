@@ -62,7 +62,7 @@ This example demonstrates how to combine [LlamaIndex](https://ts.llamaindex.ai/)
 1. Install dependencies. If you want to run with local dependencies follow root instructions.
 
    ```sh
-   $ npm install
+   npm install
    ```
 
 2. Running the example
