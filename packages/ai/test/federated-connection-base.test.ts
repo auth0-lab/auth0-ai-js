@@ -1,9 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import {
-  asyncLocalStorage,
-  FederatedConnectionAuthorizerBase,
-} from "../src/authorizers/federated-connections";
+import { asyncLocalStorage, FederatedConnectionAuthorizerBase } from "../src/authorizers/federated-connections";
 
 const fetchMock = vi.fn();
 
@@ -41,6 +38,29 @@ describe("FederatedConnectionAuthorizerBase", () => {
           clientSecret: "custom-secret",
         },
         mockParams
+      );
+      expect(auth).toBeInstanceOf(FederatedConnectionAuthorizerBase<[string]>);
+    });
+    it("should initialize with custom getAccessToken func", () => {
+      const auth = new FederatedConnectionAuthorizerBase<[string]>(
+        {
+          domain: "custom.auth0.com",
+          clientId: "custom-client",
+          clientSecret: "custom-secret",
+        },
+        {
+          getAccessToken: () => {
+            return {
+              access_token: "test",
+              id_token: "test",
+              scope: "read:calendar",
+              expires_in: 3600,
+              token_type: "Bearer",
+            };
+          },
+          connection: "google",
+          scopes: ["read:calendar"],
+        }
       );
       expect(auth).toBeInstanceOf(FederatedConnectionAuthorizerBase<[string]>);
     });

@@ -11,7 +11,9 @@
   "devDependencies": {
     "@commitlint/config-conventional": "^19.8.0",
     "commitlint": "^19.8.0",
+    "eslint-config-prettier": "^10.1.1",
     "husky": "^9.1.7",
+    "prettier": "^3.5.3",
     "turbo": "^2.3.4"
   },
   "packageManager": "npm@9.8.0",
