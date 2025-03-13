@@ -45,7 +45,7 @@ export class FGAAuthorizerBase<ToolExecuteArgs extends any[]> {
           apiTokenIssuer:
             fgaClientParams?.credentials?.config.apiTokenIssuer ||
             process.env.FGA_API_TOKEN_ISSUER ||
-            "fga.us.auth0.com",
+            "auth.fga.dev",
           apiAudience:
             fgaClientParams?.credentials?.config.apiAudience ||
             process.env.FGA_API_AUDIENCE ||

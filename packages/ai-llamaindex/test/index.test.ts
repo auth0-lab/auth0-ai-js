@@ -44,7 +44,7 @@ describe("FGARetriever", () => {
     credentials: {
       method: CredentialsMethod.ClientCredentials,
       config: {
-        apiTokenIssuer: "fga.us.auth0.com",
+        apiTokenIssuer: "auth.fga.dev",
         apiAudience: "https://api.us1.fga.dev/",
         clientId: "client-id",
         clientSecret: "client-secret",
