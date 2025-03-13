@@ -9,36 +9,38 @@
     "dist/**/*"
   ],
   "scripts": {
-    "build": "tsup",
-    "build:watch": "tsup --watch",
+    "build": "npm run clean && npm run build:esm && npm run build:cjs",
+    "build:watch": "tsc --module ESNext --watch",
+    "build:esm": "tsc --module ESNext --outDir ./dist/esm",
+    "build:cjs": "tsc --module nodenext --moduleResolution nodenext --declaration false --declarationMap false --outDir ./dist/cjs",
     "clean": "rm -rf dist",
     "lint": "eslint .",
     "type-check": "tsc --noEmit",
     "test": "vitest run"
   },
   "imports": {
-    "#interruptions": {
-      "types": "./dist/interruptions/index.d.ts",
-      "require": "./dist/interruptions/index.js",
-      "import": "./dist/interruptions/index.mjs"
+    "#interrupts": {
+      "types": "./dist/esm/interrupts/index.d.ts",
+      "require": "./dist/cjs/interrupts/index.js",
+      "import": "./dist/esm/interrupts/index.js"
     }
   },
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "types": "./dist/esm/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
     },
-    "./interruptions": {
-      "types": "./dist/interruptions/index.d.ts",
-      "import": "./dist/interruptions/index.mjs",
-      "require": "./dist/interruptions/index.js"
+    "./interrupts": {
+      "types": "./dist/esm/interrupts/index.d.ts",
+      "import": "./dist/esm/interrupts/index.js",
+      "require": "./dist/cjs/interrupts/index.js"
     },
     "./react": {
-      "types": "./dist/react/index.d.ts",
-      "import": "./dist/react/index.mjs",
-      "require": "./dist/react/index.js"
+      "types": "./dist/esm/react/index.d.ts",
+      "import": "./dist/esm/react/index.js",
+      "require": "./dist/cjs/react/index.js"
     }
   },
   "author": {

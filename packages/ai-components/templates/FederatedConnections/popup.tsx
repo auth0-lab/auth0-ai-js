@@ -10,7 +10,7 @@ export function EnsureAPIAccessPopup({
   connection,
   scopes,
   connectWidget: { icon, title, description, action },
-  addToolResult,
+  onFinish,
 }: FederatedConnectionAuthProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [loginPopup, setLoginPopup] = useState<Window | null>(null);
@@ -26,8 +26,8 @@ export function EnsureAPIAccessPopup({
         setIsLoading(false);
         setLoginPopup(null);
         clearInterval(interval);
-        if (addToolResult) {
-          addToolResult({ success: true });
+        if (onFinish) {
+          onFinish();
         }
       }
     }, 1000);
@@ -36,7 +36,7 @@ export function EnsureAPIAccessPopup({
         clearInterval(interval);
       }
     };
-  }, [loginPopup, addToolResult]);
+  }, [loginPopup, onFinish]);
 
   //Open the login popup
   const startLoginPopup = useCallback(async () => {

@@ -53,5 +53,8 @@
   },
   "[markdown]": {
     "editor.formatOnSave": false
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   }
 }

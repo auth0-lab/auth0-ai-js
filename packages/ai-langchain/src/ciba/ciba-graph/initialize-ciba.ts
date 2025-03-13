@@ -116,7 +116,7 @@ export const initializeCIBA =
       console.log("CIBA Task Scheduled");
     } catch (e) {
       console.error(e);
-      state.auth0 = { error: e.message };
+      state.auth0 = { error: (e as Error).message };
     }
 
     return state;

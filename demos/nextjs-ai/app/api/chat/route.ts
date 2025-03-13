@@ -5,7 +5,7 @@ import { checkUsersCalendar } from "@/lib/ai/tools/check-user-calendar";
 import { getWeather } from "@/lib/ai/tools/get-weather";
 import { generateUUID } from "@/lib/utils";
 import { openai } from "@ai-sdk/openai";
-import { errorSerializer, invokeTools } from "@auth0/ai-vercel/interruptions";
+import { errorSerializer, invokeTools } from "@auth0/ai-vercel/interrupts";
 
 export const maxDuration = 30;
 

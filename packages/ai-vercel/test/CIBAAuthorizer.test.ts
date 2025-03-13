@@ -3,13 +3,13 @@ import { Tool, ToolExecutionOptions } from "ai";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 
+import { CIBAAuthorizerBase } from "@auth0/ai/CIBA";
 import {
   AuthorizationPending,
   AuthorizationRequestExpiredError,
-} from "@auth0/ai";
-import { CIBAAuthorizerBase } from "@auth0/ai/CIBA";
+  CIBAInterrupt,
+} from "@auth0/ai/interrupts";
 
-import { CIBAuthorizationError } from "../src/CIBA";
 import { CIBAAuthorizer } from "../src/CIBA/CIBAAuthorizer";
 
 describe("CIBAAuthorizer", () => {
@@ -52,7 +52,7 @@ describe("CIBAAuthorizer", () => {
   });
 
   describe("on authorization pending error", () => {
-    let error: CIBAuthorizationError;
+    let error: CIBAInterrupt;
     beforeEach(async () => {
       authorizerParameters.getAuthorizationResponse.mockResolvedValue({
         status: "pending",
@@ -72,13 +72,12 @@ describe("CIBAAuthorizer", () => {
           {} as ToolExecutionOptions
         );
       } catch (err) {
-        error = err as CIBAuthorizationError;
+        error = err as CIBAInterrupt;
       }
     });
 
-    it("should throw a final error", () => {
-      expect(error).toBeInstanceOf(CIBAuthorizationError);
-      expect(error.isFinal).toBe(false);
+    it("should throw a CIBA interrupt", () => {
+      expect(error).toBeInstanceOf(CIBAInterrupt);
     });
 
     it("should not call the tool execute method", () => {
@@ -87,7 +86,7 @@ describe("CIBAAuthorizer", () => {
   });
 
   describe("on authorization request expired error", () => {
-    let error: CIBAuthorizationError;
+    let error: CIBAInterrupt;
     beforeEach(async () => {
       authorizerParameters.getAuthorizationResponse.mockResolvedValue({
         status: "pending",
@@ -107,13 +106,12 @@ describe("CIBAAuthorizer", () => {
           {} as ToolExecutionOptions
         );
       } catch (err) {
-        error = err as CIBAuthorizationError;
+        error = err as CIBAInterrupt;
       }
     });
 
-    it("should throw a non final error", () => {
-      expect(error).toBeInstanceOf(CIBAuthorizationError);
-      expect(error.isFinal).toBe(true);
+    it("should throw a CIBA interrupt", () => {
+      expect(error).toBeInstanceOf(CIBAInterrupt);
     });
 
     it("should not call the tool execute method", () => {
@@ -122,7 +120,7 @@ describe("CIBAAuthorizer", () => {
   });
 
   describe("on completed authorization request", () => {
-    let error: CIBAuthorizationError;
+    let error: CIBAInterrupt;
     beforeEach(async () => {
       authorizerParameters.getAuthorizationResponse.mockResolvedValue({
         status: "pending",
@@ -148,7 +146,7 @@ describe("CIBAAuthorizer", () => {
           {} as ToolExecutionOptions
         );
       } catch (err) {
-        error = err as CIBAuthorizationError;
+        error = err as CIBAInterrupt;
       }
     });
 

@@ -1,3 +1,2 @@
-export { useInterruptions } from './interruptions';
-export type { Auth0InterruptionUI } from './interruptions';
-
+export { useInterruptions } from "./interrupts";
+export type { Auth0InterruptionUI } from "./interrupts";

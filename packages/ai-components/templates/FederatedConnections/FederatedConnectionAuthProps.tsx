@@ -12,7 +12,7 @@ export type AuthComponentMode = "redirect" | "popup" | "auto";
 export type FederatedConnectionAuthProps = {
   connection: string;
   scopes: string[];
-  addToolResult?: (result: any) => void;
+  onFinish?: () => void;
   connectWidget: {
     icon?: ReactNode;
     title: string;

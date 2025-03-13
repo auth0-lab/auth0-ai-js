@@ -3,12 +3,11 @@ import { Tool, ToolExecutionOptions } from "ai";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 
-import { AuthorizationRequired } from "@auth0/ai";
 import { FederatedConnectionAuthorizerBase } from "@auth0/ai/FederatedConnections";
+import { FederatedConnectionInterrupt } from "@auth0/ai/interrupts";
 
 import {
   FederatedConnectionAuthorizer,
-  FederatedConnectionError,
   getAccessTokenForConnection,
 } from "../src/FederatedConnections";
 
@@ -46,15 +45,20 @@ describe("FederatedConnectionAuthorizer", () => {
     vi.clearAllMocks();
   });
 
-  describe("on authorization error", () => {
-    let error: FederatedConnectionError;
+  describe("on FederatedConnectionInterrupt error", () => {
+    let error: FederatedConnectionInterrupt;
     beforeEach(async () => {
       vi.spyOn(
         FederatedConnectionAuthorizerBase.prototype,
         //@ts-ignore
         "getAccessToken"
       ).mockImplementation(() => {
-        throw new AuthorizationRequired("Authorization required");
+        throw new FederatedConnectionInterrupt(
+          "Authorization required",
+          "test",
+          ["test"],
+          ["test"]
+        );
       });
 
       try {
@@ -63,12 +67,12 @@ describe("FederatedConnectionAuthorizer", () => {
           {} as ToolExecutionOptions
         );
       } catch (err) {
-        error = err as FederatedConnectionError;
+        error = err as FederatedConnectionInterrupt;
       }
     });
 
     it("should throw a federated connection error", () => {
-      expect(error).toBeInstanceOf(FederatedConnectionError);
+      expect(error).toBeInstanceOf(FederatedConnectionInterrupt);
     });
 
     it("should not call the tool execute", () => {
@@ -77,7 +81,7 @@ describe("FederatedConnectionAuthorizer", () => {
   });
 
   describe("on authorization success", () => {
-    let error: FederatedConnectionError;
+    let error: FederatedConnectionInterrupt;
     let accessToken: string | undefined;
 
     beforeEach(async () => {
@@ -103,7 +107,7 @@ describe("FederatedConnectionAuthorizer", () => {
           {} as ToolExecutionOptions
         );
       } catch (err) {
-        error = err as FederatedConnectionError;
+        error = err as FederatedConnectionInterrupt;
       }
     });
 

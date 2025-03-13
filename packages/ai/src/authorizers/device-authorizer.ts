@@ -8,12 +8,9 @@ import {
   TokenEndpointResponse,
   TokenEndpointResponseHelpers,
 } from "openid-client";
-import {
-  AccessDeniedError,
-  AuthorizationRequestExpiredError,
-} from "src/errors";
 
 import { Credentials } from "../credentials";
+import { AccessDeniedError, AuthorizationRequestExpiredError } from "../errors";
 import { AuthorizerParams, AuthParams, ToolWithAuthHandler } from "./";
 
 export type DeviceAuthorizerOptions = {

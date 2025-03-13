@@ -1,4 +1,4 @@
-import { Auth0AI, FGA_AI } from "@auth0/ai-vercel";
+import { Auth0AI } from "@auth0/ai-vercel";
 
 import { auth0 } from "./auth0";
 
@@ -14,7 +14,7 @@ export const withTokenForGoogleConnection = auth0AI.withTokenForConnection({
   scopes: ["https://www.googleapis.com/auth/calendar.freebusy"],
 });
 
-const fgaAI = new FGA_AI();
+const fgaAI = new Auth0AI.FGA();
 
 export const withCanBuyPermission = fgaAI.withFGA({
   async buildQuery({ ticker }: { ticker: string }) {

@@ -2,7 +2,7 @@ import { useState } from "react";
 
 import { useChat } from "@ai-sdk/react";
 
-import { InterruptionPrefix } from "#interruptions";
+import { InterruptionPrefix } from "#interrupts";
 
 type UseChatReturnType = ReturnType<typeof useChat>;
 type UseChatWithInterruptionsReturnType = ReturnType<typeof useChat> & {
@@ -14,14 +14,18 @@ type ErrorHandler = (
 ) => (error: Error) => void;
 
 export type Auth0InterruptionUI = {
-  code: string;
-  toolCallId: string;
   name: string;
-  addToolResult: (result: any) => void;
+  code: string;
+
+  tool: {
+    id: string;
+    name: string;
+    args: any;
+  };
+
+  resume: () => void;
 
   [key: string]: any;
-  // connection: string;
-  // scopes: Array<string>;
 };
 
 export const useInterruptions = (
@@ -34,7 +38,6 @@ export const useInterruptions = (
     userErrorHandler?: (error: Error) => void
   ) => {
     return (error: Error) => {
-      console.log("Interruption error:", error.message);
       if (!error.message.startsWith(InterruptionPrefix)) {
         if (userErrorHandler) {
           userErrorHandler(error);
@@ -44,12 +47,14 @@ export const useInterruptions = (
       const parsedError = JSON.parse(
         error.message.replace(InterruptionPrefix, "")
       );
+      const { id } = parsedError.toolCall;
+
       setToolInterrupt({
         ...parsedError,
-        addToolResult: (result: any) => {
+        resume: (result: any) => {
           setToolInterrupt(null);
           addToolResult({
-            toolCallId: parsedError.toolCallId,
+            toolCallId: id,
             result: { continueInterruption: true, ...result },
           });
         },

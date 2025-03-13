@@ -6,7 +6,7 @@ import {
   AccessDeniedError,
   AuthorizationPending,
   AuthorizationRequestExpiredError,
-} from "../src/errors";
+} from "../src/interrupts";
 
 vi.mock("auth0");
 

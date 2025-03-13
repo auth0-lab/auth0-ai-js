@@ -1,4 +1,8 @@
-import { AuthorizationRequired } from "../../errors";
+import {
+  Auth0Interrupt,
+  FederatedConnectionError,
+  FederatedConnectionInterrupt,
+} from "../../interrupts";
 import { AuthorizerToolParameter, resolveParameter } from "../../parameters";
 import { TokenResponse } from "../../TokenResponse";
 import { asyncLocalStorage, AsyncStorageValue } from "./asyncLocalStorage";
@@ -9,7 +13,7 @@ export { asyncLocalStorage };
 
 export type FederatedConnectionAuthorizerParams<ToolExecuteArgs extends any[]> =
   {
-    refreshToken: AuthorizerToolParameter<ToolExecuteArgs, string>;
+    refreshToken: AuthorizerToolParameter<ToolExecuteArgs, string | undefined>;
     scopes: AuthorizerToolParameter<ToolExecuteArgs, string[]>;
     connection: AuthorizerToolParameter<ToolExecuteArgs, string>;
   };
@@ -27,7 +31,7 @@ export class FederatedConnectionAuthorizerBase<ToolExecuteArgs extends any[]> {
     private params: FederatedConnectionAuthorizerParams<ToolExecuteArgs>
   ) {}
 
-  protected handleAuthorizationErrors(err: AuthorizationRequired) {
+  protected handleAuthorizationInterrupts(err: Auth0Interrupt) {
     throw err;
   }
 
@@ -39,22 +43,29 @@ export class FederatedConnectionAuthorizerBase<ToolExecuteArgs extends any[]> {
       );
     }
 
+    const { scopes, connection } = store;
+
     if (!tokenResponse) {
-      throw new AuthorizationRequired(
-        `Authorization required to access the Federated Connection: ${this.params.connection}`
+      throw new FederatedConnectionInterrupt(
+        `Authorization required to access the Federated Connection: ${this.params.connection}`,
+        connection,
+        scopes,
+        scopes
       );
     }
 
     const currentScopes = (tokenResponse.scope ?? "").split(" ");
-    const { scopes } = store;
     const missingScopes = scopes.filter((s) => !currentScopes.includes(s));
     store.currentScopes = currentScopes;
 
     if (missingScopes.length > 0) {
-      throw new AuthorizationRequired(
+      throw new FederatedConnectionInterrupt(
         `Authorization required to access the Federated Connection: ${
           this.params.connection
-        }. Missing scopes: ${missingScopes.join(", ")}`
+        }. Missing scopes: ${missingScopes.join(", ")}`,
+        connection,
+        scopes,
+        [...currentScopes, ...scopes]
       );
     }
   }
@@ -62,10 +73,16 @@ export class FederatedConnectionAuthorizerBase<ToolExecuteArgs extends any[]> {
   protected async getAccessToken(
     ...toolContext: ToolExecuteArgs
   ): Promise<TokenResponse | undefined> {
-    const subjectToken = await resolveParameter(
-      this.params.refreshToken,
-      toolContext
-    );
+    const store = asyncLocalStorage.getStore();
+    if (!store) {
+      throw new Error(
+        "The tool must be wrapped with the FederationConnectionAuthorizer."
+      );
+    }
+
+    const { connection } = store;
+
+    const subjectToken = await this.getRefreshToken(...toolContext);
 
     if (!subjectToken) {
       return;
@@ -78,7 +95,7 @@ export class FederatedConnectionAuthorizerBase<ToolExecuteArgs extends any[]> {
       client_secret: this.auth0.clientSecret,
       subject_token_type: "urn:ietf:params:oauth:token-type:refresh_token",
       subject_token: subjectToken,
-      connection: this.params.connection,
+      connection: connection,
       requested_token_type:
         "http://auth0.com/oauth/token-type/federated-connection-access-token",
     };
@@ -94,6 +111,10 @@ export class FederatedConnectionAuthorizerBase<ToolExecuteArgs extends any[]> {
     }
 
     return res.json();
+  }
+
+  protected async getRefreshToken(...toolContext: ToolExecuteArgs) {
+    return await resolveParameter(this.params.refreshToken, toolContext);
   }
 
   /**
@@ -126,10 +147,19 @@ export class FederatedConnectionAuthorizerBase<ToolExecuteArgs extends any[]> {
           const tokenResponse = await this.getAccessToken(...args);
           this.validateToken(tokenResponse);
           asyncStore.accessToken = tokenResponse!.access_token;
-          return execute(...args);
+          return await execute(...args);
         } catch (err) {
-          if (err instanceof AuthorizationRequired) {
-            return this.handleAuthorizationErrors(err);
+          if (err instanceof FederatedConnectionError) {
+            const interrupt = new FederatedConnectionInterrupt(
+              err.message,
+              asyncStore.connection,
+              asyncStore.scopes,
+              asyncStore.scopes
+            );
+            return this.handleAuthorizationInterrupts(interrupt);
+          }
+          if (err instanceof Auth0Interrupt) {
+            return this.handleAuthorizationInterrupts(err);
           }
           throw err;
         }

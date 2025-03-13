@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { withTokenForGoogleConnection } from "@/lib/auth0-ai";
 import {
-  FederatedConnectionError,
+  FederatedConnectionInterrupt,
   getAccessTokenForConnection,
 } from "@auth0/ai-vercel";
 
@@ -36,7 +36,7 @@ export const checkUsersCalendar = withTokenForGoogleConnection(
 
       if (!response.ok) {
         if (response.status === 401) {
-          throw new FederatedConnectionError(
+          throw new FederatedConnectionInterrupt(
             `Authorization required to access the Federated Connection`
           );
         }

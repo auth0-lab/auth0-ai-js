@@ -56,8 +56,8 @@ Then use the `withTokenForGoogleConnection` to wrap the tool and use `getAccessT
 
 ```javascript
 import {
-  FederatedConnectionError,
   getAccessTokenForConnection,
+  FederatedConnectionInterrupt,
 } from "@auth0/ai-vercel";
 
 export const checkUsersCalendar = withTokenForGoogleConnection(
@@ -88,7 +88,7 @@ export const checkUsersCalendar = withTokenForGoogleConnection(
 
       if (!response.ok) {
         if (response.status === 401) {
-          throw new FederatedConnectionError(
+          throw new FederatedConnectionInterrupt(
             `Authorization required to access the Federated Connection`
           );
         }
