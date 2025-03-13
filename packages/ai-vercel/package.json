@@ -48,11 +48,11 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@auth0/ai": "*",
-    "ai": "^4.1.54",
     "auth0": "^4.18.0",
     "z": "1.0.1"
   },
   "peerDependencies": {
+    "ai": "^4.1.54",
     "react": "^19.0.0"
   },
   "devDependencies": {
