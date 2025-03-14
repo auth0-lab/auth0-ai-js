@@ -49,7 +49,7 @@
   "dependencies": {
     "@auth0/ai": "*",
     "auth0": "^4.18.0",
-    "z": "1.0.1"
+    "z": "1.0.9"
   },
   "peerDependencies": {
     "ai": "^4.1.54",
