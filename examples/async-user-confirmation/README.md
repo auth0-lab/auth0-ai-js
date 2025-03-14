@@ -12,6 +12,24 @@ Async User Confirmation enables background agents to perform tasks that require 
 
 This process ensures that users maintain control over significant actions initiated by automated agents.
 
+### Diagram
+
+Below is a high-level workflow:
+
+<p align="center">
+  <img
+    style="margin-left: auto; margin-right: auto; padding: 10px; background: #4a4a4a; border-radius: 10px; max-height: 500px;"
+    src="https://cdn.auth0.com/website/auth0-lab/ai/sdks/diagrams/async-user-confirmation-enroll.png"
+  />
+<p>
+
+<p align="center">
+  <img
+    style="margin-left: auto; margin-right: auto; padding: 10px; background: #4a4a4a; border-radius: 10px; max-height: 500px;"
+    src="https://cdn.auth0.com/website/auth0-lab/ai/sdks/diagrams/async-user-confirmation-authorize.png"
+  />
+<p>
+
 ### Examples
 
 Explore the following examples demonstrating the integration of **Auth0's Async User confirmation** with **LangChain**, **LlamaIndex**, **Genkit**, and others:
