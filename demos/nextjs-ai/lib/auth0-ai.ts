@@ -4,7 +4,7 @@ import { auth0 } from "./auth0";
 
 const auth0AI = new Auth0AI();
 
-export const withTokenForConnection = auth0AI.withTokenForConnection({
+export const withCalendarFreeBusyAccess = auth0AI.withFederatedConnection({
   refreshToken: async () => {
     const session = await auth0.getSession();
     const refreshToken = session?.tokenSet.refreshToken as string;

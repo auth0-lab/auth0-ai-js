@@ -58,11 +58,11 @@ export class Auth0AI {
     return authorizer;
   }
 
-  withTokenForConnection(params: FederatedConnectionParams): ToolWrapper;
+  withFederatedConnection(params: FederatedConnectionParams): ToolWrapper;
 
-  withTokenForConnection(params: FederatedConnectionParams, tool: Tool): Tool;
+  withFederatedConnection(params: FederatedConnectionParams, tool: Tool): Tool;
 
-  withTokenForConnection(params: FederatedConnectionParams, tool?: Tool) {
+  withFederatedConnection(params: FederatedConnectionParams, tool?: Tool) {
     const fc = new FederatedConnectionAuthorizer(this, params);
     const authorizer = fc.authorizer();
     if (tool) {
