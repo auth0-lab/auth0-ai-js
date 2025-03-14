@@ -1,33 +1,33 @@
 import {
   ClientBatchCheckItem,
   ConsistencyPreference,
-  CredentialsMethod,
   OpenFgaClient,
 } from "@openfga/sdk";
+import { buildOpenFgaClient, FGAClientParams } from "./fga-client";
 
-export type FGARetrieverCheckerFn<T extends Record<string, any>> = (
+export type FGAFilterCheckerFn<T extends Record<string, any>> = (
   doc: T
 ) => ClientBatchCheckItem;
 
-export type FGARetrieverArgs<T extends Record<string, any>> = {
-  buildQuery: FGARetrieverCheckerFn<T>;
+export type FGAFilterArgs<T extends Record<string, any>> = {
+  buildQuery: FGAFilterCheckerFn<T>;
   consistency?: ConsistencyPreference;
 };
 
 /**
- * A retriever that allows filtering documents based on access control checks
+ * A filter that allows filtering documents based on access control checks
  * using OpenFGA. This class performs batch checks on passed documents,
  * returning only the ones that pass the specified access criteria.
  *
  * @remarks
- * The FGARetriever requires a buildQuery function to specify how access checks
+ * The FGAFilter requires a buildQuery function to specify how access checks
  * are formed for each document, the checks are executed via an OpenFGA client
  * or equivalent mechanism. The checks are then mapped back to their corresponding
  * documents to filter out those for which access is denied.
  *
  * @example
  * ```ts
- * const retriever = FGARetriever.create({
+ * const filter = FGAFilter.create({
  *   buildQuery: (doc) => ({
  *     user: `user:${user}`,
  *     object: `doc:${doc.metadata.id}`,
@@ -36,61 +36,45 @@ export type FGARetrieverArgs<T extends Record<string, any>> = {
  * });
  * ```
  */
-export class FGARetriever<T extends Record<string, any>> {
-  lc_namespace = ["retrievers"];
-  private buildQuery: FGARetrieverCheckerFn<T>;
+export class FGAFilter<T extends Record<string, any>> {
+  private buildQuery: FGAFilterCheckerFn<T>;
   private consistency: ConsistencyPreference;
   private fgaClient: OpenFgaClient;
 
   private constructor(
-    { buildQuery, consistency }: FGARetrieverArgs<T>,
-    fgaClient?: OpenFgaClient
+    { buildQuery, consistency }: FGAFilterArgs<T>,
+    fgaClientParams?: FGAClientParams
   ) {
     this.buildQuery = buildQuery;
     this.consistency = consistency || ConsistencyPreference.HigherConsistency;
-    this.fgaClient =
-      fgaClient ||
-      new OpenFgaClient({
-        apiUrl: process.env.FGA_API_URL || "https://api.us1.fga.dev",
-        storeId: process.env.FGA_STORE_ID!,
-        credentials: {
-          method: CredentialsMethod.ClientCredentials,
-          config: {
-            apiTokenIssuer: process.env.FGA_API_TOKEN_ISSUER || "auth.fga.dev",
-            apiAudience:
-              process.env.FGA_API_AUDIENCE || "https://api.us1.fga.dev/",
-            clientId: process.env.FGA_CLIENT_ID!,
-            clientSecret: process.env.FGA_CLIENT_SECRET!,
-          },
-        },
-      });
+    this.fgaClient = buildOpenFgaClient(fgaClientParams);
   }
 
   /**
-   * Creates a new FGARetriever instance using the given arguments and optional OpenFgaClient.
+   * Creates a new FGAFilter instance using the given arguments and optional OpenFgaClient.
    *
-   * @param args - @FGARetrieverArgs
+   * @param args - @FGAFilterArgs
    * @param args.buildQuery - A function to generate access check requests for each document.
    * @param args.consistency - Optional - The consistency preference for the OpenFGA client.
-   * @param fgaClient - Optional - OpenFgaClient instance to execute checks against.
-   * @returns A newly created FGARetriever instance configured with the provided arguments.
+   * @param fgaClientParams - Optional - OpenFgaClient configuration to execute checks against.
+   * @returns A newly created FGAFilter instance configured with the provided arguments.
    */
   static create<T extends Record<string, any>>(
-    args: FGARetrieverArgs<T>,
-    fgaClient?: OpenFgaClient
-  ): FGARetriever<T> {
-    return new FGARetriever(args, fgaClient);
+    args: FGAFilterArgs<T>,
+    fgaClientParams?: FGAClientParams
+  ): FGAFilter<T> {
+    return new FGAFilter(args, fgaClientParams);
   }
 
   /**
-   * Retrieves documents based on the provided query parameters, processes
+   * Filters documents based on the provided query parameters, processes
    * them through a checker function,
    * and filters the documents based on permissions.
    *
    * @param params - The query parameters used to retrieve nodes.
    * @returns A promise that resolves to an array of documents that have passed the permission checks.
    */
-  async retrieve(documents: T[]): Promise<T[]> {
+  async filter(documents: T[]): Promise<T[]> {
     const { checks, documentToObject } = documents.reduce(
       (acc, doc) => {
         const check = this.buildQuery(doc);

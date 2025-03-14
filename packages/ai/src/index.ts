@@ -4,4 +4,5 @@ export * from "./authorizers/ciba-authorizer";
 export * from "./authorizers/device-authorizer";
 export * from "./errors";
 export type { TokenResponse } from "./TokenResponse";
-export * from "./fga-retriever";
+export * from "./fga-filter";
+export * from "./fga-client";
