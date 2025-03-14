@@ -16,7 +16,7 @@ export const queue = new Queue(process.env.QUEUENAME as string, {
     attempts: 3,
     backoff: {
       type: "exponential",
-      delay: 1000,
+      delay: 5000,
     },
     removeOnComplete: {
       age: 60 * 30,

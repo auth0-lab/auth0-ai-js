@@ -11,43 +11,42 @@ The client can then process the interruption, obtain the necessary input, and re
 ## Usage
 
 There are two changes required in the chat route:
+
 - Invoke Tools with the `invokeTools` function. This will call the tools after the user has provided the necessary input.
 - Handle the Interruption error with the `errorSerializer` function. This will serialize the error and return it to the client.
 
 ```javascript
 import { errorSerializer, invokeTools } from "@auth0/ai-vercel/interruptions";
 
+return createDataStreamResponse({
+  execute: async (dataStream) => {
+    await invokeTools({
+      messages,
+      tools: {
+        checkUsersCalendar,
+      },
+      onToolResult: async (message: Message) => {
+        await saveMessages({
+          messages: [{ ...message, chatId: id }],
+        });
+      },
+    });
+    const result = streamText({
+      model: openai("gpt-4o-mini"),
+      system: systemPrompt({ selectedChatModel }),
+      messages,
+    });
 
+    result.mergeIntoDataStream(dataStream);
+  },
+  onError: errorSerializer(),
 
-  return createDataStreamResponse({
-    execute: async (dataStream) => {
-      await invokeTools({
-        messages,
-        tools: {
-          checkUsersCalendar,
-        },
-        persistMessage: async (message: Message) => {
-          await saveMessages({
-            messages: [{ ...message, chatId: id }],
-          });
-        },
-      });
-      const result = streamText({
-        model: openai("gpt-4o-mini"),
-        system: systemPrompt({ selectedChatModel }),
-        messages,
-      });
-
-      result.mergeIntoDataStream(dataStream);
-    },
-    onError: errorSerializer(),
-
-    // Alternatively you can handle other type of errors as follows:
-    // onError: errorSerializer((err) => {
-    //   console.log(err);
-    //   return "Oops, an error occured!";
-    // }),
-  });
+  // Alternatively you can handle other type of errors as follows:
+  // onError: errorSerializer((err) => {
+  //   console.log(err);
+  //   return "Oops, an error occured!";
+  // }),
+});
 ```
 
 ## Client-side
@@ -75,8 +74,7 @@ import { useInterruptions } from "@auth0/ai-vercel/react";
       initialMessages,
 ```
 
-This will give  you an additional `toolInterrupt` function that you can use to display a different component for the Chat message.
-
+This will give you an additional `toolInterrupt` function that you can use to display a different component for the Chat message.
 
 ## Complete example
 

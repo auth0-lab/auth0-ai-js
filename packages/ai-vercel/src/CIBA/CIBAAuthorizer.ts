@@ -1,7 +1,11 @@
 import { Tool, ToolExecutionOptions } from "ai";
 import { Schema, z } from "zod";
 
-import { AuthorizationPending, Credentials } from "@auth0/ai";
+import {
+  AuthorizationPending,
+  AuthorizationPollingError,
+  Credentials,
+} from "@auth0/ai";
 import { AuthorizeResponse, CIBAAuthorizerBase } from "@auth0/ai/CIBA";
 
 import { CIBAuthorizationError } from "./CIBAuthorizationError";
@@ -14,7 +18,9 @@ type Parameters = z.ZodTypeAny | Schema<any>;
  * CIBA (Client Initiated Backchannel Authentication) is a protocol that allows a client to
  * request authorization from the user via an out-of-band channel.
  */
-export class CIBAAuthorizer extends CIBAAuthorizerBase<[any, ToolExecutionOptions]> {
+export class CIBAAuthorizer extends CIBAAuthorizerBase<
+  [any, ToolExecutionOptions]
+> {
   /**
    *
    * Overrides the getCredentials method to handle the CIBA authorization errors.
@@ -26,12 +32,13 @@ export class CIBAAuthorizer extends CIBAAuthorizerBase<[any, ToolExecutionOption
     params: AuthorizeResponse
   ): Promise<Credentials | undefined> {
     try {
-      return super.getCredentials(params);
+      return await super.getCredentials(params);
     } catch (err) {
       if (err instanceof Error) {
         throw new CIBAuthorizationError(
           err.message,
-          err.name !== AuthorizationPending.name
+          err.name !== AuthorizationPending.name &&
+            err.name !== AuthorizationPollingError.name
         );
       }
     }

@@ -7,6 +7,7 @@ import { Credentials } from "../../credentials";
 import {
   AccessDeniedError,
   AuthorizationPending,
+  AuthorizationPollingError,
   AuthorizationRequestExpiredError,
   UserDoesNotHavePushNotificationsError,
 } from "../../errors";
@@ -154,6 +155,11 @@ export class CIBAAuthorizerBase<ToolExecuteArgs extends any[]> {
       if (e.error === "authorization_pending") {
         throw new AuthorizationPending(e.error_description);
       }
+
+      if (e.error === "slow_down") {
+        throw new AuthorizationPollingError(e.error_description);
+      }
+
       throw e;
     }
   }
