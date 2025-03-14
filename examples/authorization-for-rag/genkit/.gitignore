@@ -29,6 +29,9 @@ yarn-error.log*
 !.env.example
 
 package-lock.json
+yarn.lock
+bun.lock
+pnpm-lock.yaml
 
 # Optional VS Code settings
 .vscode/*
