@@ -25,6 +25,13 @@ yarn-error.log*
 # dotenv environment variables file
 .env.test
 .env.production
+.env*
+!.env.example
+
+package-lock.json
+yarn.lock
+bun.lock
+pnpm-lock.yaml
 
 # Optional VS Code settings
 .vscode/*
