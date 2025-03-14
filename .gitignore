@@ -27,8 +27,8 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
-.env*.local
-.env
+.env*
+!.env.example
 
 # vercel
 .vercel
@@ -43,3 +43,4 @@ dist
 __db_documents.json
 
 *.index
+package-lock.json

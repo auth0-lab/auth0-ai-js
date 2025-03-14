@@ -12,14 +12,18 @@ Authorization for Tools ensures that users can only execute actions they are per
 
 Explore the following examples demonstrating the integration of **Okta FGA** with **LangChain**, **LlamaIndex**, and **Genkit**:
 
-- **LangChain with FGA Tool protection:**
-   An implementation showcasing how integrate `@auth0/ai` with LangChain to enforce authorization checks during tool execution.
+- **LangChain with FGA Tool protection:**  
+   An implementation showcasing how integrate `@auth0/ai` with LangChain to enforce authorization checks during tool execution.  
    [View Example](/examples/authorization-for-tools/langchain/)
 
-- **LlamaIndex with FGA Tool protection:**
-   An implementation showcasing how integrate `@auth0/ai` with LlamaIndex to enforce authorization checks during tool execution.
+- **LlamaIndex with FGA Tool protection:**  
+   An implementation showcasing how integrate `@auth0/ai` with LlamaIndex to enforce authorization checks during tool execution.  
    [View Example](/examples/authorization-for-tools/llamaindex/)
 
-- **Genkit with FGA Tool protection:**
-   An implementation showcasing how integrate `@auth0/ai` with Genkit to enforce authorization checks during tool execution.
+- **Genkit with FGA Tool protection:**  
+   An implementation showcasing how integrate `@auth0/ai` with Genkit to enforce authorization checks during tool execution.  
   [View Example](/examples/authorization-for-tools/genkit/)
+
+- **AI SDK with FGA Tool protection:**  
+   An implementation showcasing how integrate `@auth0/ai` with AI SDK to enforce authorization checks during tool execution.  
+  [View Example](/examples/authorization-for-tools/ai-sdk/)

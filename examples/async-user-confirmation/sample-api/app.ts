@@ -14,7 +14,7 @@ const checkJwt = auth({
   issuerBaseURL: `https://${process.env.AUTH0_DOMAIN}/`,
 });
 
-app.post("/", checkJwt, requiredScopes(["openid"]), (req, res) => {
+app.post("/", checkJwt, requiredScopes(["stock:trade"]), (req, res) => {
   console.log("Received request to purchase stock");
 
   res.status(200).send({ message: "Stock purchase request received" });
