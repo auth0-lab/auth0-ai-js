@@ -63,7 +63,7 @@ export class FGARetriever extends BaseRetriever {
     this.fgaFilter = FGAFilter.create(
       {
         buildQuery,
-        consistency: consistency || ConsistencyPreference.HigherConsistency,
+        consistency,
       },
       fgaClientParams
     );
