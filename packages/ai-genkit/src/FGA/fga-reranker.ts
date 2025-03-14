@@ -1,12 +1,8 @@
 import { Document, Genkit, z } from "genkit";
 import { GenkitPlugin, genkitPlugin } from "genkit/plugin";
 
-import {
-  ClientBatchCheckItem,
-  ConsistencyPreference,
-  CredentialsMethod,
-  OpenFgaClient,
-} from "@openfga/sdk";
+import { ClientBatchCheckItem, ConsistencyPreference } from "@openfga/sdk";
+import { FGAFilter, FGAClientParams } from "@auth0/ai";
 
 export type FGARerankerCheckerFn = (doc: Document) => ClientBatchCheckItem;
 
@@ -45,36 +41,24 @@ export type FGARerankerArgs = FGARerankerConstructorArgs & {
  */
 export class FGAReranker {
   lc_namespace = ["genkit", "rerankers", "fga-reranker"];
-  private buildQuery: FGARerankerCheckerFn;
-  private consistency: ConsistencyPreference;
-  private fgaClient: OpenFgaClient;
 
   static lc_name() {
     return "FGAReranker";
   }
 
+  private fgaFilter: FGAFilter;
+
   private constructor(
     { buildQuery, consistency }: FGARerankerConstructorArgs,
-    fgaClient?: OpenFgaClient
+    fgaClientParams?: FGAClientParams
   ) {
-    this.buildQuery = buildQuery;
-    this.consistency = consistency || ConsistencyPreference.HigherConsistency;
-    this.fgaClient =
-      fgaClient ||
-      new OpenFgaClient({
-        apiUrl: process.env.FGA_API_URL || "https://api.us1.fga.dev",
-        storeId: process.env.FGA_STORE_ID!,
-        credentials: {
-          method: CredentialsMethod.ClientCredentials,
-          config: {
-            apiTokenIssuer: process.env.FGA_API_TOKEN_ISSUER || "auth.fga.dev",
-            apiAudience:
-              process.env.FGA_API_AUDIENCE || "https://api.us1.fga.dev/",
-            clientId: process.env.FGA_CLIENT_ID!,
-            clientSecret: process.env.FGA_CLIENT_SECRET!,
-          },
-        },
-      });
+    this.fgaFilter = new FGAFilter(
+      {
+        buildQuery,
+        consistency,
+      },
+      fgaClientParams
+    );
   }
 
   /**
@@ -83,14 +67,14 @@ export class FGAReranker {
    * @param args - @FGARerankerArgs
    * @param args.ai - A Genkit Instance.
    * @param args.buildQuery - A function to generate access check requests for each document.
-   * @param fgaClient - Optional - OpenFgaClient instance to execute checks against.
+   * @param fgaClientParams - Optional - OpenFgaClient configuration to execute checks against.
    * @returns A Reranker instance instance configured with the provided arguments.
    */
   static create(
     { ai, buildQuery }: FGARerankerArgs,
-    fgaClient?: OpenFgaClient
+    fgaClientParams?: FGAClientParams
   ) {
-    const client = new FGAReranker({ buildQuery }, fgaClient);
+    const client = new FGAReranker({ buildQuery }, fgaClientParams);
 
     const fgaReranker = ai.defineReranker(
       {
@@ -126,67 +110,14 @@ export class FGAReranker {
   }
 
   /**
-   * Checks permissions for a list of client requests.
-   *
-   * @param requests - An array of `ClientBatchCheckItem` objects representing the permissions to be checked.
-   * @returns A promise that resolves to a `Map` where the keys are object identifiers and the values are booleans indicating whether the permission is allowed.
-   */
-  private async checkPermissions(
-    checks: ClientBatchCheckItem[]
-  ): Promise<Map<string, boolean>> {
-    const response = await this.fgaClient.batchCheck(
-      { checks },
-      {
-        consistency: this.consistency,
-      }
-    );
-
-    return response.result.reduce(
-      (permissionMap: Map<string, boolean>, result) => {
-        const checkKey = this.getCheckKey(result.request);
-        permissionMap.set(checkKey, result.allowed || false);
-        return permissionMap;
-      },
-      new Map<string, boolean>()
-    );
-  }
-
-  private getCheckKey(check: ClientBatchCheckItem): string {
-    return `${check.user}|${check.object}|${check.relation}`;
-  }
-
-  /**
    * Retrieves a filtered list of documents based on permission checks.
    *
    * @param documents - An array of documents to be checked for permissions.
    * @returns A promise that resolves to an array of documents that have passed the permission checks.
    */
   private async filter(documents: Document[]): Promise<Array<Document>> {
-    const { checks, documentToObjectMap } = documents.reduce(
-      (acc, document: Document) => {
-        const check = this.buildQuery(document);
-        const checkKey = this.getCheckKey(check);
-        acc.documentToObjectMap.set(document, checkKey);
-        // Skip duplicate checks for same user, object, and relation
-        if (!acc.seenChecks.has(checkKey)) {
-          acc.seenChecks.add(checkKey);
-          acc.checks.push(check);
-        }
-        return acc;
-      },
-      {
-        checks: [] as ClientBatchCheckItem[],
-        documentToObjectMap: new Map<Document, string>(),
-        seenChecks: new Set<string>(),
-      }
-    );
-
-    const permissionsMap = await this.checkPermissions(checks);
-
-    return documents.filter(
-      (document) =>
-        permissionsMap.get(documentToObjectMap.get(document) || "") === true
-    );
+    const result = await this.fgaFilter.filter(documents);
+    return result;
   }
 }
 
