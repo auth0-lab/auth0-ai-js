@@ -28,22 +28,23 @@ OPENAI_API_KEY="openai-api-key"
 
 ### How to run it
 
-1. Install dependencies. If you want to run with local dependencies follow root instructions.
+### How to run it
 
-   ```sh
-   npm install
-   ```
+1. Install dependencies.
+    ```sh
+    npm install
+    ```
+    > If you want to run with local dependencies follow root instructions.
 
 2. Running the API
-
-   ```sh
-   npm run start:api
-   ```
+    ```sh
+    npm run start:api
+    ```
 
 3. Running the example
-   ```sh
-   npm start
-   ```
+    ```sh
+    npm start
+    ```
 
 ## License
 
