@@ -1,11 +1,7 @@
 import { Document, genkit } from "genkit";
 import { describe, expect, it, vi } from "vitest";
 
-import {
-  ConsistencyPreference,
-  CredentialsMethod,
-  OpenFgaClient,
-} from "@openfga/sdk";
+import { ConsistencyPreference, CredentialsMethod } from "@openfga/sdk";
 
 import { auth0, FGAReranker } from "../src/FGA/fga-reranker";
 
@@ -28,7 +24,7 @@ describe("FGAReranker", async () => {
     user: "user:user1",
   }));
 
-  const mockClient = new OpenFgaClient({
+  const fgaParams = {
     apiUrl: "https://api.us1.fga.dev",
     storeId: "01GGXW367SRH9YFXJ7GHJN0GMK",
     credentials: {
@@ -40,7 +36,7 @@ describe("FGAReranker", async () => {
         clientSecret: "client-secret",
       },
     },
-  });
+  };
 
   const args = {
     ai,
@@ -53,14 +49,16 @@ describe("FGAReranker", async () => {
     expect(retriever.__action.name).toBe("auth0/fga-reranker");
   });
 
-  it("should create an instance of RerankerAction with provided OpenFgaClient", () => {
-    const retriever = FGAReranker.create(args, mockClient);
+  it("should create an instance of RerankerAction with provided OpenFgaClient params", () => {
+    const retriever = FGAReranker.create(args, fgaParams);
     expect(retriever).toBeTypeOf("function");
     expect(retriever.__action.name).toBe("auth0/fga-reranker");
   });
 
   it("should filter relevant documents based on permission", async () => {
-    mockClient.batchCheck = vi.fn().mockResolvedValue({
+    // @ts-expect-error mock
+    const reranker = new FGAReranker(args);
+    reranker.fgaFilter.fgaClient.batchCheck = vi.fn().mockResolvedValue({
       result: [
         {
           request: {
@@ -81,11 +79,7 @@ describe("FGAReranker", async () => {
       ],
     });
 
-    const rankedDocuments = await ai.rerank({
-      reranker: FGAReranker.create(args, mockClient),
-      query: "input",
-      documents,
-    });
+    const rankedDocuments = await reranker.filter(documents);
 
     expect(rankedDocuments[0].content).toEqual(documents[0].content);
     expect(rankedDocuments[0].metadata.id).toEqual(documents[0].metadata?.id);
@@ -93,7 +87,7 @@ describe("FGAReranker", async () => {
 
   it("should handle empty document list", async () => {
     const rankedDocuments = await ai.rerank({
-      reranker: FGAReranker.create(args, mockClient),
+      reranker: FGAReranker.create(args),
       query: "input",
       documents: [],
     });
@@ -102,13 +96,13 @@ describe("FGAReranker", async () => {
   });
 
   it("should handle empty permission list", async () => {
-    mockClient.batchCheck = vi.fn().mockResolvedValue({ result: [] });
-
-    const rankedDocuments = await ai.rerank({
-      reranker: FGAReranker.create(args, mockClient),
-      query: "input",
-      documents,
+    // @ts-expect-error mock
+    const reranker = new FGAReranker(args);
+    reranker.fgaFilter.fgaClient.batchCheck = vi.fn().mockResolvedValue({
+      result: [],
     });
+
+    const rankedDocuments = await reranker.filter(documents);
 
     expect(rankedDocuments).toEqual([]);
   });
@@ -120,7 +114,10 @@ describe("FGAReranker", async () => {
       Document.fromText("private content", { id: "public-doc" }),
     ];
 
-    mockClient.batchCheck = vi.fn().mockResolvedValue({
+    // @ts-expect-error mock
+    const reranker = new FGAReranker(args);
+
+    reranker.fgaFilter.fgaClient.batchCheck = vi.fn().mockResolvedValue({
       result: [
         {
           request: {
@@ -141,14 +138,10 @@ describe("FGAReranker", async () => {
       ],
     });
 
-    const rankedDocuments = await ai.rerank({
-      reranker: FGAReranker.create(args, mockClient),
-      query: "input",
-      documents: duplicateDocuments,
-    });
+    const rankedDocuments = await reranker.filter(duplicateDocuments);
 
-    expect(mockClient.batchCheck).toHaveBeenCalledTimes(1);
-    expect(mockClient.batchCheck).toBeCalledWith(
+    expect(reranker.fgaFilter.fgaClient.batchCheck).toHaveBeenCalledTimes(1);
+    expect(reranker.fgaFilter.fgaClient.batchCheck).toBeCalledWith(
       {
         checks: [
           { object: "doc:public-doc", relation: "viewer", user: "user:user1" },
@@ -163,7 +156,9 @@ describe("FGAReranker", async () => {
   });
 
   it("should handle all documents being filtered out", async () => {
-    mockClient.batchCheck = vi.fn().mockResolvedValue({
+    // @ts-expect-error mock
+    const reranker = new FGAReranker(args);
+    reranker.fgaFilter.fgaClient.batchCheck = vi.fn().mockResolvedValue({
       result: [
         {
           request: {
@@ -184,27 +179,19 @@ describe("FGAReranker", async () => {
       ],
     });
 
-    const rankedDocuments = await ai.rerank({
-      reranker: FGAReranker.create(args, mockClient),
-      query: "input",
-      documents,
-    });
+    const rankedDocuments = await reranker.filter(documents);
 
     expect(rankedDocuments).toEqual([]);
   });
 
   it("should handle batchCheck error gracefully", async () => {
-    mockClient.batchCheck = vi
+    // @ts-expect-error mock
+    const reranker = new FGAReranker(args);
+    reranker.fgaFilter.fgaClient.batchCheck = vi
       .fn()
       .mockRejectedValue(new Error("FGA API Error"));
 
-    await expect(
-      ai.rerank({
-        reranker: FGAReranker.create(args, mockClient),
-        query: "input",
-        documents,
-      })
-    ).rejects.toThrow("FGA API Error");
+    await expect(reranker.filter(documents)).rejects.toThrow("FGA API Error");
   });
 
   it("should preserve document metadata in filtered results", async () => {
@@ -219,7 +206,9 @@ describe("FGAReranker", async () => {
       }),
     ];
 
-    mockClient.batchCheck = vi.fn().mockResolvedValue({
+    // @ts-expect-error mock
+    const reranker = new FGAReranker(args);
+    reranker.fgaFilter.fgaClient.batchCheck = vi.fn().mockResolvedValue({
       result: [
         {
           request: {
@@ -240,17 +229,12 @@ describe("FGAReranker", async () => {
       ],
     });
 
-    const rankedDocuments = await ai.rerank({
-      reranker: FGAReranker.create(args, mockClient),
-      query: "input",
-      documents: docsWithMetadata,
-    });
+    const rankedDocuments = await reranker.filter(docsWithMetadata);
 
     expect(rankedDocuments).toHaveLength(2);
     expect(rankedDocuments[0].metadata).toEqual({
       id: "public-doc",
       importance: "high",
-      score: 1,
     });
   });
 });
