@@ -14,7 +14,10 @@ Authorization for RAG ensure that users can only access documents they are permi
 Below is a high-level workflow:
 
 <p align="center">
-    <img style="margin-left: auto; margin-right: auto;" height="700px" src="https://images.ctfassets.net/23aumh6u8s0i/76DegvQtjEx5jNDcqvy1VD/462977639c07dd1d92e82783d66aac7e/rag-with-fga-flow.png" />
+  <img
+    style="margin-left: auto; margin-right: auto; padding: 10px; background: #4a4a4a; border-radius: 10px; max-height: 500px;"
+    src="https://cdn.auth0.com/website/auth0-lab/ai/sdks/diagrams/authorization-for-rag.png"
+  />
 <p>
 
 ### Examples
