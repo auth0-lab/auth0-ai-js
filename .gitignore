@@ -43,4 +43,3 @@ dist
 __db_documents.json
 
 *.index
-package-lock.json
