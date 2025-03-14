@@ -32,3 +32,10 @@ export class AuthorizationRequired extends Error {
     this.name = AuthorizationRequired.name;
   }
 }
+
+export class AuthorizationPollingError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = AuthorizationPollingError.name;
+  }
+}

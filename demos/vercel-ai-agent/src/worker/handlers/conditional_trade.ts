@@ -1,4 +1,4 @@
-import { CoreMessage, generateText } from "ai";
+import { CoreMessage, generateText, ToolExecutionError } from "ai";
 import { Job } from "bullmq";
 
 import { queue } from "@/src/queue";
@@ -7,6 +7,11 @@ import { compareMetric } from "@/src/tools/compareMetric";
 import { getStockMetric } from "@/src/tools/getStockMetric";
 import { notifyUser } from "@/src/tools/notifyUser";
 import { openai } from "@ai-sdk/openai";
+import {
+  appendToolCall,
+  Interruption,
+  invokeTools,
+} from "@auth0/ai-vercel/interruptions";
 
 import { ConditionalTrade } from "../../ConditionalTrade";
 
@@ -31,22 +36,39 @@ export const conditionalTrade = async (
   ];
 
   try {
+    const tools = {
+      getStockMetric,
+      compareMetric,
+      buyStock,
+      notifyUser,
+    };
+
+    console.log(`Invoking previously interrupted tools if any`);
+    await invokeTools({
+      messages,
+      tools,
+      onToolResult: async (message: CoreMessage) => {
+        messages.push(message);
+        await job.updateData({
+          ...conditionalTrade,
+          messages,
+        });
+      },
+    });
+
+    console.log(`Calling the LLM`);
     const r = await generateText({
       model: openai("gpt-4o", { parallelToolCalls: false }),
       system:
         "You are a fictional stock trader bot. Please execute the trades of the user.",
       messages,
       maxSteps: 5,
-      tools: {
-        getStockMetric,
-        compareMetric,
-        buyStock,
-        notifyUser,
-      },
+      tools,
       onStepFinish: async (step) => {
+        const newMessages = [...messages, ...step.response.messages];
         await job.updateData({
           ...conditionalTrade,
-          messages: [...messages, ...step.response.messages],
+          messages: newMessages,
         });
         const conditionIsMet = step.toolResults.some(
           (r) => r.toolName === "compareMetric" && r.result === true
@@ -59,13 +81,26 @@ export const conditionalTrade = async (
     });
     console.log(`${r.text}`);
   } catch (err) {
-    if (err instanceof Error) {
-      console.log(err instanceof Error ? err.message : "");
-      if ("final" in err && err.final) {
+    if (
+      err instanceof ToolExecutionError &&
+      err.cause instanceof Interruption
+    ) {
+      const newMessages = appendToolCall(messages, err);
+      await job.updateData({
+        ...conditionalTrade,
+        messages: newMessages,
+      });
+
+      const isFinal = "isFinal" in err.cause && err.cause.isFinal;
+
+      console.log(err.cause.message);
+
+      if (isFinal) {
         console.log("Final error, do not retry.");
         return;
       }
     }
+
     throw err;
   }
 };
