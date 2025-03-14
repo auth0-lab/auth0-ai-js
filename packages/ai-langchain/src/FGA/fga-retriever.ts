@@ -46,14 +46,14 @@ export class FGARetriever extends BaseRetriever {
   lc_namespace = ["@langchain", "retrievers"];
   private retriever: BaseRetriever;
 
-  private fgaFilter: FGAFilter;
+  private fgaFilter: FGAFilter<DocumentInterface<Record<string, any>>>;
 
   private constructor(
     { buildQuery, retriever, consistency, retrieverFields }: FGARetrieverArgs,
     fgaClientParams?: FGAClientParams
   ) {
     super(retrieverFields);
-    this.fgaFilter = new FGAFilter(
+    this.fgaFilter = FGAFilter.create(
       {
         buildQuery,
         consistency,

@@ -46,13 +46,13 @@ export class FGAReranker {
     return "FGAReranker";
   }
 
-  private fgaFilter: FGAFilter;
+  private fgaFilter: FGAFilter<Document>;
 
   private constructor(
     { buildQuery, consistency }: FGARerankerConstructorArgs,
     fgaClientParams?: FGAClientParams
   ) {
-    this.fgaFilter = new FGAFilter(
+    this.fgaFilter = FGAFilter.create(
       {
         buildQuery,
         consistency,

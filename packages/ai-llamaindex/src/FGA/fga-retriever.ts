@@ -1,5 +1,4 @@
 import {
-  BaseNode,
   BaseRetriever,
   Metadata,
   NodeWithScore,
@@ -10,7 +9,7 @@ import { ClientBatchCheckItem, ConsistencyPreference } from "@openfga/sdk";
 import { FGAFilter, FGAClientParams } from "@auth0/ai";
 
 export type FGARetrieverCheckerFn = (
-  doc: BaseNode<Metadata>
+  doc: NodeWithScore<Metadata>
 ) => ClientBatchCheckItem;
 
 export interface FGARetrieverArgs {
@@ -48,7 +47,7 @@ export class FGARetriever extends BaseRetriever {
   lc_namespace = ["llamaindex", "retrievers", "fga-retriever"];
   private retriever: BaseRetriever;
 
-  private fgaFilter: FGAFilter;
+  private fgaFilter: FGAFilter<NodeWithScore<Metadata>>;
 
   static lc_name() {
     return "FGARetriever";
@@ -61,7 +60,7 @@ export class FGARetriever extends BaseRetriever {
     super();
 
     this.retriever = retriever;
-    this.fgaFilter = new FGAFilter(
+    this.fgaFilter = FGAFilter.create(
       {
         buildQuery,
         consistency: consistency || ConsistencyPreference.HigherConsistency,
