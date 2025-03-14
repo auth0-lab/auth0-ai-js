@@ -2,6 +2,10 @@
 
 ## Getting Started
 
+### Prerequisites
+
+- An OpenAI account and API key create one [here](https://platform.openai.com).
+
 #### `.env` file
 
 ```sh
@@ -26,7 +30,7 @@ LANGGRAPH_API_URL="http://localhost:54367"
 1. Install dependencies. If you want to run with local dependencies follow root instructions.
 
    ```sh
-   $ npm install
+   npm install
    ```
 
 2. Running the API
@@ -63,7 +67,7 @@ sequenceDiagram
     Agent->>User: "I've started a conditional trade"
     loop Every 10 mins
         Conditional Trade Agent->>Stocks API: Check P/E ratio
-        Stocks API-->>Conditional Trade Agent:  
+        Stocks API-->>Conditional Trade Agent: 
         alt P/E > 15
             Conditional Trade Agent->>Auth0: Initiate CIBA request
             Auth0->>User's Phone: Send push notification

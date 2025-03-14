@@ -28,7 +28,7 @@ FGA_API_AUDIENCE=https://api.xxx.fga.dev/
 1. Install dependencies. If you want to run with local dependencies follow root instructions.
 
    ```sh
-   $ npm install
+   npm install
    ```
 
 2. Generate the embeddings

@@ -192,7 +192,7 @@ describe("FGAAuthorizerBase", () => {
             clientId: undefined,
             clientSecret: undefined,
             apiAudience: "https://api.us1.fga.dev/",
-            apiTokenIssuer: "fga.us.auth0.com",
+            apiTokenIssuer: "auth.fga.dev",
           },
         },
       });

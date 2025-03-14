@@ -1,39 +1,64 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Chat Application with Auth0 AI and AI SDK
+
+This is a [Next.js](https://nextjs.org) application that implements [Auth0 AI](https://auth0.ai) along with the [AI SDK](https://sdk.vercel.ai/) and to create a chat bot with [OpenAI](https://platform.openai.com) as engine. The application demonstrates how to integrate the AI SDK with Auth0 AI to implement: Authentication & Authorization of apps & APIs with Auth0 and Tool Authorization with FGA.
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- An Auth0 account, you can create one [here](https://auth0.com).
+- An Okta FGA account, you can create one [here](https://dashboard.fga.dev).
+- An OpenAI account and API key create one [here](https://platform.openai.com).
+
+### Prepare the workspace
+
+Copy the `.env.example` file to `.env` and fill in the required values:
+
+```bash
+# Auth0
+AUTH0_DOMAIN="<auth0-domain>"
+AUTH0_CLIENT_ID="<auth0-client-id>"
+AUTH0_CLIENT_SECRET="<auth0-client-secret>"
+
+# OpenAI
+OPENAI_API_KEY=xx-xxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# Okta FGA
+FGA_STORE_ID=xxxxxxxxxxxxxxxxxxxxxxxxxxx
+FGA_CLIENT_ID=xxxxxxxxxxxxxxxxxxxxxxxxxxx
+FGA_CLIENT_SECRET=xxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# Required only for non-US regions
+FGA_API_URL=https://api.xxx.fga.dev
+FGA_API_AUDIENCE=https://api.xxx.fga.dev/
+```
+
+> [!NOTE]
+> Auth0 config is necessary to run the authentication & authorization flows. Make sure to utilize a [Web Application type of client](https://auth0.com/docs/get-started/auth0-overview/create-applications/regular-web-apps).
+
+### Install & run
+
+Install the dependencies running the following command:
+
+```bash
+npm install
+```
+
+Then, run the Next.js development server like:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+This will start the development server at [http://localhost:3000](http://localhost:3000). You can open the URL with your browser to try the application.
 
 ## Learn More
 
-To learn more about Next.js, take a look at the following resources:
+To learn more about the Auth0 AI and the AI SDK, take a look at the following resources:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [Auth0 AI](https://auth0.ai)
+- [AI SDK](https://sdk.vercel.ai/)
+- [Next.js](https://nextjs.org)
 
 ## License
 

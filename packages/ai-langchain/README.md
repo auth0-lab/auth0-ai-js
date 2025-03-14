@@ -18,7 +18,8 @@ Provides Async User Authorizer for tools using [Client Initiated Backchannel Aut
 
 ## Install
 
-> [!WARNING] > `@auth0/ai-langchain` is currently under development and it is not intended to be used in production, and therefore has no official support.
+> [!WARNING]
+> `@auth0/ai-langchain` is currently under development and it is not intended to be used in production, and therefore has no official support.
 
 ```
 $ npm install @auth0/ai-langchain
@@ -149,6 +150,23 @@ async function main() {
 
 main().catch(console.error);
 ```
+
+## Feedback
+
+### Contributing
+
+We appreciate feedback and contribution to this repo! Before you get started, please see the following:
+
+- [Auth0's general contribution guidelines](https://github.com/auth0/open-source-template/blob/master/GENERAL-CONTRIBUTING.md)
+- [Auth0's code of conduct guidelines](https://github.com/auth0/open-source-template/blob/master/CODE-OF-CONDUCT.md)
+
+### Raise an issue
+
+To provide feedback or report a bug, please [raise an issue on our issue tracker](https://github.com/auth0-lab/auth0-ai-python/issues).
+
+### Vulnerability Reporting
+
+Please do not report security vulnerabilities on the public GitHub issue tracker. The [Responsible Disclosure Program](https://auth0.com/responsible-disclosure-policy) details the procedure for disclosing security issues.
 
 ---
 
