@@ -4,7 +4,7 @@
 
 ## Install
 
-> [!WARNING] 
+> [!WARNING]
 > `@auth0/ai-vercel` is currently under development and it is not intended to be used in production, and therefore has no official support.
 
 ```
