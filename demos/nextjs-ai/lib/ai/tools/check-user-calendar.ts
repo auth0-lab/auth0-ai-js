@@ -2,13 +2,13 @@ import { tool } from "ai";
 import { addHours } from "date-fns";
 import { z } from "zod";
 
-import { withTokenForConnection } from "@/lib/auth0-ai";
+import { withTokenForGoogleConnection } from "@/lib/auth0-ai";
 import {
   FederatedConnectionError,
   getAccessTokenForConnection,
 } from "@auth0/ai-vercel";
 
-export const checkUsersCalendar = withTokenForConnection(
+export const checkUsersCalendar = withTokenForGoogleConnection(
   tool({
     description:
       "Check user availability on a given date time on their calendar",
