@@ -4,12 +4,23 @@ This package integrates [LlamaIndex](https://ts.llamaindex.ai/) with [Auth0 AI](
 
 `@auth0/ai-llamaindex` is an SDK for building secure AI-powered applications using [Auth0](https://www.auth0.ai/), [Okta FGA](https://docs.fga.dev/) and [LlamaIndex](https://ts.llamaindex.ai/).
 
-This SDK provides Okta FGA as a [retriever](https://docs.llamaindex.ai/en/stable/module_guides/querying/retriever/) for RAG applications. The retriever allows filtering documents based on access control checks defined in Okta FGA. This retriever performs batch checks on retrieved documents, returning only the ones that pass the specified access criteria.
+## Features
+
+### FGA Retriever
+
+Provides Okta FGA as a [retriever](https://docs.llamaindex.ai/en/stable/module_guides/querying/retriever/) for RAG applications. The retriever allows filtering documents based on access control checks defined in Okta FGA. This retriever performs batch checks on retrieved documents, returning only the ones that pass the specified access criteria.
+
+### FGA Authorizer
+
+Provides Okta FGA as a tool authorizer that protects the tool execution with FGA.
+
+### Async Authorizer
+
+Provides Async User Authorizer using [Client Initiated Backchannel Authentication (CIBA)](https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html).
 
 ## Install
 
-> [!WARNING]
-> `@auth0/ai-llamaindex` is currently under development and it is not intended to be used in production, and therefore has no official support.
+> [!WARNING] > `@auth0/ai-llamaindex` is currently under development and it is not intended to be used in production, and therefore has no official support.
 
 ```
 $ npm install @auth0/ai-llamaindex
@@ -17,7 +28,7 @@ $ npm install @auth0/ai-llamaindex
 
 ## Usage
 
-Example [RAG Application](../../examples/llamaindex/retrievers-with-fga).
+Example [RAG Application](../../examples/authorization-for-rag/llamaindex).
 
 Create a Retriever instance using the `FGAReranker.create` method.
 
@@ -39,7 +50,7 @@ async function main() {
       retriever: vectorStoreIndex.asRetriever(),
       buildQuery: (document) => ({
         user: `user:${user}`,
-        object: `doc:${document.metadata.id}`,
+        object: `doc:${document.node.metadata.id}`,
         relation: "viewer",
       }),
     }),
@@ -85,4 +96,3 @@ Please do not report security vulnerabilities on the public GitHub issue tracker
 <p align="center">Auth0 is an easy to implement, adaptable authentication and authorization platform. To learn more checkout <a href="https://auth0.com/why-auth0">Why Auth0?</a></p>
 <p align="center">
 This project is licensed under the Apache 2.0 license. See the <a href="/LICENSE"> LICENSE</a> file for more info.</p>
-

@@ -2,7 +2,15 @@
 
 `@auth0/genkit` is an SDK for building secure AI-powered applications using [Auth0](https://www.auth0.ai/), [Okta FGA](https://docs.fga.dev/) and [Firebase Genkit](https://firebase.google.com/docs/genkit).
 
-This SDK provides Okta FGA as a [reranker](https://firebase.google.com/docs/genkit/rag) for RAG applications. The reranker allows filtering documents based on access control checks defined in Okta FGA. This reranker performs batch checks on retrieved documents, returning only the ones that pass the specified access criteria.
+## Features
+
+### FGA Reranker
+
+Provides Auth0 FGA as a [reranker](https://firebase.google.com/docs/genkit/rag) for RAG applications. The reranker allows filtering documents based on access control checks defined in Okta FGA. This reranker performs batch checks on retrieved documents, returning only the ones that pass the specified access criteria.
+
+### FGA Authorizer
+
+Provides Auth0 FGA as a tool authorizer that protects the tool execution with FGA.
 
 ## Install
 
@@ -15,7 +23,7 @@ $ npm install @auth0/ai-genkit
 
 ## Usage
 
-Example [RAG Application](../../examples/genkit/retrievers-with-fga).
+Example [RAG Application](../../examples/authorization-for-rag/genkit).
 
 Create a Reranker instance using the `FGAReranker.create` method.
 

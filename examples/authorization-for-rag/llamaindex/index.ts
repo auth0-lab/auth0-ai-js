@@ -46,7 +46,7 @@ async function main() {
       retriever: vectorStoreIndex.asRetriever(),
       buildQuery: (document) => ({
         user: `user:${user}`,
-        object: `doc:${document.metadata.id}`,
+        object: `doc:${document.node.metadata.id}`,
         relation: "viewer",
       }),
     }),
