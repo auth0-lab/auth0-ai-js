@@ -3,7 +3,8 @@ import {
   ConsistencyPreference,
   OpenFgaClient,
 } from "@openfga/sdk";
-import { buildOpenFgaClient, FGAClientParams } from "src/fga-client";
+
+import { buildOpenFgaClient, FGAClientParams } from "./fga-client";
 
 export type FGAAuthorizerOptions<ToolExecuteArgs extends any[]> = {
   buildQuery: (...args: ToolExecuteArgs) => Promise<ClientCheckRequest>;

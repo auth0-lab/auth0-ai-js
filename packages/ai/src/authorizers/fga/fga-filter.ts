@@ -3,6 +3,7 @@ import {
   ConsistencyPreference,
   OpenFgaClient,
 } from "@openfga/sdk";
+
 import { buildOpenFgaClient, FGAClientParams } from "./fga-client";
 
 export type FGAFilterCheckerFn<T extends Record<string, any>> = (
