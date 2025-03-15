@@ -37,7 +37,7 @@ First initialize the Federated Connection Authorizer as follows:
 ```javascript
 import { auth0 } from "./auth0";
 
-export const withTokenForConnection = auth0AI.withTokenForConnection({
+export const withTokenForGoogleConnection = auth0AI.withTokenForConnection({
   // A function to retrieve the refresh token of the context.
   refreshToken: async () => {
     const session = await auth0.getSession();
@@ -51,7 +51,7 @@ export const withTokenForConnection = auth0AI.withTokenForConnection({
 });
 ```
 
-Then use the `withTokenForConnection` to wrap the tool and use `getAccessTokenForConnection` from the SDK to get the access token.
+Then use the `withTokenForGoogleConnection` to wrap the tool and use `getAccessTokenForConnection` from the SDK to get the access token.
 
 ```javascript
 import {
@@ -59,7 +59,7 @@ import {
   getAccessTokenForConnection,
 } from "@auth0/ai-vercel";
 
-export const checkUsersCalendar = withTokenForConnection(
+export const checkUsersCalendar = withTokenForGoogleConnection(
   tool({
     description:
       "Check user availability on a given date time on their calendar",
