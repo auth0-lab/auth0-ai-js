@@ -4,7 +4,8 @@
 
 ## Install
 
-> [!WARNING] > `@auth0/ai-vercel` is currently under development and it is not intended to be used in production, and therefore has no official support.
+> [!WARNING]
+> `@auth0/ai-vercel` is currently under development and it is not intended to be used in production, and therefore has no official support.
 
 ```
 $ npm install @auth0/ai-vercel
