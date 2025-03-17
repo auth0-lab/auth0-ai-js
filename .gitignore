@@ -43,3 +43,4 @@ dist
 __db_documents.json
 
 *.index
+bun.lock

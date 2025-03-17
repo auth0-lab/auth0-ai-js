@@ -8,7 +8,7 @@ export type GenKitToolHandler<
 > = (input: z.infer<I>) => Promise<z.infer<O>>;
 
 /**
- * The FGAAuthorizer class implements the FGA authorization control for a Vercel AI tool.
+ * The FGAAuthorizer class implements the FGA authorization control for a Genkit AI tool.
  *
  * This class extends the FGAAuthorizerBase and provides a method to build a tool authorizer
  * that protects the tool execution using FGA.
