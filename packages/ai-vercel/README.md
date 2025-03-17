@@ -38,7 +38,7 @@ First initialize the Federated Connection Authorizer as follows:
 ```javascript
 import { auth0 } from "./auth0";
 
-export const withCalendarFreeBusyAccess = auth0AI.withFederatedConnection({
+export const withTokenForGoogleConnection = auth0AI.withTokenForConnection({
   // A function to retrieve the refresh token of the context.
   refreshToken: async () => {
     const session = await auth0.getSession();
@@ -52,15 +52,15 @@ export const withCalendarFreeBusyAccess = auth0AI.withFederatedConnection({
 });
 ```
 
-Then use the `withCalendarFreeBusyAccess` to wrap the tool and use `getFederatedConnectionAccessToken` from the SDK to get the access token.
+Then use the `withTokenForGoogleConnection` to wrap the tool and use `getAccessTokenForConnection` from the SDK to get the access token.
 
 ```javascript
 import {
   FederatedConnectionError,
-  getFederatedConnectionAccessToken,
+  getAccessTokenForConnection,
 } from "@auth0/ai-vercel";
 
-export const checkUsersCalendar = withCalendarFreeBusyAccess(
+export const checkUsersCalendar = withTokenForGoogleConnection(
   tool({
     description:
       "Check user availability on a given date time on their calendar",
@@ -68,7 +68,7 @@ export const checkUsersCalendar = withCalendarFreeBusyAccess(
       date: z.coerce.date(),
     }),
     execute: async ({ date }) => {
-      const accessToken = getFederatedConnectionAccessToken();
+      const accessToken = getAccessTokenForConnection();
       const url = "https://www.googleapis.com/calendar/v3/freeBusy";
       const body = JSON.stringify({
         timeMin: date,
@@ -265,4 +265,3 @@ Please do not report security vulnerabilities on the public GitHub issue tracker
 <p align="center">Auth0 is an easy to implement, adaptable authentication and authorization platform. To learn more checkout <a href="https://auth0.com/why-auth0">Why Auth0?</a></p>
 <p align="center">
 This project is licensed under the Apache 2.0 license. See the <a href="/LICENSE"> LICENSE</a> file for more info.</p>
-

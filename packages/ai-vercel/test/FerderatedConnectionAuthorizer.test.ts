@@ -9,7 +9,7 @@ import { FederatedConnectionAuthorizerBase } from "@auth0/ai/FederatedConnection
 import {
   FederatedConnectionAuthorizer,
   FederatedConnectionError,
-  getFederatedConnectionAccessToken,
+  getAccessTokenForConnection,
 } from "../src/FederatedConnections";
 
 describe("FederatedConnectionAuthorizer", () => {
@@ -95,7 +95,7 @@ describe("FederatedConnectionAuthorizer", () => {
 
       try {
         mockTool.execute.mockImplementation(() => {
-          accessToken = getFederatedConnectionAccessToken();
+          accessToken = getAccessTokenForConnection();
           return { result: "success" };
         });
         await protectedTool!.execute!(

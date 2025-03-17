@@ -2,13 +2,13 @@ import { tool } from "ai";
 import { addHours } from "date-fns";
 import { z } from "zod";
 
-import { withCalendarFreeBusyAccess } from "@/lib/auth0-ai";
+import { withTokenForGoogleConnection } from "@/lib/auth0-ai";
 import {
   FederatedConnectionError,
-  getFederatedConnectionAccessToken,
+  getAccessTokenForConnection,
 } from "@auth0/ai-vercel";
 
-export const checkUsersCalendar = withCalendarFreeBusyAccess(
+export const checkUsersCalendar = withTokenForGoogleConnection(
   tool({
     description:
       "Check user availability on a given date time on their calendar",
@@ -16,7 +16,7 @@ export const checkUsersCalendar = withCalendarFreeBusyAccess(
       date: z.coerce.date(),
     }),
     execute: async ({ date }) => {
-      const accessToken = getFederatedConnectionAccessToken();
+      const accessToken = getAccessTokenForConnection();
       const url = "https://www.googleapis.com/calendar/v3/freeBusy";
       const body = JSON.stringify({
         timeMin: date,

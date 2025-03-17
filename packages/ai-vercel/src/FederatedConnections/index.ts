@@ -1,3 +1,3 @@
-export { FederatedConnectionAuthorizer } from './FederatedConnectionAuthorizer';
-export { FederatedConnectionError } from './FederatedConnectionError';
-export { getFederatedConnectionAccessToken } from './getFederatedConnectionAccessToken';
+export { FederatedConnectionAuthorizer } from "./FederatedConnectionAuthorizer";
+export { FederatedConnectionError } from "./FederatedConnectionError";
+export { getAccessTokenForConnection } from "./getAccessTokenForConnection";
