@@ -13,7 +13,11 @@ export { asyncLocalStorage };
 
 export type FederatedConnectionAuthorizerParams<ToolExecuteArgs extends any[]> =
   {
-    refreshToken: AuthorizerToolParameter<ToolExecuteArgs, string | undefined>;
+    refreshToken?: AuthorizerToolParameter<ToolExecuteArgs, string | undefined>;
+    accessToken?: AuthorizerToolParameter<
+      ToolExecuteArgs,
+      TokenResponse | undefined
+    >;
     scopes: AuthorizerToolParameter<ToolExecuteArgs, string[]>;
     connection: AuthorizerToolParameter<ToolExecuteArgs, string>;
   };
@@ -29,7 +33,25 @@ export class FederatedConnectionAuthorizerBase<ToolExecuteArgs extends any[]> {
       clientSecret: string | undefined;
     },
     private params: FederatedConnectionAuthorizerParams<ToolExecuteArgs>
-  ) {}
+  ) {
+    if (
+      typeof params.refreshToken === "undefined" &&
+      typeof params.accessToken === "undefined"
+    ) {
+      throw new Error(
+        "Either refreshToken or accessToken must be provided to initialize the Authorizer."
+      );
+    }
+
+    if (
+      typeof params.accessToken !== "undefined" &&
+      typeof params.refreshToken !== "undefined"
+    ) {
+      throw new Error(
+        "Only one of refreshToken or accessToken can be provided to initialize the Authorizer."
+      );
+    }
+  }
 
   protected handleAuthorizationInterrupts(err: Auth0Interrupt) {
     throw err;
@@ -70,7 +92,7 @@ export class FederatedConnectionAuthorizerBase<ToolExecuteArgs extends any[]> {
     }
   }
 
-  protected async getAccessToken(
+  private async getAccessTokenImpl(
     ...toolContext: ToolExecuteArgs
   ): Promise<TokenResponse | undefined> {
     const store = asyncLocalStorage.getStore();
@@ -110,7 +132,24 @@ export class FederatedConnectionAuthorizerBase<ToolExecuteArgs extends any[]> {
       return;
     }
 
-    return res.json();
+    const tokenResponse: TokenResponse = await res.json();
+    return tokenResponse;
+  }
+
+  protected async getAccessToken(
+    ...toolContext: ToolExecuteArgs
+  ): Promise<TokenResponse | undefined> {
+    let tokenResponse: TokenResponse | undefined;
+    if (typeof this.params.refreshToken === "function") {
+      tokenResponse = await this.getAccessTokenImpl(...toolContext);
+    } else {
+      tokenResponse = await resolveParameter(
+        this.params.accessToken!,
+        toolContext
+      );
+    }
+    this.validateToken(tokenResponse);
+    return tokenResponse;
   }
 
   protected async getRefreshToken(...toolContext: ToolExecuteArgs) {
@@ -145,7 +184,6 @@ export class FederatedConnectionAuthorizerBase<ToolExecuteArgs extends any[]> {
       return asyncLocalStorage.run(asyncStore, async () => {
         try {
           const tokenResponse = await this.getAccessToken(...args);
-          this.validateToken(tokenResponse);
           asyncStore.accessToken = tokenResponse!.access_token;
           return await execute(...args);
         } catch (err) {

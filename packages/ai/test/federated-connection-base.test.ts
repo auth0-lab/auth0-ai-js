@@ -44,6 +44,29 @@ describe("FederatedConnectionAuthorizerBase", () => {
       );
       expect(auth).toBeInstanceOf(FederatedConnectionAuthorizerBase<[string]>);
     });
+    it("should initialize with custom getAccessToken func", () => {
+      const auth = new FederatedConnectionAuthorizerBase<[string]>(
+        {
+          domain: "custom.auth0.com",
+          clientId: "custom-client",
+          clientSecret: "custom-secret",
+        },
+        {
+          accessToken: () => {
+            return {
+              access_token: "test",
+              id_token: "test",
+              scope: "read:calendar",
+              expires_in: 3600,
+              token_type: "Bearer",
+            };
+          },
+          connection: "google",
+          scopes: ["read:calendar"],
+        }
+      );
+      expect(auth).toBeInstanceOf(FederatedConnectionAuthorizerBase<[string]>);
+    });
   });
 
   /**
