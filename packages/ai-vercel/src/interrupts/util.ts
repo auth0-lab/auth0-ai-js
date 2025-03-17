@@ -1,6 +1,6 @@
 import { CoreMessage, ToolExecutionError } from "ai";
 
-import { Interruption } from "#interruptions";
+import { Auth0Interrupt } from "@auth0/ai/interrupts";
 
 export const toolCallFromError = (error: ToolExecutionError): CoreMessage => {
   return {
@@ -32,16 +32,15 @@ export const appendToolCall = (
     return currentMessages;
   }
 
-  if (!(error.cause instanceof Interruption) || !error.cause) {
+  if (!(error.cause instanceof Auth0Interrupt)) {
     return currentMessages;
   }
 
-  const cause = error.cause as Interruption;
   const lastMessage = currentMessages[currentMessages.length - 1];
   const content = lastMessage.content || [];
   const toolCall = Array.isArray(content)
     ? content.find(
-        (c) => c.type === "tool-call" && c.toolCallId === cause.toolCallId
+        (c) => c.type === "tool-call" && c.toolCallId === error.toolCallId
       )
     : undefined;
   if (toolCall) {

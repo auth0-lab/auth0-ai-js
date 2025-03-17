@@ -7,7 +7,7 @@
     "forceConsistentCasingInFileNames": true,
     "inlineSources": false,
     "isolatedModules": true,
-    "moduleResolution": "nodenext",
+    "moduleResolution": "bundler",
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "preserveWatchOutput": true,
@@ -21,14 +21,13 @@
       "dom",
       "ES2018"
     ],
-    "module": "NodeNext",
+    "module": "ESNext",
     "target": "ES2018",
     "outDir": "./dist",
     "baseUrl": ".",
-    "jsx": "react-jsx",
     "paths": {
-      "#interruptions": [
-        "src/interruptions"
+      "#interrupts": [
+        "src/interrupts"
       ],
     }
   },

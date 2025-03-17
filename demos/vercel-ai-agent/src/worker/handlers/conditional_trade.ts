@@ -7,11 +7,12 @@ import { compareMetric } from "@/src/tools/compareMetric";
 import { getStockMetric } from "@/src/tools/getStockMetric";
 import { notifyUser } from "@/src/tools/notifyUser";
 import { openai } from "@ai-sdk/openai";
+import { appendToolCall, invokeTools } from "@auth0/ai-vercel/interrupts";
 import {
-  appendToolCall,
-  Interruption,
-  invokeTools,
-} from "@auth0/ai-vercel/interruptions";
+  Auth0Interrupt,
+  AuthorizationPending,
+  AuthorizationPollingError,
+} from "@auth0/ai/interrupts";
 
 import { ConditionalTrade } from "../../ConditionalTrade";
 
@@ -83,20 +84,24 @@ export const conditionalTrade = async (
   } catch (err) {
     if (
       err instanceof ToolExecutionError &&
-      err.cause instanceof Interruption
+      err.cause &&
+      err.cause instanceof Auth0Interrupt
     ) {
+      console.log("Handling tool execution error");
       const newMessages = appendToolCall(messages, err);
       await job.updateData({
         ...conditionalTrade,
         messages: newMessages,
       });
 
-      const isFinal = "isFinal" in err.cause && err.cause.isFinal;
+      const authorizationPending =
+        err.cause instanceof AuthorizationPending ||
+        err.cause instanceof AuthorizationPollingError;
 
       console.log(err.cause.message);
 
-      if (isFinal) {
-        console.log("Final error, do not retry.");
+      if (!authorizationPending) {
+        console.log("Authorization is not pending, do not retry.");
         return;
       }
     }

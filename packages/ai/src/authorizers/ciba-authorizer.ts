@@ -2,7 +2,11 @@ import { AuthenticationClient } from "auth0";
 import * as jose from "jose";
 
 import { Credentials } from "../credentials";
-import { AccessDeniedError, AuthorizationRequestExpiredError, UserDoesNotHavePushNotificationsError } from "../errors";
+import {
+  AccessDeniedError,
+  AuthorizationRequestExpiredError,
+  UserDoesNotHavePushNotificationsError,
+} from "../errors";
 import { AuthorizerParams, AuthParams, ToolWithAuthHandler } from "./";
 
 type StringOrFn = (params: any) => Promise<string>;

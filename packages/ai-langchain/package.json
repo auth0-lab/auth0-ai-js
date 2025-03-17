@@ -9,8 +9,10 @@
     "dist/**/*"
   ],
   "scripts": {
-    "build": "tsup",
-    "build:watch": "tsup --watch",
+    "build": "npm run clean && npm run build:esm && npm run build:cjs",
+    "build:watch": "tsc --module ESNext --watch",
+    "build:esm": "tsc --module ESNext --outDir ./dist/esm",
+    "build:cjs": "tsc --module nodenext --moduleResolution nodenext --declaration false --declarationMap false --outDir ./dist/cjs",
     "clean": "rm -rf dist",
     "lint": "eslint .",
     "type-check": "tsc --noEmit",
@@ -19,9 +21,9 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "types": "./dist/esm/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
     }
   },
   "author": {
@@ -36,7 +38,7 @@
   },
   "peerDependencies": {
     "@langchain/core": "^0.3.19",
-    "@langchain/langgraph": "^0.2.46",
+    "@langchain/langgraph": "^0.2.55",
     "@langchain/langgraph-sdk": "^0.0.42",
     "@openfga/sdk": "0.8.0",
     "zod": "^3.24.2"

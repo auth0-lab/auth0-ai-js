@@ -6,8 +6,10 @@
   "main": "dist/index.js",
   "module": "./dist/index.mjs",
   "scripts": {
-    "build": "tsup",
-    "build:watch": "tsup --watch",
+    "build": "npm run clean && npm run build:esm && npm run build:cjs",
+    "build:watch": "tsc --module ESNext --watch",
+    "build:esm": "tsc --module ESNext --outDir ./dist/esm",
+    "build:cjs": "tsc --module nodenext --moduleResolution nodenext --declaration false --declarationMap false --outDir ./dist/cjs",
     "clean": "rm -rf dist",
     "lint": "eslint \"./**/*.ts*\"",
     "type-check": "tsc --noEmit",
@@ -20,24 +22,29 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "types": "./dist/esm/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
+    },
+    "./interrupts": {
+      "types": "./dist/esm/interrupts/index.d.ts",
+      "import": "./dist/esm/interrupts/index.js",
+      "require": "./dist/cjs/interrupts/index.js"
     },
     "./FederatedConnections": {
-      "types": "./dist/authorizers/federated-connections/index.d.ts",
-      "import": "./dist/authorizers/federated-connections/index.mjs",
-      "require": "./dist/authorizers/federated-connections/index.js"
+      "types": "./dist/esm/authorizers/federated-connections/index.d.ts",
+      "import": "./dist/esm/authorizers/federated-connections/index.js",
+      "require": "./dist/cjs/authorizers/federated-connections/index.js"
     },
     "./CIBA": {
-      "types": "./dist/authorizers/ciba/index.d.ts",
-      "import": "./dist/authorizers/ciba/index.mjs",
-      "require": "./dist/authorizers/ciba/index.js"
+      "types": "./dist/esm/authorizers/ciba/index.d.ts",
+      "import": "./dist/esm/authorizers/ciba/index.js",
+      "require": "./dist/cjs/authorizers/ciba/index.js"
     },
     "./FGA": {
-      "types": "./dist/authorizers/fga/index.d.ts",
-      "import": "./dist/authorizers/fga/index.mjs",
-      "require": "./dist/authorizers/fga/index.js"
+      "types": "./dist/esm/authorizers/fga/index.d.ts",
+      "import": "./dist/esm/authorizers/fga/index.js",
+      "require": "./dist/cjs/authorizers/fga/index.js"
     }
   },
   "files": [
@@ -49,7 +56,6 @@
     "@types/node": "^22.10.6",
     "eslint": "^8.57.0",
     "globals": "^15.11.0",
-    "tsup": "^8",
     "typedoc": "^0.27.6",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0",

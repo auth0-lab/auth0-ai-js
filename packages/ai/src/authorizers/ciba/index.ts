@@ -1,6 +1,5 @@
 import { AuthenticationClient } from "auth0";
 import { AsyncLocalStorage } from "node:async_hooks";
-import { AuthorizerToolParameter, resolveParameter } from "src/parameters";
 
 import { AuthorizerParams } from "../";
 import { Credentials } from "../../credentials";
@@ -10,7 +9,8 @@ import {
   AuthorizationPollingError,
   AuthorizationRequestExpiredError,
   UserDoesNotHavePushNotificationsError,
-} from "../../errors";
+} from "../../interrupts";
+import { AuthorizerToolParameter, resolveParameter } from "../../parameters";
 
 export type AsyncStorageValue<TContext> = {
   credentials?: Credentials;
