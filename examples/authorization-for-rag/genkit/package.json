@@ -1,5 +1,6 @@
 {
-  "name": "genkit-retrievers-with-fga",
+  "name": "@auth0/auth0-ai-js-examples-authorization-for-rag-genkit",
+  "private": true,
   "version": "0.0.0",
   "description": "Demonstrates the usage of the Okta FGA with a genkit to query documents with permission checks.",
   "x-type": "module",

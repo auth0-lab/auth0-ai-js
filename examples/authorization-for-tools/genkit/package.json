@@ -1,5 +1,6 @@
 {
-  "name": "@auth0-ai-js/examples-authorization-for-tools-genkit",
+  "name": "@auth0/auth0-ai-js-examples-authorization-for-tools-genkit",
+  "private": true,
   "version": "1.0.0",
   "description": "",
   "main": "index.js",

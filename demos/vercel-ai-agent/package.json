@@ -1,7 +1,7 @@
 {
-  "name": "vercel-ai-agent",
-  "version": "1.0.0",
+  "name": "@auth0/auth0-ai-js-demos-vercel-ai-agent",
   "private": true,
+  "version": "1.0.0",
   "scripts": {
     "queue-job": "tsx --env-file=.env.local src/queue/index.ts",
     "worker": "tsx --env-file=.env.local src/worker/index.ts",
