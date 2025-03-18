@@ -2,26 +2,28 @@
   "name": "@auth0/ai-genkit",
   "version": "0.0.0",
   "description": "",
-  "types": "dist/index.d.ts",
-  "main": "dist/index.js",
-  "module": "./dist/index.mjs",
-  "files": [
-    "dist/**/*"
-  ],
+  "types": "dist/esm/index.d.ts",
+  "main": "dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
   "scripts": {
-    "build": "tsup",
-    "build:watch": "tsup --watch",
+    "build": "npm run clean && npm run build:esm && npm run build:cjs",
+    "build:watch": "tsc --watch",
+    "build:esm": "tsc --outDir ./dist/esm",
+    "build:cjs": "tsc --module nodenext --moduleResolution nodenext --declaration false --declarationMap false --outDir ./dist/cjs",
     "clean": "rm -rf dist",
     "lint": "eslint .",
     "type-check": "tsc --noEmit",
     "test": "vitest run"
   },
+  "files": [
+    "dist/**/*.{*js,*js.map,d.ts}"
+  ],
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "types": "./dist/esm/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
     }
   },
   "author": {
@@ -41,7 +43,6 @@
     "@types/node": "^22.10.6",
     "@eslint/compat": "^1.2.7",
     "eslint": "^9.22.0",
-    "tsup": "^8.3.6",
     "typedoc": "^0.27.6",
     "typescript": "^5.7.3",
     "vitest": "^3.0.8"

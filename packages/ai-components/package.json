@@ -4,7 +4,7 @@
   "description": "Components for Auth0 AI",
   "bin": "./bin/cli.js",
   "files": [
-    "dist/**/*",
+    "dist/**/*.{*js,*js.map,d.ts}",
     "bin/**/*",
     "templates/**/*"
   ],

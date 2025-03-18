@@ -2,13 +2,13 @@
   "name": "@auth0/ai",
   "version": "0.0.0",
   "description": "",
-  "types": "dist/index.d.ts",
-  "main": "dist/index.js",
-  "module": "./dist/index.mjs",
+  "types": "dist/esm/index.d.ts",
+  "main": "dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
   "scripts": {
     "build": "npm run clean && npm run build:esm && npm run build:cjs",
-    "build:watch": "tsc --module ESNext --watch",
-    "build:esm": "tsc --module ESNext --outDir ./dist/esm",
+    "build:watch": "tsc --watch",
+    "build:esm": "tsc --outDir ./dist/esm",
     "build:cjs": "tsc --module nodenext --moduleResolution nodenext --declaration false --declarationMap false --outDir ./dist/cjs",
     "clean": "rm -rf dist",
     "lint": "eslint \"./**/*.ts*\"",
@@ -19,6 +19,9 @@
     "name": "Auth0 Inc.",
     "url": "https://auth0.com"
   },
+  "files": [
+    "dist/**/*.{*js,*js.map,d.ts}"
+  ],
   "exports": {
     "./package.json": "./package.json",
     ".": {
@@ -47,9 +50,6 @@
       "require": "./dist/cjs/authorizers/fga/index.js"
     }
   },
-  "files": [
-    "dist/**/*"
-  ],
   "license": "Apache-2.0",
   "devDependencies": {
     "@eslint/js": "^9.18.0",
