@@ -7,8 +7,8 @@
   "module": "./dist/index.mjs",
   "scripts": {
     "build": "npm run clean && npm run build:esm && npm run build:cjs",
-    "build:watch": "tsc --module ESNext --watch",
-    "build:esm": "tsc --module ESNext --outDir ./dist/esm",
+    "build:watch": "tsc --watch",
+    "build:esm": "tsc --outDir ./dist/esm",
     "build:cjs": "tsc --module nodenext --moduleResolution nodenext --declaration false --declarationMap false --outDir ./dist/cjs",
     "clean": "rm -rf dist",
     "lint": "eslint \"./**/*.ts*\"",
@@ -48,7 +48,7 @@
     }
   },
   "files": [
-    "dist/**/*"
+    "dist/**/*.{*js,*js.map,d.ts}"
   ],
   "license": "Apache-2.0",
   "devDependencies": {
