@@ -30,3 +30,13 @@ export type AsyncStorageValue<TContext> = {
 export const asyncLocalStorage = new AsyncLocalStorage<
   AsyncStorageValue<any>
 >();
+
+export const getAccessTokenForConnection = () => {
+  const store = asyncLocalStorage.getStore();
+  if (typeof store === "undefined") {
+    throw new Error(
+      "The tool must be wrapped with the withFederatedConnections function."
+    );
+  }
+  return store?.accessToken;
+};

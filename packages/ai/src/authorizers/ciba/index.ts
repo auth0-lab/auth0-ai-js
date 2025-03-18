@@ -1,5 +1,4 @@
 import { AuthenticationClient } from "auth0";
-import { AsyncLocalStorage } from "node:async_hooks";
 
 import { AuthorizerParams } from "../";
 import { Credentials } from "../../credentials";
@@ -11,19 +10,9 @@ import {
   UserDoesNotHavePushNotificationsInterrupt,
 } from "../../interrupts";
 import { AuthorizerToolParameter, resolveParameter } from "../../parameters";
+import { asyncLocalStorage, AsyncStorageValue } from "./asyncLocalStorage";
 
-export type AsyncStorageValue<TContext> = {
-  credentials?: Credentials;
-
-  /**
-   * The tool execution context.
-   */
-  context: TContext;
-};
-
-export const asyncLocalStorage = new AsyncLocalStorage<
-  AsyncStorageValue<any>
->();
+export { asyncLocalStorage, getCIBACredentials } from "./asyncLocalStorage";
 
 export type CIBAAuthorizerParams<ToolExecuteArgs extends any[]> = {
   userID: AuthorizerToolParameter<ToolExecuteArgs>;
