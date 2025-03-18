@@ -2,11 +2,7 @@
   "extends": "../../tools/tsconfig/base.json",
   "compilerOptions": {
     "baseUrl": ".",
-    "outDir": "./dist",
-    "module": "ESNext",
-    "target": "ES2018",
-    "types": ["@types/node", "vitest/globals"],
-    "lib": ["dom", "ES2018"]
+    "outDir": "./dist"
   },
   "include": ["src/**/*"]
 }

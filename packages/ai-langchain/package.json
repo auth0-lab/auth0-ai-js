@@ -2,22 +2,22 @@
   "name": "@auth0/ai-langchain",
   "version": "0.0.0",
   "description": "",
-  "types": "dist/index.d.ts",
-  "main": "dist/index.js",
-  "module": "./dist/index.mjs",
-  "files": [
-    "dist/**/*"
-  ],
+  "types": "dist/esm/index.d.ts",
+  "main": "dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
   "scripts": {
     "build": "npm run clean && npm run build:esm && npm run build:cjs",
-    "build:watch": "tsc --module ESNext --watch",
-    "build:esm": "tsc --module ESNext --outDir ./dist/esm",
+    "build:watch": "tsc --watch",
+    "build:esm": "tsc --outDir ./dist/esm",
     "build:cjs": "tsc --module nodenext --moduleResolution nodenext --declaration false --declarationMap false --outDir ./dist/cjs",
     "clean": "rm -rf dist",
     "lint": "eslint .",
     "type-check": "tsc --noEmit",
     "test": "vitest run"
   },
+  "files": [
+    "dist/**/*.{*js,*js.map,d.ts}"
+  ],
   "exports": {
     "./package.json": "./package.json",
     ".": {
