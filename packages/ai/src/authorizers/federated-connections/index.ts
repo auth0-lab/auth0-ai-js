@@ -9,7 +9,10 @@ import { asyncLocalStorage, AsyncStorageValue } from "./asyncLocalStorage";
 
 export type { AsyncStorageValue } from "./asyncLocalStorage";
 
-export { asyncLocalStorage };
+export {
+  asyncLocalStorage,
+  getAccessTokenForConnection,
+} from "./asyncLocalStorage";
 
 export type FederatedConnectionAuthorizerParams<ToolExecuteArgs extends any[]> =
   {
