@@ -23,7 +23,7 @@ export class FederatedConnectionInterrupt extends Auth0Interrupt {
    */
   public readonly requiredScopes: string[];
 
-  static code: string = "FEDERATED_CONNECTION_ERROR";
+  public static code = "FEDERATED_CONNECTION_ERROR" as const;
 
   constructor(
     message: string,

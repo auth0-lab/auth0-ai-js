@@ -1,43 +1,60 @@
-import { Auth0Interrupt } from "./Auth0Interrupt";
+import { Auth0Interrupt, Auth0InterruptData } from "./Auth0Interrupt";
 
 export class CIBAInterrupt extends Auth0Interrupt {
   constructor(message: string, code: string) {
-    super(message, `CIBA_${code}`);
+    super(message, code);
+  }
+
+  static isInterrupt<T extends abstract new (...args: any) => any>(
+    this: T,
+    interrupt: any
+  ): interrupt is Auth0InterruptData<InstanceType<T>> {
+    return (
+      Auth0Interrupt.isInterrupt(interrupt) &&
+      interrupt.code.startsWith("CIBA_")
+    );
   }
 }
 
-export class AccessDeniedError extends CIBAInterrupt {
+export class AccessDeniedInterrupt extends CIBAInterrupt {
+  public static code: string = "CIBA_ACCESS_DENIED" as const;
   constructor(message: string) {
-    super(message, "ACCESS_DENIED");
+    super(message, AccessDeniedInterrupt.code);
   }
 }
 
-export class UserDoesNotHavePushNotificationsError extends CIBAInterrupt {
+export class UserDoesNotHavePushNotificationsInterrupt extends CIBAInterrupt {
+  public static code: string =
+    "CIBA_USER_DOES_NOT_HAVE_PUSH_NOTIFICATIONS" as const;
   constructor(message: string) {
-    super(message, "USER_DOES_NOT_HAVE_PUSH_NOTIFICATIONS");
+    super(message, UserDoesNotHavePushNotificationsInterrupt.code);
   }
 }
 
-export class AuthorizationRequestExpiredError extends CIBAInterrupt {
+export class AuthorizationRequestExpiredInterrupt extends CIBAInterrupt {
+  public static code: string = "CIBA_AUTHORIZATION_REQUEST_EXPIRED" as const;
   constructor(message: string) {
-    super(message, "AUTHORIZATION_REQUEST_EXPIRED");
+    super(message, AuthorizationRequestExpiredInterrupt.code);
   }
 }
 
-export class AuthorizationPending extends CIBAInterrupt {
+export class AuthorizationPendingInterrupt extends CIBAInterrupt {
+  public static code: string = "CIBA_AUTHORIZATION_PENDING" as const;
   constructor(message: string) {
-    super(message, "AUTHORIZATION_PENDING");
+    super(message, AuthorizationPendingInterrupt.code);
   }
 }
 
-export class AuthorizationRequired extends Auth0Interrupt {
+export class AuthorizationRequiredInterrupt extends Auth0Interrupt {
+  public static code: string = "CIBA_AUTHORIZATION_REQUIRED" as const;
   constructor(message: string) {
-    super(message, "AUTHORIZATION_REQUIRED");
+    super(message, AuthorizationRequiredInterrupt.code);
   }
 }
 
-export class AuthorizationPollingError extends Auth0Interrupt {
+export class AuthorizationPollingInterrupt extends Auth0Interrupt {
+  public static code: string = "CIBA_AUTHORIZATION_POLLING_ERROR" as const;
   constructor(message: string) {
-    super(message, "AUTHORIZATION_POLLING_ERROR");
+    super(message, AuthorizationPollingInterrupt.code);
   }
 }

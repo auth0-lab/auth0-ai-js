@@ -4,11 +4,11 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { AuthorizerParams } from "../";
 import { Credentials } from "../../credentials";
 import {
-  AccessDeniedError,
-  AuthorizationPending,
-  AuthorizationPollingError,
-  AuthorizationRequestExpiredError,
-  UserDoesNotHavePushNotificationsError,
+  AccessDeniedInterrupt,
+  AuthorizationPendingInterrupt,
+  AuthorizationPollingInterrupt,
+  AuthorizationRequestExpiredInterrupt,
+  UserDoesNotHavePushNotificationsInterrupt,
 } from "../../interrupts";
 import { AuthorizerToolParameter, resolveParameter } from "../../parameters";
 
@@ -127,7 +127,7 @@ export class CIBAAuthorizerBase<ToolExecuteArgs extends any[]> {
       const elapsedSeconds = Date.now() / 1000 - params.requestedAt;
 
       if (elapsedSeconds >= params.expiresIn) {
-        throw new AuthorizationRequestExpiredError(
+        throw new AuthorizationRequestExpiredInterrupt(
           "Authorization request has expired"
         );
       }
@@ -146,18 +146,20 @@ export class CIBAAuthorizerBase<ToolExecuteArgs extends any[]> {
       return credentials;
     } catch (e: any) {
       if (e.error == "invalid_request") {
-        throw new UserDoesNotHavePushNotificationsError(e.error_description);
+        throw new UserDoesNotHavePushNotificationsInterrupt(
+          e.error_description
+        );
       }
       if (e.error == "access_denied") {
-        throw new AccessDeniedError(e.error_description);
+        throw new AccessDeniedInterrupt(e.error_description);
       }
 
       if (e.error === "authorization_pending") {
-        throw new AuthorizationPending(e.error_description);
+        throw new AuthorizationPendingInterrupt(e.error_description);
       }
 
       if (e.error === "slow_down") {
-        throw new AuthorizationPollingError(e.error_description);
+        throw new AuthorizationPollingInterrupt(e.error_description);
       }
 
       throw e;

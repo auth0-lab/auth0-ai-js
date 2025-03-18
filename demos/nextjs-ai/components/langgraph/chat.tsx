@@ -3,10 +3,7 @@
 import { useQueryState } from "nuqs";
 import { FormEventHandler, useEffect, useRef, useState } from "react";
 
-import {
-  Auth0Interrupt,
-  FederatedConnectionInterrupt,
-} from "@auth0/ai/interrupts";
+import { FederatedConnectionInterrupt } from "@auth0/ai/interrupts";
 import { useStream } from "@langchain/langgraph-sdk/react";
 
 import { EnsureAPIAccessPopup } from "../auth0-ai/FederatedConnections/popup";
@@ -15,7 +12,10 @@ import { GoogleCalendarIcon } from "../icons";
 const useFocus = () => {
   const htmlElRef = useRef<HTMLInputElement>(null);
   const setFocus = () => {
-    htmlElRef.current && htmlElRef.current.focus();
+    if (!htmlElRef.current) {
+      return;
+    }
+    htmlElRef.current.focus();
   };
   return [htmlElRef, setFocus] as const;
 };
@@ -41,7 +41,7 @@ export default function Chat() {
       return;
     }
     setInputFocus();
-  }, [thread.isLoading]);
+  }, [thread.isLoading, setInputFocus]);
 
   // //When the user submits a message, add it to the list of messages and resume the conversation.
   const handleSubmit: FormEventHandler<HTMLFormElement> = async (e) => {
@@ -72,10 +72,7 @@ export default function Chat() {
         ))}
 
       {thread.interrupt &&
-      Auth0Interrupt.is(
-        FederatedConnectionInterrupt,
-        thread.interrupt.value
-      ) ? (
+      FederatedConnectionInterrupt.isInterrupt(thread.interrupt.value) ? (
         <div
           key={thread.interrupt.ns?.join("")}
           className="whitespace-pre-wrap"

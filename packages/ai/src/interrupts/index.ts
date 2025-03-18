@@ -5,10 +5,10 @@ export {
 } from "./FederatedConnectionInterrupt";
 export {
   CIBAInterrupt,
-  AccessDeniedError,
-  UserDoesNotHavePushNotificationsError,
-  AuthorizationRequestExpiredError,
-  AuthorizationPending,
-  AuthorizationRequired,
-  AuthorizationPollingError,
+  AccessDeniedInterrupt,
+  UserDoesNotHavePushNotificationsInterrupt,
+  AuthorizationRequestExpiredInterrupt,
+  AuthorizationPendingInterrupt,
+  AuthorizationRequiredInterrupt,
+  AuthorizationPollingInterrupt,
 } from "./CIBAInterrupts";

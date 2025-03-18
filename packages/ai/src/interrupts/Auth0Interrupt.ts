@@ -1,3 +1,11 @@
+// Define a type alias for the generalized type
+export type Auth0InterruptData<T extends Auth0Interrupt> = Omit<
+  Omit<T, keyof Error>,
+  "toJSON"
+> & { message: string };
+
+export const InterruptName = "AUTH0_AI_INTERRUPT" as const;
+
 /**
  * Auth0Interrupt is the base class for all interruptions
  * in the Auth0 AI sdk.
@@ -5,9 +13,8 @@
  * It is serializable to a JSON object.
  */
 export class Auth0Interrupt extends Error {
-  name = "AUTH0_AI_INTERRUPT" as const;
+  name = InterruptName;
   code: string;
-  context: Record<string, any> | undefined;
 
   constructor(message: string, code: string) {
     super(message);
@@ -20,48 +27,35 @@ export class Auth0Interrupt extends Error {
    *
    * @returns - The JSON object representation of the interrupt.
    */
-  toJSON() {
-    return Object.fromEntries(
-      Object.entries(this).filter(([key]) => key !== "stack")
-    );
+  toJSON(): Auth0InterruptData<this> {
+    return {
+      ...Object.fromEntries(
+        Object.entries(this).filter(
+          ([key]) => key !== "stack" && key !== "toJSON"
+        )
+      ),
+      message: this.message,
+    } as Auth0InterruptData<this>;
   }
 
   /**
    *
-   * Extract the data type of the interrupt without the js Error properties.
+   * Checks if an interrupt is of a specific type asserting its data component.
    *
-   * @returns The data type of the interrupt.
-   */
-  static DataType<T extends Auth0Interrupt>(): Omit<T, keyof Error> {
-    return {} as Omit<T, keyof Error>;
-  }
-
-  /**
-   *
-   * Checks if an interrupt is of type Auth0Interrupt.
-   *
-   * @param interrupt - The interrupt to check.
-   * @returns -
-   */
-  static isInterrupt(interrupt: any): interrupt is Auth0Interrupt {
-    return interrupt && interrupt.name === "AUTH0_AI_INTERRUPT";
-  }
-
-  /**
-   *
-   * Checks if an interrupt is of a specific type  asserting its data component.
-   *
-   * This method will work even if the interruption is sent serialized to the front end.
+   * This method assert the data part of the interrupt.
    *
    * @param clazz - The class of the interrupt to check.
    * @param interrupt - The interrupt to check.
    *
    * @returns - True if the interrupt is of the specified type.
    */
-  static is<T extends Auth0Interrupt>(
-    clazz: { code: string } & (new (...args: any[]) => T),
+  static isInterrupt<T extends abstract new (...args: any) => any>(
+    this: T & { code?: string },
     interrupt: any
-  ): interrupt is Omit<T, keyof Error> {
-    return interrupt && interrupt.code === clazz.code;
+  ): interrupt is Auth0InterruptData<InstanceType<T>> {
+    return (
+      interrupt.name === "AUTH0_AI_INTERRUPT" &&
+      (typeof this.code === "undefined" || interrupt.code === this.code)
+    );
   }
 }

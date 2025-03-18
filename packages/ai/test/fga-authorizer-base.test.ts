@@ -7,7 +7,7 @@ import {
   OpenFgaClient,
 } from "@openfga/sdk";
 
-import { FGAAuthorizerBase, FGAAuthorizerParams } from "../src/authorizers/fga";
+import { FGAAuthorizerBase, FGAClientParams } from "../src/authorizers/fga";
 
 vi.mock("@openfga/sdk", () => {
   return {
@@ -84,7 +84,7 @@ describe("FGAAuthorizerBase", () => {
     });
 
     it("should initialize with provided parameters", async () => {
-      const params: FGAAuthorizerParams = {
+      const params: FGAClientParams = {
         apiUrl: "https://custom.api.url",
         storeId: "custom_store_id",
         credentials: {
@@ -133,7 +133,7 @@ describe("FGAAuthorizerBase", () => {
       process.env.FGA_CLIENT_ID = "env_client_id";
       process.env.FGA_CLIENT_SECRET = "env_client_secret";
 
-      const params: FGAAuthorizerParams = {
+      const params: FGAClientParams = {
         storeId: "partial_store_id",
       };
 
@@ -168,7 +168,7 @@ describe("FGAAuthorizerBase", () => {
     it("should handle missing environment variables gracefully", async () => {
       process.env.FGA_STORE_ID = "env_store_id";
 
-      const params: FGAAuthorizerParams = {};
+      const params: FGAClientParams = {};
 
       const buildQueryMock = vi.fn().mockResolvedValue({
         user: "user",
@@ -322,5 +322,4 @@ describe("FGAAuthorizerBase", () => {
       });
     });
   });
-
 });

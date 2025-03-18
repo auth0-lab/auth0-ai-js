@@ -5,8 +5,8 @@ import { z } from "zod";
 
 import { CIBAAuthorizerBase } from "@auth0/ai/CIBA";
 import {
-  AuthorizationPending,
-  AuthorizationRequestExpiredError,
+  AuthorizationPendingInterrupt,
+  AuthorizationRequestExpiredInterrupt,
   CIBAInterrupt,
 } from "@auth0/ai/interrupts";
 
@@ -63,7 +63,7 @@ describe("CIBAAuthorizer", () => {
         //@ts-ignore
         "getCredentials"
       ).mockImplementation(() => {
-        throw new AuthorizationPending("Authorization pending");
+        throw new AuthorizationPendingInterrupt("Authorization pending");
       });
 
       try {
@@ -97,7 +97,7 @@ describe("CIBAAuthorizer", () => {
         //@ts-ignore
         "getCredentials"
       ).mockImplementation(() => {
-        throw new AuthorizationRequestExpiredError("Authorization pending");
+        throw new AuthorizationRequestExpiredInterrupt("Authorization pending");
       });
 
       try {
