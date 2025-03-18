@@ -34,7 +34,7 @@
   "dependencies": {
     "@auth0/ai": "*",
     "langchain": "^0.3.11",
-    "z": "1.0.1"
+    "z": "1.0.9"
   },
   "peerDependencies": {
     "@langchain/core": "^0.3.19",

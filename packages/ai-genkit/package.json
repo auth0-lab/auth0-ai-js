@@ -34,7 +34,7 @@
   "dependencies": {
     "@auth0/ai": "*",
     "genkit": "^0.9.12",
-    "z": "1.0.1"
+    "z": "1.0.9"
   },
   "peerDependencies": {
     "@openfga/sdk": "^0.8.0"
