@@ -33,8 +33,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@auth0/ai": "*",
-    "genkit": "^0.9.12",
-    "z": "1.0.1"
+    "genkit": "^0.9.12"
   },
   "peerDependencies": {
     "@openfga/sdk": "^0.8.0"
