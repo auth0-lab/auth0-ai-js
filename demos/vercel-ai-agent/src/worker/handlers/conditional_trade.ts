@@ -10,8 +10,8 @@ import { openai } from "@ai-sdk/openai";
 import { appendToolCall, invokeTools } from "@auth0/ai-vercel/interrupts";
 import {
   Auth0Interrupt,
-  AuthorizationPending,
-  AuthorizationPollingError,
+  AuthorizationPendingInterrupt,
+  AuthorizationPollingInterrupt,
 } from "@auth0/ai/interrupts";
 
 import { ConditionalTrade } from "../../ConditionalTrade";
@@ -84,8 +84,7 @@ export const conditionalTrade = async (
   } catch (err) {
     if (
       err instanceof ToolExecutionError &&
-      err.cause &&
-      err.cause instanceof Auth0Interrupt
+      Auth0Interrupt.isInterrupt(err.cause)
     ) {
       console.log("Handling tool execution error");
       const newMessages = appendToolCall(messages, err);
@@ -94,13 +93,13 @@ export const conditionalTrade = async (
         messages: newMessages,
       });
 
-      const authorizationPending =
-        err.cause instanceof AuthorizationPending ||
-        err.cause instanceof AuthorizationPollingError;
+      const authorizationPendingInterAuthorizationPendingInterrupt =
+        AuthorizationPendingInterrupt.isInterrupt(err.cause) ||
+        AuthorizationPollingInterrupt.isInterrupt(err.cause);
 
       console.log(err.cause.message);
 
-      if (!authorizationPending) {
+      if (!authorizationPendingInterAuthorizationPendingInterrupt) {
         console.log("Authorization is not pending, do not retry.");
         return;
       }

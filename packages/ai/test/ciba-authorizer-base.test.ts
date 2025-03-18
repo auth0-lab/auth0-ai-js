@@ -3,9 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { asyncLocalStorage, CIBAAuthorizerBase } from "../src/authorizers/ciba";
 import {
-  AccessDeniedError,
-  AuthorizationPending,
-  AuthorizationRequestExpiredError,
+  AccessDeniedInterrupt,
+  AuthorizationPendingInterrupt,
+  AuthorizationRequestExpiredInterrupt,
 } from "../src/interrupts";
 
 vi.mock("auth0");
@@ -74,7 +74,7 @@ describe("CIBAAuthorizerBase", () => {
    * and the backchannel.authorize should be called.
    *
    * As the request is still pending the protected function will throw an
-   * AuthorizationPending error.
+   * AuthorizationPendingInterrupt error.
    */
   describe("first call", () => {
     const authorizeResponse = {
@@ -114,8 +114,8 @@ describe("CIBAAuthorizerBase", () => {
       );
     });
 
-    it('should throw "AuthorizationPending" error', async () => {
-      expect(err).toBeInstanceOf(AuthorizationPending);
+    it('should throw "AuthorizationPendingInterrupt" error', async () => {
+      expect(err).toBeInstanceOf(AuthorizationPendingInterrupt);
     });
   });
 
@@ -124,7 +124,7 @@ describe("CIBAAuthorizerBase", () => {
    * and the backchannel.authorize should be called.
    *
    * As the request is still pending the protected function will throw an
-   * AuthorizationPending error.
+   * AuthorizationPendingInterrupt error.
    */
   describe("first call", () => {
     const authorizeResponse = {
@@ -164,8 +164,8 @@ describe("CIBAAuthorizerBase", () => {
       );
     });
 
-    it('should throw "AuthorizationPending" error', async () => {
-      expect(err).toBeInstanceOf(AuthorizationPending);
+    it('should throw "AuthorizationPendingInterrupt" error', async () => {
+      expect(err).toBeInstanceOf(AuthorizationPendingInterrupt);
     });
 
     it("should not execute the protected function", async () => {
@@ -179,7 +179,7 @@ describe("CIBAAuthorizerBase", () => {
    * should be called throwing an authorization_pending error.
    *
    * As the request is still pending the protected function will throw an
-   * AuthorizationPending error.
+   * AuthorizationPendingInterrupt error.
    */
   describe("pending request", () => {
     const storedAuthorizationResponse = {
@@ -219,8 +219,8 @@ describe("CIBAAuthorizerBase", () => {
       );
     });
 
-    it('should throw "AuthorizationPending" error', async () => {
-      expect(err).toBeInstanceOf(AuthorizationPending);
+    it('should throw "AuthorizationPendingInterrupt" error', async () => {
+      expect(err).toBeInstanceOf(AuthorizationPendingInterrupt);
     });
   });
 
@@ -327,14 +327,14 @@ describe("CIBAAuthorizerBase", () => {
       );
     });
 
-    it('should throw "AccessDeniedError" error', async () => {
-      expect(err).toBeInstanceOf(AccessDeniedError);
+    it('should throw "AccessDeniedInterrupt" error', async () => {
+      expect(err).toBeInstanceOf(AccessDeniedInterrupt);
     });
   });
 
   /**
    * If the request expires  the protected function
-   * should throw an AuthorizationRequestExpiredError.
+   * should throw an AuthorizationRequestExpiredInterrupt.
    */
   describe("expired request", () => {
     const storedAuthorizationResponse = {
@@ -375,8 +375,8 @@ describe("CIBAAuthorizerBase", () => {
       );
     });
 
-    it('should throw "AccessDeniedError" error', async () => {
-      expect(err).toBeInstanceOf(AuthorizationRequestExpiredError);
+    it('should throw "AccessDeniedInterrupt" error', async () => {
+      expect(err).toBeInstanceOf(AuthorizationRequestExpiredInterrupt);
     });
   });
 });

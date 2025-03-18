@@ -6,6 +6,8 @@ import {
 
 import { buildOpenFgaClient, FGAClientParams } from "./fga-client";
 
+export type { FGAClientParams };
+
 export type FGAAuthorizerOptions<ToolExecuteArgs extends any[]> = {
   buildQuery: (...args: ToolExecuteArgs) => Promise<ClientCheckRequest>;
   onUnauthorized?: (...args: ToolExecuteArgs) => any;

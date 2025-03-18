@@ -20,7 +20,7 @@ export const errorSerializer = (errHandler?: errorHandler): errorHandler => {
     if (
       !(error instanceof ToolExecutionError) ||
       error.cause ||
-      !Auth0Interrupt.isInterrupt(error.cause)
+      !(error.cause instanceof Auth0Interrupt)
     ) {
       if (errHandler) {
         return errHandler(error);

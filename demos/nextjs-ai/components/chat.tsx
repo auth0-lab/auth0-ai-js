@@ -5,10 +5,7 @@ import cx from "classnames";
 import { generateUUID } from "@/lib/utils";
 import { useChat } from "@ai-sdk/react";
 import { useInterruptions } from "@auth0/ai-vercel/react";
-import {
-  Auth0Interrupt,
-  FederatedConnectionInterrupt,
-} from "@auth0/ai/interrupts";
+import { FederatedConnectionInterrupt } from "@auth0/ai/interrupts";
 
 import { EnsureAPIAccessPopup } from "./auth0-ai/FederatedConnections/popup";
 import { GoogleCalendarIcon } from "./icons";
@@ -42,10 +39,7 @@ export default function Chat() {
                   const { toolName, toolCallId, state } = toolInvocation;
                   if (
                     state === "call" &&
-                    Auth0Interrupt.is(
-                      FederatedConnectionInterrupt,
-                      toolInterrupt
-                    )
+                    FederatedConnectionInterrupt.isInterrupt(toolInterrupt)
                   ) {
                     return (
                       <EnsureAPIAccessPopup
