@@ -1,9 +1,9 @@
 {
-  "name": "@auth0-ai-js/examples-langchain-federated-connections",
+  "name": "@auth0/auth0-ai-js-examples-calling-apis-langgraph",
+  "private": true,
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "private": true,
   "scripts": {
     "start": "npx @langchain/langgraph-cli up",
     "dev": "npx @langchain/langgraph-cli dev --port 54367",

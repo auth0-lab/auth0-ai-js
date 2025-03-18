@@ -1,5 +1,6 @@
 {
-  "name": "@auth0-ai-js/examples-step-up-langchain",
+  "name": "@auth0/auth0-ai-js-examples-async-user-confirmation-langchain",
+  "private": true,
   "version": "1.0.0",
   "description": "",
   "main": "index.js",

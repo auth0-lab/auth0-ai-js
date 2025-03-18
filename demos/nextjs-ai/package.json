@@ -1,7 +1,7 @@
 {
-  "name": "nextjs-ai",
-  "version": "0.1.0",
+  "name": "@auth0/auth0-ai-js-demos-nextjs-ai",
   "private": true,
+  "version": "0.1.0",
   "scripts": {
     "dev": "next dev --turbopack",
     "start": "next start"
