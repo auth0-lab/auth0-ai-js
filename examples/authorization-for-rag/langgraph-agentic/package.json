@@ -17,7 +17,7 @@
   "dependencies": {
     "@auth0/ai-langchain": "*",
     "@langchain/core": "^0.3.33",
-    "@langchain/langgraph": "^0.2.41",
+    "@langchain/langgraph": "^0.2.56",
     "@langchain/openai": "^0.3.17",
     "@openfga/sdk": "^0.8.0",
     "dotenv": "^16.4.7",
