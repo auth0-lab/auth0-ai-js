@@ -2,18 +2,18 @@
   "name": "auth0-ai-js",
   "private": true,
   "scripts": {
-    "build": "turbo run build",
-    "clean": "turbo run clean",
-    "test": "turbo run test",
-    "lint": "turbo run lint",
+    "build": "lage build",
+    "clean": "lage clean",
+    "test": "lage test",
+    "lint": "lage lint",
     "prepare": "node .husky/install.mjs"
   },
   "devDependencies": {
     "@commitlint/config-conventional": "^19.8.0",
     "commitlint": "^19.8.0",
     "husky": "^9.1.7",
-    "prettier": "^3.5.3",
-    "turbo": "^2.3.4"
+    "lage": "^2.13.0",
+    "prettier": "^3.5.3"
   },
   "packageManager": "npm@9.8.0",
   "workspaces": [
