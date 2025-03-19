@@ -54,7 +54,7 @@ async function main() {
       messages.push({ role: "user", content: prompt });
 
       const { response, text } = await generate(messages, {
-        userId: authResponse.claims?.sub || "",
+        userID: authResponse.claims?.sub || "",
       });
 
       // Update the messages with the response

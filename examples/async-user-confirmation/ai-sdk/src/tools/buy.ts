@@ -3,29 +3,51 @@ import "dotenv/config";
 import { tool } from "ai";
 import { z } from "zod";
 
-import { AccessDeniedError, CIBAAuthorizer } from "@auth0/ai";
+import { Auth0AI, getCIBACredentials } from "@auth0/ai-vercel";
+import { AccessDeniedInterrupt } from "@auth0/ai/interrupts";
 
 import { Context } from "../context";
 
-const ciba = CIBAAuthorizer.create();
+const auth0AI = new Auth0AI();
 
 export const buy = (context: Context) => {
-  const useCiba = ciba({
-    userId: context.userId,
+  const useCIBA = auth0AI.withCIBA({
+    userID: context.userID,
     bindingMessage: async ({ ticker, qty }) =>
       `Do you want to buy ${qty} shares of ${ticker}`,
-    scope: "openid buy:stocks",
+    scopes: ["openid", "buy:stocks"],
     audience: process.env["AUDIENCE"]!,
+
+    /**
+     * When this flag is set to `block`, the execution of the tool awaits
+     * until the user approves or rejects the request.
+     *
+     * Given the asynchronous nature of the CIBA flow, this mode
+     * is only useful during development.
+     *
+     * In practice, the process that is awaiting the user confirmation
+     * could crash or timeout before the user approves the request.
+     *
+     * For a more real world scenario refer to `demos/vercel-ai-agent`.
+     */
+    onAuthorizationRequest: "block",
+
+    onUnauthorized: async (e: Error) => {
+      if (e instanceof AccessDeniedInterrupt) {
+        return "The user has deny the request";
+      }
+      return e.message;
+    },
   });
 
-  return tool({
-    description: "Use this function to buy stock",
-    parameters: z.object({
-      ticker: z.string(),
-      qty: z.number(),
-    }),
-    execute: useCiba(
-      async ({ accessToken }, { ticker, qty }) => {
+  return useCIBA(
+    tool({
+      description: "Use this function to buy stock",
+      parameters: z.object({
+        ticker: z.string(),
+        qty: z.number(),
+      }),
+      execute: async ({ ticker, qty }) => {
         const headers = {
           "Content-Type": "application/json",
         };
@@ -33,6 +55,9 @@ export const buy = (context: Context) => {
           ticker: ticker,
           qty: qty,
         };
+
+        const credentials = getCIBACredentials();
+        const accessToken = credentials?.accessToken?.value;
 
         if (accessToken) {
           headers["Authorization"] = "Bearer " + accessToken;
@@ -46,15 +71,6 @@ export const buy = (context: Context) => {
 
         return response.statusText;
       },
-      // If `onError` is not provided, Auth0-AI will respond with a generic error message.
-      async (e: Error) => {
-        // Custom error handling.
-        if (e instanceof AccessDeniedError) {
-          return "The user has deny the request";
-        }
-
-        return e.message;
-      }
-    ),
-  });
+    })
+  );
 };

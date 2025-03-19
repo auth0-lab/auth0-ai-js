@@ -1,12 +1,15 @@
 import { AuthenticationClient } from "auth0";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { asyncLocalStorage, CIBAAuthorizerBase } from "../src/authorizers/ciba";
+import {
+  asyncLocalStorage,
+  CIBAAuthorizerBase,
+} from "../../src/authorizers/ciba";
 import {
   AccessDeniedInterrupt,
   AuthorizationPendingInterrupt,
   AuthorizationRequestExpiredInterrupt,
-} from "../src/interrupts";
+} from "../../src/interrupts";
 
 vi.mock("auth0");
 
@@ -15,7 +18,7 @@ describe("CIBAAuthorizerBase", () => {
   const mockParams = {
     userID: "user123",
     bindingMessage: "test-binding",
-    scope: "read:users",
+    scopes: ["read:users"],
     getAuthorizationResponse: vi.fn(),
     storeAuthorizationResponse: vi.fn(),
   };
@@ -77,7 +80,7 @@ describe("CIBAAuthorizerBase", () => {
    * AuthorizationPendingInterrupt error.
    */
   describe("first call", () => {
-    const authorizeResponse = {
+    const startResponse = {
       auth_req_id: "test-id",
       expires_in: 3600,
       interval: 5,
@@ -87,7 +90,7 @@ describe("CIBAAuthorizerBase", () => {
 
     beforeEach(async () => {
       mockParams.getAuthorizationResponse.mockResolvedValue(undefined);
-      mockAuth0.backchannel.authorize.mockResolvedValue(authorizeResponse);
+      mockAuth0.backchannel.authorize.mockResolvedValue(startResponse);
       mockAuth0.backchannel.backchannelGrant.mockImplementation(() => {
         throw { error: "authorization_pending" };
       });
@@ -105,10 +108,10 @@ describe("CIBAAuthorizerBase", () => {
     it("should store the authorization response", async () => {
       expect(mockParams.storeAuthorizationResponse).toHaveBeenCalledWith(
         {
-          authReqId: authorizeResponse.auth_req_id,
+          id: startResponse.auth_req_id,
           requestedAt: expect.any(Number),
-          expiresIn: authorizeResponse.expires_in,
-          interval: authorizeResponse.interval,
+          expiresIn: startResponse.expires_in,
+          interval: startResponse.interval,
         },
         "test-context"
       );
@@ -155,7 +158,7 @@ describe("CIBAAuthorizerBase", () => {
     it("should store the authorization response", async () => {
       expect(mockParams.storeAuthorizationResponse).toHaveBeenCalledWith(
         {
-          authReqId: authorizeResponse.auth_req_id,
+          id: authorizeResponse.auth_req_id,
           requestedAt: expect.any(Number),
           expiresIn: authorizeResponse.expires_in,
           interval: authorizeResponse.interval,

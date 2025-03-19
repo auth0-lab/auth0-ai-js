@@ -67,7 +67,13 @@ describe("interrupts", () => {
 
     beforeEach(() => {
       interrupt = new AuthorizationRequestExpiredInterrupt(
-        "The request has expired"
+        "The request has expired",
+        {
+          id: "123",
+          requestedAt: 123,
+          expiresIn: 123,
+          interval: 123,
+        }
       );
       serialized = interrupt.toJSON();
     });
@@ -78,6 +84,12 @@ describe("interrupts", () => {
           "code": "CIBA_AUTHORIZATION_REQUEST_EXPIRED",
           "message": "The request has expired",
           "name": "AUTH0_AI_INTERRUPT",
+          "request": {
+            "expiresIn": 123,
+            "id": "123",
+            "interval": 123,
+            "requestedAt": 123,
+          },
         }
       `);
     });

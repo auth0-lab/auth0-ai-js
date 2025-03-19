@@ -9,47 +9,17 @@ import {
   AuthorizationRequestExpiredInterrupt,
   UserDoesNotHavePushNotificationsInterrupt,
 } from "../../interrupts";
-import { AuthorizerToolParameter, resolveParameter } from "../../parameters";
+import { resolveParameter } from "../../parameters";
 import { asyncLocalStorage, AsyncStorageValue } from "./asyncLocalStorage";
+import { CIBAAuthorizationRequest } from "./CIBAAuthorizationRequest";
+import { CIBAAuthorizerParams } from "./CIBAAuthorizerParams";
 
 export { asyncLocalStorage, getCIBACredentials } from "./asyncLocalStorage";
 
-export type CIBAAuthorizerParams<ToolExecuteArgs extends any[]> = {
-  userID: AuthorizerToolParameter<ToolExecuteArgs>;
-  bindingMessage: AuthorizerToolParameter<ToolExecuteArgs>;
-  scope: string;
-  audience?: string;
-  requestExpiry?: number;
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-  /**
-   * Given a tool context returns the authorization request data.
-   */
-  getAuthorizationResponse: AuthorizerToolParameter<
-    ToolExecuteArgs,
-    AuthorizeResponse | undefined
-  >;
-
-  storeAuthorizationResponse: (
-    request: AuthorizeResponse,
-    ...args: ToolExecuteArgs
-  ) => Promise<void>;
-};
-
-export type AuthorizeResponse = {
-  authReqId: string;
-  requestedAt: number;
-  expiresIn: number;
-  interval: number;
-};
-
-function ensureOpenIdScope(scope: string): string {
-  const scopes = scope.trim().split(/\s+/);
-
-  if (!scopes.includes("openid")) {
-    scopes.unshift("openid");
-  }
-
-  return scopes.join(" ") || "openid";
+function ensureOpenIdScope(scopes: string[]): string[] {
+  return scopes.includes("openid") ? scopes : ["openid", ...scopes];
 }
 
 /**
@@ -79,10 +49,10 @@ export class CIBAAuthorizerBase<ToolExecuteArgs extends any[]> {
 
   private async start(
     toolContext: ToolExecuteArgs
-  ): Promise<AuthorizeResponse> {
+  ): Promise<CIBAAuthorizationRequest> {
     const requestedAt = Date.now() / 1000;
     const authorizeParams = {
-      scope: ensureOpenIdScope(this.params.scope),
+      scope: ensureOpenIdScope(this.params.scopes).join(" "),
       binding_message: "",
       userId: "",
       audience: this.params.audience || "",
@@ -102,27 +72,28 @@ export class CIBAAuthorizerBase<ToolExecuteArgs extends any[]> {
     const response = await this.auth0.backchannel.authorize(authorizeParams);
 
     return {
+      id: response.auth_req_id,
       requestedAt: requestedAt,
-      authReqId: response.auth_req_id,
       expiresIn: response.expires_in,
       interval: response.interval,
     };
   }
 
   protected async getCredentials(
-    params: AuthorizeResponse
+    authRequest: CIBAAuthorizationRequest
   ): Promise<Credentials | undefined> {
     try {
-      const elapsedSeconds = Date.now() / 1000 - params.requestedAt;
+      const elapsedSeconds = Date.now() / 1000 - authRequest.requestedAt;
 
-      if (elapsedSeconds >= params.expiresIn) {
+      if (elapsedSeconds >= authRequest.expiresIn) {
         throw new AuthorizationRequestExpiredInterrupt(
-          "Authorization request has expired"
+          "Authorization request has expired",
+          authRequest
         );
       }
 
       const response = await this.auth0.backchannel.backchannelGrant({
-        auth_req_id: params.authReqId,
+        auth_req_id: authRequest.id,
       });
 
       const credentials = {
@@ -130,6 +101,18 @@ export class CIBAAuthorizerBase<ToolExecuteArgs extends any[]> {
           type: response.token_type || "bearer",
           value: response.access_token,
         },
+        refreshToken: response.refresh_token
+          ? {
+              type: response.token_type || "bearer",
+              value: response.refresh_token,
+            }
+          : undefined,
+        idToken: response.id_token
+          ? {
+              type: response.token_type || "bearer",
+              value: response.id_token,
+            }
+          : undefined,
       };
 
       return credentials;
@@ -140,19 +123,48 @@ export class CIBAAuthorizerBase<ToolExecuteArgs extends any[]> {
         );
       }
       if (e.error == "access_denied") {
-        throw new AccessDeniedInterrupt(e.error_description);
+        throw new AccessDeniedInterrupt(e.error_description, authRequest);
       }
 
       if (e.error === "authorization_pending") {
-        throw new AuthorizationPendingInterrupt(e.error_description);
+        throw new AuthorizationPendingInterrupt(
+          e.error_description,
+          authRequest
+        );
       }
 
       if (e.error === "slow_down") {
-        throw new AuthorizationPollingInterrupt(e.error_description);
+        throw new AuthorizationPollingInterrupt(
+          e.error_description,
+          authRequest
+        );
       }
 
       throw e;
     }
+  }
+
+  protected async getCredentialsPolling(
+    authRequest: CIBAAuthorizationRequest
+  ): Promise<Credentials | undefined> {
+    let credentials: Credentials | undefined = undefined;
+
+    do {
+      try {
+        credentials = await this.getCredentials(authRequest);
+      } catch (err) {
+        if (
+          err instanceof AuthorizationPendingInterrupt ||
+          err instanceof AuthorizationPollingInterrupt
+        ) {
+          await sleep(err.request.interval * 1000);
+        } else {
+          throw err;
+        }
+      }
+    } while (!credentials);
+
+    return credentials;
   }
 
   /**
@@ -168,32 +180,52 @@ export class CIBAAuthorizerBase<ToolExecuteArgs extends any[]> {
     execute: (...args: ToolExecuteArgs) => any
   ): (...args: ToolExecuteArgs) => any {
     return async (...args: ToolExecuteArgs) => {
-      let authorizeResponse = await resolveParameter(
-        this.params.getAuthorizationResponse,
-        args
-      );
-
-      if (!authorizeResponse) {
-        //Initial request
-        authorizeResponse = await this.start(args);
-        await this.params.storeAuthorizationResponse(
-          authorizeResponse,
-          ...args
+      let authRequest: CIBAAuthorizationRequest | undefined;
+      if (asyncLocalStorage.getStore()) {
+        throw new Error(
+          "Cannot nest tool calls that require CIBA authorization."
         );
+      }
+      const interruptMode =
+        typeof this.params.onAuthorizationRequest === "undefined" ||
+        this.params.onAuthorizationRequest === "interrupt";
+      if (interruptMode) {
+        authRequest = await resolveParameter(
+          this.params.getAuthorizationResponse,
+          args
+        );
+
+        if (!authRequest) {
+          //Initial request
+          authRequest = await this.start(args);
+          await this.params.storeAuthorizationResponse(authRequest, ...args);
+        }
+      } else {
+        authRequest = await this.start(args);
       }
 
       const storeValue: AsyncStorageValue<any> = {
         context: getContext(...args),
       };
 
-      if (asyncLocalStorage.getStore()) {
-        throw new Error(
-          "Cannot nest tool calls that require CIBA authorization."
-        );
-      }
-
       return asyncLocalStorage.run(storeValue, async () => {
-        const credentials = await this.getCredentials(authorizeResponse);
+        let credentials: Credentials | undefined;
+        if (interruptMode) {
+          credentials = await this.getCredentials(authRequest);
+        } else {
+          try {
+            credentials = await this.getCredentialsPolling(authRequest);
+          } catch (err) {
+            if (
+              this.params.onAuthorizationRequest === "block" &&
+              typeof this.params.onUnauthorized === "function"
+            ) {
+              return this.params.onUnauthorized(err as Error, ...args);
+            } else {
+              return err;
+            }
+          }
+        }
         storeValue.credentials = credentials;
         return execute(...args);
       });

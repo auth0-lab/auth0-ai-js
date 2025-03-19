@@ -13,6 +13,7 @@ export type FGAClientParams = {
     };
   };
 };
+
 export function buildOpenFgaClient(
   fgaClientParams?: FGAClientParams | null
 ): OpenFgaClient {
