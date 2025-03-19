@@ -1,1 +1,1 @@
-export type Context = { userId: string };
+export type Context = { userID: string };
