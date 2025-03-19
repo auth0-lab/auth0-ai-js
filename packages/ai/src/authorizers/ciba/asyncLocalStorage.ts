@@ -1,5 +1,6 @@
 import { AsyncLocalStorage } from "async_hooks";
-import { Credentials } from "src/credentials";
+
+import { Credentials } from "../../credentials";
 
 export type AsyncStorageValue<TContext> = {
   credentials?: Credentials;
@@ -14,7 +15,7 @@ export const asyncLocalStorage = new AsyncLocalStorage<
   AsyncStorageValue<any>
 >();
 
-export const getCIBACredentials = (): Credentials | undefined => {
+export const getCIBACredentials = () => {
   const t = asyncLocalStorage.getStore();
   if (typeof t === "undefined") {
     throw new Error("The tool must be wrapped with the withCIBA function.");

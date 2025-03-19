@@ -9,6 +9,5 @@ export {
   UserDoesNotHavePushNotificationsInterrupt,
   AuthorizationRequestExpiredInterrupt,
   AuthorizationPendingInterrupt,
-  AuthorizationRequiredInterrupt,
   AuthorizationPollingInterrupt,
 } from "./CIBAInterrupts";
