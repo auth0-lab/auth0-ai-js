@@ -20,16 +20,18 @@ const useFGA = auth0AI.withFGA({
   },
 });
 
-export const buyTool = tool(
-  useFGA(async ({ ticker, qty }) => {
-    return `Purchased ${qty} shares of ${ticker}`;
-  }),
-  {
-    name: "buy",
-    description: "Use this function to buy stock",
-    schema: z.object({
-      ticker: z.string(),
-      qty: z.number(),
-    }),
-  }
+export const buyTool = useFGA(
+  tool(
+    async ({ ticker, qty }) => {
+      return `Purchased ${qty} shares of ${ticker}`;
+    },
+    {
+      name: "buy",
+      description: "Use this function to buy stock",
+      schema: z.object({
+        ticker: z.string(),
+        qty: z.number(),
+      }),
+    }
+  )
 );

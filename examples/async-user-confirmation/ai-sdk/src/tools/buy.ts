@@ -15,7 +15,7 @@ export const buy = (context: Context) => {
     userID: context.userID,
     bindingMessage: async ({ ticker, qty }) =>
       `Do you want to buy ${qty} shares of ${ticker}`,
-    scopes: ["openid", "buy:stocks"],
+    scopes: ["openid", "stock:trade"],
     audience: process.env["AUDIENCE"]!,
 
     /**

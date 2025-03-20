@@ -1,5 +1,6 @@
 import "dotenv/config";
 
+import { tool } from "ai";
 import { z } from "zod";
 
 import { Auth0AI } from "@auth0/ai-vercel";
@@ -23,14 +24,16 @@ export const buy = (context: Context) => {
     },
   });
 
-  return useFGA({
-    description: "Use this function to buy stock",
-    parameters: z.object({
-      ticker: z.string(),
-      qty: z.number(),
-    }),
-    execute: async ({ ticker, qty }) => {
-      return `Purchased ${qty} shares of ${ticker}`;
-    },
-  });
+  return useFGA(
+    tool({
+      description: "Use this function to buy stock",
+      parameters: z.object({
+        ticker: z.string(),
+        qty: z.number(),
+      }),
+      execute: async ({ ticker, qty }) => {
+        return `Purchased ${qty} shares of ${ticker}`;
+      },
+    })
+  );
 };

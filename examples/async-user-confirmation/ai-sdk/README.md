@@ -4,9 +4,25 @@
 
 ### Prerequisites
 
-- An OpenAI account and API key create one [here](https://platform.openai.com).
+- An OpenAI account and API key. You can create one [here](https://platform.openai.com).
+  - [Use this page for instructions on how to find your OpenAI API key](https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key)
+- An **[Auth0](https://auth0.com)** account and the following settings and resources configured:
+  - An application for Device flow with the following settings:
+    - **Application Type**: `Native`
+    - **Grant Type**: `Device Code` (or `urn:ietf:params:oauth:grant-type:device_code`)
+  - An additional application for CIBA with the following settings:
+    - **Application Type**: `Web Application`
+    - **Grant Type**: `CIBA` (or `urn:openid:params:grant-type:ciba`)
+  - An API with the following settings:
+    - **Name**: `Sample API`
+    - **Identifier**: `sample-api`
+    - **Permissions**: `stock:trade`
+  - **Push Notifications** using [Auth0 Guardian](https://auth0.com/docs/secure/multi-factor-authentication/auth0-guardian) must be `enabled`
+  - A test user enrolled in Guardian MFA.
 
-#### `.env` file
+### Setup the workspace `.env` file
+
+Copy the `.env.example` file to `.env` and fill in the values for the following variables, using the settings obtained from the prerequisites:
 
 ```sh
 # Auth0
@@ -20,7 +36,7 @@ AUTH0_PUBLIC_CLIENT_SECRET="<auth0-public-client-secret>"
 
 # API
 API_URL=http://localhost:8081/
-AUDIENCE=http://localhost:8081
+AUDIENCE=sample-api
 
 # OpenAI
 OPENAI_API_KEY="openai-api-key"
@@ -43,6 +59,8 @@ OPENAI_API_KEY="openai-api-key"
     ```sh
     npm start
     ```
+
+4. Try to buy some `zeko` stocks!
 
 ## License
 
