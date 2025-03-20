@@ -25,7 +25,7 @@ export const buyTool = (context: Context) => {
   });
 
   return FunctionTool.from(
-    useFGA(async ({ ticker, qty }) => {
+    useFGA(async ({ ticker, qty }: { ticker: string; qty: number }) => {
       return `Purchased ${qty} shares of ${ticker}`;
     }),
     {
