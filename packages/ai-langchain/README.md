@@ -27,7 +27,9 @@ $ npm install @auth0/ai-langchain
 
 ## Authorization for Tools
 
-Example [Authorization for tools](../../examples/authorization-for-tools/langchain/).
+The `Auth0AI` can leverage OpenFGA to authorize tools executions. The `withFGA` method can be used to create an authorizer that checks permissions before executing the tool.
+
+Full example [Authorization for tools](../../examples/authorization-for-tools/langchain/).
 
 1. Create an instance of Auth0 AI:
 
@@ -109,7 +111,197 @@ export const buyTool = tool(
 );
 ```
 
+## Calling APIs
+
+The Federated Connection Authorizer of Auth0AI exchanes an token from the graph context for a Federated Connection Token using Auth0's Tokens For APIs feature.
+
+1. Define a tool with the proper authorizer:
+
+```js
+import { Auth0AI, getAccessTokenForConnection } from '@auth0/ai-langchain';
+const auth0AI = new Auth0AI();
+
+const withGoogleAccess = auth0AI.withFederatedConnection({
+  connection: "google-oauth2",
+  scopes: ["https://www.googleapis.com/auth/calendar.freebusy"],
+});
+
+export const checkCalendarTool = withGoogleAccess(
+  tool(
+    async ({ date }) => {
+      const accessToken = getAccessTokenForConnection();
+      const response = await fetch("https://www.googleapis.com/calendar/v3/freeBusy", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        JSON.stringify({
+          timeMin: date,
+          timeMax: addHours(date, 1),
+          timeZone: "UTC",
+          items: [{ id: "primary" }],
+        }),
+      });
+      const busyResp = await response.json();
+      return { available: busyResp.calendars.primary.busy.length === 0 };
+    },
+    {
+      name: "check_user_calendar",
+      description:
+        "Use this function to check if the user is available on a certain date and time",
+      schema: z.object({
+        date: z.coerce.date(),
+      }),
+    }
+  )
+);
+```
+
+2. Add a node to your graph for your tools:
+
+```js
+  .addNode(
+    "tools",
+    new ToolNode(
+      [
+        // A tool with federated connection access
+        checkCalendarTool,
+        //other tools
+      ],
+      {
+        // Error handler should be disabled in order to
+        // trigger interruptions from within tools.
+        handleToolErrors: false,
+      }
+    )
+  )
+```
+
+3. Handle interruptions properly. If the user does not have access to Google Calendar, the tool will throw an interruption.
+
+If you are using langgraph-sdk for react with `useStream` you could handle the `FederatedConnectionInterrupt` like this:
+
+```js
+{thread.interrupt &&
+FederatedConnectionInterrupt.isInterrupt(thread.interrupt.value) ? (
+  <div
+    key={thread.interrupt.ns?.join("")}
+    className="whitespace-pre-wrap"
+  >
+    <EnsureAPIAccessPopup
+      key={thread.interrupt.ns?.join("")}
+      onFinish={() => thread.submit(null)}
+      connection={thread.interrupt.value.connection}
+      scopes={thread.interrupt.value.requiredScopes}
+      connectWidget={{
+        icon: (
+          <div className="bg-gray-200 p-3 rounded-lg flex-wrap">
+            <GoogleCalendarIcon />
+          </div>
+        ),
+        title: "Free/Busy Access Required",
+        description:
+          "Connect your google calendar...",
+        action: { label: "Check" },
+      }}
+    />
+  </div>
+) : null}
+```
+
+
+## Async User Confirmation
+
+Auth0AI uses CIBA (Client Initiated Backchannel Authentication) to handle user confirmation asynchronously. This is useful when you need to confirm a user action before proceeding with a tool execution.
+
+1. Create a protected tool:
+
+```js
+import { Auth0AI, getCIBACredentials } from '@auth0/ai-langchain';
+const auth0AI = new Auth0AI();
+
+const protectTool = auth0AI.withCIBA({
+  audience: process.env["AUDIENCE"],
+  store: langchainStore,
+  scopes: ["stock:trade"],
+  bindingMessage: async (_) => {
+    return `Do you want to buy ${_.qty} ${_.ticker}`;
+  },
+  userID: (_params, config) => {
+    return config.configurable?.user_id;
+  }
+});
+
+export const buyTool = protectTool(
+  tool(
+    async ({ ticker, qty }) => {
+      const credentials = getCIBACredentials();
+      const accessToken = credentials?.accessToken?.value;
+      fetch("http://yourapi.com/buy", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ ticker, qty }),
+      });
+      return `Purchased ${qty} shares of ${ticker}`;
+    },
+    {
+      name: "buy",
+      description: "Use this function to buy stock",
+      schema: z.object({
+        ticker: z.string(),
+        qty: z.number(),
+      },
+    }
+  )
+);
+```
+
+2. Register your tool node:
+
+```js
+  .addNode(
+    "tools",
+    new ToolNode(
+      [
+        buyTool,
+      ],
+      {
+        // Error handler should be disabled in order to
+        // trigger interruptions from within tools.
+        handleToolErrors: false,
+      }
+    )
+  )
+```
+
+
+3. Run a `GraphResumer` instance to continue Graphs that have been interrupted with CIBA:
+
+```js
+import { GraphResumer } from "@auth0/ai-langchain";
+
+const resumer = new GraphResumer({
+  langGraph: new Client({
+    apiUrl: process.env.LANGGRAPH_API_URL || "http://localhost:54367",
+  }),
+}).on("resume", async (thread) => {
+    console.log(
+      `attempting to resume ${thread.id} interrupted with ${thread.interruptionID}`
+    );
+  })
+  .on("error", (err: Error) => {
+    console.error(`Error in GraphResumer: ${err.message}`);
+  })
+  .start();
+```
+
 ## RAG with FGA
+
+Auth0AI can leverage OpenFGA to authorize RAG applications. The `FGARetriever` can be used to filter documents based on access control checks defined in Okta FGA. This retriever performs batch checks on retrieved documents, returning only the ones that pass the specified access criteria.
 
 Example [RAG Application](../../examples/authorization-for-rag/langchain/).
 
