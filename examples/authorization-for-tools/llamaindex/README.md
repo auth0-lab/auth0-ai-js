@@ -4,9 +4,10 @@
 
 ### Prerequisites
 
+- An OpenAI account and API key. You can create one [here](https://platform.openai.com).
+  - [Use this page for instructions on how to find your OpenAI API key](https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key)
 - An Okta FGA account, you can create one [here](https://dashboard.fga.dev).
   - Set up a new store and execute `npm run fga:init` to initialize it with the necessary model and tuples.
-- An OpenAI account and API key create one [here](https://platform.openai.com).
 
 #### `.env` file
 
@@ -23,18 +24,22 @@ FGA_CLIENT_SECRET="<fga-client-secret>"
 ### How to run it
 
 1. Install dependencies. If you want to run with local dependencies follow root instructions.
-
    ```sh
    npm install
    ```
 
-2. Running the example
+2. Initialize the FGA store's model
+   ```sh
+   npm run fga:init
+   ```
 
+3. Running the example
    ```sh
    npm start
    ```
 
-3. Type `buy 10 shares of ATKO`
+4. Try to buy `ATKO` or `ZEKO` stocks!
+
 
 ## License
 

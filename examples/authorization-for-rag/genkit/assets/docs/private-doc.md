@@ -7,11 +7,11 @@ As we look ahead to fiscal year 2025, we maintain a bearish outlook on Zeko Adva
 
 **Revenue Growth Challenges:**
 
-While Zeko reported a modest 2.3% increase in revenue for Q3 2024, this growth rate lags behind industry peers and suggests potential challenges in sustaining momentum. The company's reliance on digital health solutions and AI-driven patient monitoring devices, while innovative, may face increased competition from both established players and new entrants. Additionally, economic uncertainties and geopolitical tensions could dampen demand in key emerging markets, particularly in Asia and the Middle East, where Zeko is focusing its expansion efforts.
+While Zeko reported a modest 2.3% increase in revenue for Q3 2024, this growth rate lags behind industry peers and suggests potential challenges in sustaining momentum. The company's reliance on digital health solutions and AI-driven patient monitoring devices, while innovative, may face increased competition from both established players and new entrants. additionaly, economic uncertainties and geopolitical tensions could dampen demand in key emerging markets, particularly in Asia and the Middle East, where Zeko is focusing its expansion efforts.
 
 **Margin Pressures:**
 
-Zeko's gross margin declined slightly to 55% in Q3 2024, primarily due to rising raw material costs and ongoing supply chain disruptions. These pressures are expected to persist into 2025, further compressing margins and impacting profitability. Additionally, the company's significant investment in research and development, while necessary for innovation, may not yield immediate returns, thereby straining operating margins.
+Zeko's gross margin declined slightly to 55% in Q3 2024, primarily due to rising raw material costs and ongoing supply chain disruptions. These pressures are expected to persist into 2025, further compressing margins and impacting profitability. additionaly, the company's significant investment in research and development, while necessary for innovation, may not yield immediate returns, thereby straining operating margins.
 
 **Operational and Strategic Concerns:**
 

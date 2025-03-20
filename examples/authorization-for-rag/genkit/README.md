@@ -1,14 +1,17 @@
-## Retrievers with FGA
+## Genkit Retrievers + Okta FGA
 
 ## Getting Started
 
 ### Prerequisites
 
+- An OpenAI account and API key. You can create one [here](https://platform.openai.com).
+  - [Use this page for instructions on how to find your OpenAI API key](https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key)
 - An Okta FGA account, you can create one [here](https://dashboard.fga.dev).
-  - Set up a new store and execute `npm run fga:init` to initialize it with the necessary model and tuples.
-- An OpenAI account and API key create one [here](https://platform.openai.com).
+  - Set up a new Authorized Client from the `Settings` page and then follow the steps to setup the workspace below.
 
-#### `.env` file
+### Setup the workspace `.env` file
+
+Copy the `.env.example` file to `.env` and fill in the values for the following variables, using the settings obtained from the prerequisites:
 
 ```sh
 # OpenAI
@@ -30,14 +33,19 @@ FGA_API_AUDIENCE=https://api.xxx.fga.dev/
    ```sh
    npm install
    ```
+2. Initialize the FGA store's model
 
-2. Generate the embeddings
+   ```sh
+   npm run fga:init
+   ```
+
+3. Generate the embeddings
 
    ```sh
    npm run generate
    ```
 
-3. Running the example
+4. Running the example
    ```sh
    npm start
    ```

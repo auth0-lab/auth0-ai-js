@@ -14,7 +14,7 @@ export function buyTool(ai: Genkit) {
     },
     bindingMessage: async ({ ticker, qty }) =>
       `Do you want to buy ${qty} shares of ${ticker}`,
-    scope: "openid buy:stocks",
+    scope: "openid stock:trade",
     audience: process.env["AUDIENCE"]!,
   });
 
