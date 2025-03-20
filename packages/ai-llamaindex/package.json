@@ -7,7 +7,7 @@
   "module": "./dist/esm/index.js",
   "scripts": {
     "build": "npm run clean && npm run build:esm && npm run build:cjs",
-    "build:watch": "tsc --watch",
+    "build:watch": "run-p 'build:esm -- --watch' 'build:cjs -- -watch'",
     "build:esm": "tsc --outDir ./dist/esm",
     "build:cjs": "tsc --module nodenext --moduleResolution nodenext --declaration false --declarationMap false --outDir ./dist/cjs",
     "clean": "rm -rf dist",
