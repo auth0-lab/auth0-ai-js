@@ -1,14 +1,10 @@
-import z from "zod";
-
 import { FGAAuthorizerBase } from "@auth0/ai/FGA";
-import { RunnableFunc } from "@langchain/core/runnables";
-import { ToolRunnableConfig } from "@langchain/core/tools";
+import { DynamicStructuredTool } from "@langchain/core/tools";
 
 import { FGAAuthorizer } from "./FGA";
-import { ZodObjectAny } from "./FGA/FGAAuthorizer";
+import { ToolWrapper } from "./util/ToolWrapper";
 
 type FGAAuthorizerParams = ConstructorParameters<typeof FGAAuthorizerBase>[0];
-type ToolWrapper = ReturnType<FGAAuthorizer["authorizer"]>;
 type FGAParams = ConstructorParameters<typeof FGAAuthorizer>[1];
 
 /**
@@ -40,17 +36,38 @@ type FGAParams = ConstructorParameters<typeof FGAAuthorizer>[1];
 export class FGA_AI {
   constructor(private fgaParams?: FGAAuthorizerParams) {}
 
+  /**
+   *
+   * Returns a tool authorizer that protects the tool execution
+   * with the Fine Grained Authorization (FGA) authorization control.
+   *
+   * @param params - The parameters for the FGA authorization control.
+   * @returns A tool authorizer.
+   */
   withFGA(params: FGAParams): ToolWrapper;
 
-  withFGA<T extends ZodObjectAny>(
+  /**
+   *
+   * Protects a tool with Fine Grained Authorization (FGA) authorization control.
+   *
+   * @param params - The parameters for the FGA authorization control.
+   * @param tool - The tool to protect.
+   * @returns The protected tool.
+   */
+  withFGA(
     params: FGAParams,
-    tool: RunnableFunc<z.output<T>, any, ToolRunnableConfig>
-  ): RunnableFunc<z.output<T>, any, ToolRunnableConfig>;
+    tool: DynamicStructuredTool
+  ): DynamicStructuredTool;
 
-  withFGA<T extends ZodObjectAny>(
-    params: FGAParams,
-    tool?: RunnableFunc<z.output<T>, any, ToolRunnableConfig>
-  ) {
+  /**
+   *
+   * Builds an FGA authorizer for a tool.
+   * if a tool is provided, the authorizer is applied to the tool.
+   * @param params - The parameters for the FGA authorization control.
+   * @param tool - The tool to protect.
+   * @returns
+   */
+  withFGA(params: FGAParams, tool?: DynamicStructuredTool) {
     const fc = new FGAAuthorizer(this.fgaParams, params);
     const authorizer = fc.authorizer();
     if (tool) {

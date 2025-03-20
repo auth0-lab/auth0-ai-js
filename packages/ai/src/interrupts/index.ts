@@ -1,8 +1,10 @@
 export { Auth0Interrupt } from "./Auth0Interrupt";
+
 export {
   FederatedConnectionInterrupt,
   FederatedConnectionError,
 } from "./FederatedConnectionInterrupt";
+
 export {
   CIBAInterrupt,
   AccessDeniedInterrupt,
@@ -10,4 +12,5 @@ export {
   AuthorizationRequestExpiredInterrupt,
   AuthorizationPendingInterrupt,
   AuthorizationPollingInterrupt,
+  InvalidGrantInterrupt,
 } from "./CIBAInterrupts";

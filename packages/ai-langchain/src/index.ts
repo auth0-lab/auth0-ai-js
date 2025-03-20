@@ -1,49 +1,24 @@
 export * from "./FGA/fga-retriever";
 
-export { CibaPollerGraph } from "./ciba/ciba-poller-graph";
-export type { SchedulerParams } from "./ciba/ciba-graph/types";
+import { AuthorizerParams } from "@auth0/ai";
+import { DynamicStructuredTool } from "@langchain/core/tools";
 
-import { AuthorizerParams, Credentials } from "@auth0/ai";
-import { Annotation, LangGraphRunnableConfig } from "@langchain/langgraph";
-
-import { CIBAGraph } from "./ciba/ciba-graph";
-import { CIBAGraphOptions } from "./ciba/ciba-graph/types";
+import { CIBAAuthorizer } from "./ciba";
 import { FederatedConnectionAuthorizer } from "./FederatedConnections";
 import { FGA_AI } from "./FGA_AI";
+import { ToolWrapper } from "./util/ToolWrapper";
 
 type FederatedConnectionAuthorizerParams = ConstructorParameters<
   typeof FederatedConnectionAuthorizer
 >[1];
 
-type Auth0StateType = {
-  error: string;
-};
+type CIBAParams = ConstructorParameters<typeof CIBAAuthorizer>[1];
 
+export { getCIBACredentials } from "./ciba";
 export { getAccessTokenForConnection } from "./FederatedConnections";
-
-export const Auth0State = Annotation.Root({
-  auth0: Annotation<Auth0StateType>(),
-  taskId: Annotation<string>(),
-});
-
-export function getAccessToken(config: LangGraphRunnableConfig) {
-  let accessToken: string | null = null;
-
-  try {
-    const credentials: Credentials | null = config.configurable?._credentials;
-
-    if (credentials) {
-      accessToken = credentials.accessToken.value;
-    }
-  } catch (e) {
-    console.error(e);
-  }
-
-  return accessToken;
-}
+export { GraphResumer } from "./ciba/GraphResumer";
 
 export class Auth0AI {
-  private _graph: CIBAGraph | undefined;
   private config: AuthorizerParams | undefined;
 
   constructor(config?: AuthorizerParams) {
@@ -65,17 +40,62 @@ export class Auth0AI {
   }
 
   /**
+   * Builds a CIBA Authorizer for a tool.
+   * @param params - The CIBA authorizer options.
+   * @returns - The authorizer.
+   */
+  withCIBA(params: CIBAParams): ToolWrapper;
+
+  /**
+   * Protects a tool with the CIBA authorizer.
+   * @param params - The CIBA authorizer options.
+   * @param tool - The tool to protect.
+   * @returns The protected tool.
+   */
+  withCIBA(
+    params: CIBAParams,
+    tool: DynamicStructuredTool
+  ): DynamicStructuredTool;
+
+  /**
    *
-   * Protects a tool execution with the CIBA authorizer.
+   * Builds a CIBA Authorizer for a tool.
+   * If a tool is provided, it will be protected with the CIBA authorizer.
+   * Otherwise the authorizer will be returned.
    *
    * @param options - The CIBA authorizer options.
+   * @param [tool] - The tool to protect.
+   * @returns The authorizer or the protected tool.
+   */
+  withCIBA(options: CIBAParams, tool?: DynamicStructuredTool) {
+    const authorizer = new CIBAAuthorizer(this.config ?? {}, options);
+    if (tool) {
+      return authorizer.authorizer()(tool);
+    }
+    return authorizer.authorizer();
+  }
+
+  /**
+   * Builds a Federated Connection authorizer for a tool.
+   *
+   * @param params - The Federated Connections authorizer options.
    * @returns The authorizer.
    */
-  withCIBA(options?: CIBAGraphOptions) {
-    this._graph = new CIBAGraph(options, this.config);
+  withFederatedConnection(
+    params: FederatedConnectionAuthorizerParams
+  ): ToolWrapper;
 
-    return this._graph;
-  }
+  /**
+   * Protects a tool execution with the Federated Connection authorizer.
+   *
+   * @param params - The Federated Connections authorizer options.
+   * @param tool - The tool to protect.
+   * @returns The protected tool.
+   */
+  withFederatedConnection(
+    params: FederatedConnectionAuthorizerParams,
+    tool: DynamicStructuredTool
+  ): DynamicStructuredTool;
 
   /**
    * Protects a tool execution with the Federated Connection authorizer.
@@ -83,7 +103,10 @@ export class Auth0AI {
    * @param options - The Federated Connections authorizer options.
    * @returns The authorizer.
    */
-  withFederatedConnection(options: FederatedConnectionAuthorizerParams) {
+  withFederatedConnection(
+    options: FederatedConnectionAuthorizerParams,
+    tool?: DynamicStructuredTool
+  ) {
     const authorizer = new FederatedConnectionAuthorizer(
       //TODO: makes types compatible...
       this.config as ConstructorParameters<
@@ -91,6 +114,9 @@ export class Auth0AI {
       >[0],
       options
     );
+    if (tool) {
+      return authorizer.authorizer()(tool);
+    }
     return authorizer.authorizer();
   }
 

@@ -52,7 +52,7 @@ describe("CIBAAuthorizerBase Block Mode", () => {
     const startResponse = {
       auth_req_id: "test-id",
       expires_in: 3600,
-      interval: 1,
+      interval: 0.0001,
     };
     const execute = vi.fn();
     let err: Error;
@@ -103,7 +103,7 @@ describe("CIBAAuthorizerBase Block Mode", () => {
     const startResponse = {
       auth_req_id: "test-id",
       expires_in: 3600,
-      interval: 1,
+      interval: 0.0001,
     };
     const execute = vi.fn();
     let err: Error;
@@ -161,8 +161,8 @@ describe("CIBAAuthorizerBase Block Mode", () => {
   describe("when the request is rejected", () => {
     const startResponse = {
       auth_req_id: "test-id",
-      expires_in: 1,
-      interval: 2,
+      expires_in: 0.0001,
+      interval: 0.0002,
     };
     const execute = vi.fn();
     let err: Error;

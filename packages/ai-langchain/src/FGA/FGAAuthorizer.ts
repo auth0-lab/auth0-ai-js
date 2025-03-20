@@ -1,10 +1,11 @@
-import z from "zod";
-
 import { FGAAuthorizerBase } from "@auth0/ai/FGA";
-import { RunnableFunc } from "@langchain/core/runnables";
-import { ToolRunnableConfig } from "@langchain/core/tools";
+import {
+  DynamicStructuredTool,
+  tool,
+  ToolRunnableConfig,
+} from "@langchain/core/tools";
 
-export type ZodObjectAny = z.ZodObject<any, any, any, any>;
+import { ToolWrapper, ZodObjectAny } from "../util/ToolWrapper";
 
 /**
  * The FGAAuthorizer class implements the FGA authorization control for a LangChain AI tool.
@@ -22,11 +23,15 @@ export class FGAAuthorizer extends FGAAuthorizerBase<
    *
    * @returns A tool authorizer.
    */
-  authorizer() {
-    return <T extends Record<string, any>>(
-      t: RunnableFunc<T, any, ToolRunnableConfig>
-    ): RunnableFunc<T, any, ToolRunnableConfig> => {
-      return this.protect(t) as RunnableFunc<T, any, ToolRunnableConfig>;
+  authorizer(): ToolWrapper {
+    return <T extends ZodObjectAny = ZodObjectAny>(
+      t: DynamicStructuredTool<T>
+    ) => {
+      return tool(this.protect(t.invoke.bind(t)), {
+        name: t.name,
+        description: t.description,
+        schema: t.schema,
+      }) as unknown as DynamicStructuredTool<T>;
     };
   }
 }

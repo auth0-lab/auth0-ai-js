@@ -87,6 +87,7 @@ describe("CIBAAuthorizer", () => {
 
   describe("on authorization request expired error", () => {
     let error: CIBAInterrupt;
+    let result: any;
     beforeEach(async () => {
       authorizerParameters.getAuthorizationResponse.mockResolvedValue({
         status: "pending",
@@ -97,11 +98,19 @@ describe("CIBAAuthorizer", () => {
         //@ts-ignore
         "getCredentials"
       ).mockImplementation(() => {
-        throw new AuthorizationRequestExpiredInterrupt("Authorization pending");
+        throw new AuthorizationRequestExpiredInterrupt(
+          "Authorization request expired",
+          {
+            interval: 10,
+            id: "123",
+            requestedAt: Date.now(),
+            expiresIn: 10,
+          }
+        );
       });
 
       try {
-        await protectedTool!.execute!(
+        result = await protectedTool!.execute!(
           { userID: "user1", input: "input" },
           {} as ToolExecutionOptions
         );
@@ -110,8 +119,20 @@ describe("CIBAAuthorizer", () => {
       }
     });
 
-    it("should throw a CIBA interrupt", () => {
-      expect(error).toBeInstanceOf(CIBAInterrupt);
+    it("should not throw an interrupt", () => {
+      expect(error).toBeUndefined();
+    });
+
+    it("should return the result", () => {
+      expect(result.name).toBe("AUTH0_AI_INTERRUPT");
+      expect(result.code).toBe("CIBA_AUTHORIZATION_REQUEST_EXPIRED");
+      expect(result.message).toBe("Authorization request expired");
+      expect(result.request).toMatchObject({
+        interval: 10,
+        id: "123",
+        requestedAt: expect.any(Number),
+        expiresIn: 10,
+      });
     });
 
     it("should not call the tool execute method", () => {
