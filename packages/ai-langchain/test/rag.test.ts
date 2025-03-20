@@ -5,7 +5,7 @@ import { Document } from "@langchain/core/documents";
 import { BaseRetriever } from "@langchain/core/retrievers";
 import { ConsistencyPreference, CredentialsMethod } from "@openfga/sdk";
 
-import { FGARetriever } from "../src/FGA/fga-retriever";
+import { FGARetriever } from "../src/RAG";
 
 describe("FGARetriever", () => {
   process.env.FGA_CLIENT_ID = "client-id";

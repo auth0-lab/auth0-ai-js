@@ -1,5 +1,3 @@
-export * from "./FGA/fga-retriever";
-
 import { AuthorizerParams } from "@auth0/ai";
 import { DynamicStructuredTool } from "@langchain/core/tools";
 
