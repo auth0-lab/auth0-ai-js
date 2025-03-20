@@ -17,7 +17,6 @@ const model = new ChatOpenAI({
 
 const callLLM = async (state: typeof MessagesAnnotation.State) => {
   const response = await model.invoke(state.messages);
-
   return { messages: [response] };
 };
 
@@ -34,7 +33,7 @@ function shouldContinue(state) {
 
 const stateGraph = new StateGraph(MessagesAnnotation.spec)
   .addNode("callLLM", callLLM)
-  .addNode("tools", new ToolNode([tradeTool, conditionalTrade]))
+  .addNode("tools", new ToolNode([conditionalTrade]))
   .addEdge(START, "callLLM")
   .addEdge("tools", "callLLM")
   .addConditionalEdges("callLLM", shouldContinue);

@@ -5,6 +5,17 @@
 ### Prerequisites
 
 - An OpenAI account and API key create one [here](https://platform.openai.com).
+- An Auth0 account configured for CIBA.
+
+
+### Process
+
+`npm run dev` run several process in parallel. Here is an explanation of each one:
+
+- **LangGraph**: The LangGraph server that will be run the graphs.
+- **Scheduler**: This is a demo scheduler that works similar to [LangGraph Cron Jobs](https://langchain-ai.github.io/langgraph/cloud/how-tos/cron_jobs/).
+- **API**: An API that is used in the demo.
+- **GraphResumer**: A service that try to resume CIBA-interrupted graphs in the LangGraph server.
 
 #### `.env` file
 
@@ -23,6 +34,9 @@ OPENAI_API_KEY="openai-api-key"
 
 # Langchain
 LANGGRAPH_API_URL="http://localhost:54367"
+
+# Alternatively set a test user
+TEST_USER_ID=...
 ```
 
 ### How to run it
@@ -33,19 +47,8 @@ LANGGRAPH_API_URL="http://localhost:54367"
    npm install
    ```
 
-2. Running the API
+2. Run all components at once
 
-   ```sh
-   npm run start:api
-   ```
-
-3. Running the scheduler
-
-   ```sh
-   npm run scheduler:up
-   ```
-
-4. Running the example
    ```sh
    npm run dev
    ```
@@ -67,14 +70,14 @@ sequenceDiagram
     Agent->>User: "I've started a conditional trade"
     loop Every 10 mins
         Conditional Trade Agent->>Stocks API: Check P/E ratio
-        Stocks API-->>Conditional Trade Agent: 
+        Stocks API-->>Conditional Trade Agent:
         alt P/E > 15
             Conditional Trade Agent->>Auth0: Initiate CIBA request
             Auth0->>User's Phone: Send push notification
             Conditional Trade Agent->>+CIBA Agent: Monitor user response
             loop Every minute
                 CIBA Agent->>Auth0: Check user approval status
-                Auth0-->>CIBA Agent: 
+                Auth0-->>CIBA Agent:
                 alt User approves
                     User's Phone-->>Auth0: User approves
                     Auth0-->>CIBA Agent: User approves
@@ -84,7 +87,7 @@ sequenceDiagram
         end
     end
     Conditional Trade Agent->>Stocks API: Execute trade for 10 NVDA
-    Stocks API-->>Conditional Trade Agent: 
+    Stocks API-->>Conditional Trade Agent:
     Conditional Trade Agent->>User's Phone: Inform user
 ```
 

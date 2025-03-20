@@ -2,24 +2,12 @@ import bodyParser from "body-parser";
 import express from "express";
 import cron from "node-cron";
 
-import { GraphResumer } from "@auth0/ai-langchain";
-import { Client } from "@langchain/langgraph-sdk";
-
 import { ScheduledRun } from "./ScheduledRunType";
 import { addTask, init, stopTask } from "./tasks";
 
 async function main() {
   const app = express();
   const port = 5555;
-
-  const resumer = new GraphResumer(
-    new Client({
-      apiUrl: process.env.LANGGRAPH_API_URL || "http://localhost:54367",
-    })
-  );
-
-  resumer.start();
-  console.log("Started CIBA Graph Resumer");
 
   await init();
 

@@ -1,9 +1,10 @@
+import { EventEmitter } from "node:stream";
+
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { CIBAAuthorizationRequest } from "@auth0/ai/CIBA";
 import { CIBAInterrupt } from "@auth0/ai/interrupts";
 
 import type { Client, Thread } from "@langchain/langgraph-sdk";
-
 type WatchedThread = {
   // The thread ID to watch.
   id: string;
@@ -21,23 +22,40 @@ type WatchedThread = {
   lastRun?: number;
 };
 
-export class GraphResumer {
+type GraphResumerFilters = {
+  graphID?: string;
+};
+
+type GraphResumerOptions = {
+  langGraph: Client;
+  filters?: GraphResumerFilters;
+};
+
+interface Events {
+  resume: [thread: WatchedThread];
+  error: [error: Error];
+}
+
+export class GraphResumer extends EventEmitter<Events> {
   private map: Map<string, WatchedThread> = new Map();
   private interval: NodeJS.Timeout | undefined = undefined;
-  private langGraph: Client;
+  private params: GraphResumerOptions;
 
-  constructor(langGraph: Client) {
-    this.langGraph = langGraph;
+  constructor(params: GraphResumerOptions) {
+    super();
+    this.params = params;
   }
 
   private async getAllInterruptedThreads() {
+    const { langGraph, filters } = this.params;
     const interruptedThreads: Thread[] = [];
     let offset = 0;
     while (true) {
-      const page = await this.langGraph.threads.search({
+      const page = await langGraph.threads.search({
         status: "interrupted",
         limit: 100,
         offset,
+        metadata: filters?.graphID ? { graph_id: filters.graphID } : {},
       });
       if (page.length === 0) break;
       const cibaInterrupted = page.filter((t) => {
@@ -50,6 +68,7 @@ export class GraphResumer {
       });
       interruptedThreads.push(...cibaInterrupted);
       offset += page.length;
+      if (page.length < 100) break;
     }
     return interruptedThreads;
   }
@@ -114,8 +133,8 @@ export class GraphResumer {
         //Note: It doesn't make sense to poll AUTH0
         // here because we need the graph to fail if the
         // user has rejected the request.
-        console.log(`Resuming thread ${t.id}`);
-        await this.langGraph.runs.wait(t.id, t.assistantID, {
+        this.emit("resume", t);
+        await this.params.langGraph.runs.wait(t.id, t.assistantID, {
           input: undefined,
           config: t.config,
         });
@@ -125,8 +144,12 @@ export class GraphResumer {
   }
 
   public start(): void {
-    this.interval = setInterval(() => {
-      this.loop();
+    this.interval = setInterval(async () => {
+      try {
+        await this.loop();
+      } catch (e) {
+        this.emit("error", e as Error);
+      }
     }, 5000);
   }
 

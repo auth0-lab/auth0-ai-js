@@ -1,12 +1,15 @@
-import { ToolWrapper } from "src/util/ToolWrapper";
 import z from "zod";
 
-import { Credentials } from "@auth0/ai";
-import { CIBAAuthorizationRequest, CIBAAuthorizerBase } from "@auth0/ai/CIBA";
+import { CIBAAuthorizerBase } from "@auth0/ai/CIBA";
+import {
+  AuthorizationPendingInterrupt,
+  AuthorizationPollingInterrupt,
+} from "@auth0/ai/interrupts";
 import { DynamicStructuredTool, tool } from "@langchain/core/tools";
 import { LangGraphRunnableConfig } from "@langchain/langgraph";
 
 import { toGraphInterrupt } from "../util/interrrupt";
+import { ToolWrapper } from "../util/ToolWrapper";
 import { CIBAAuthorizerParams, handleLangGraphStore } from "./params";
 
 export type ZodObjectAny = z.ZodObject<any, any, any, any>;
@@ -26,14 +29,10 @@ export class CIBAAuthorizer extends CIBAAuthorizerBase<
     super(auth0, handleLangGraphStore(config));
   }
 
-  override async getCredentials(
-    authRequest: CIBAAuthorizationRequest
-  ): Promise<Credentials | undefined> {
-    try {
-      return await super.getCredentials(authRequest);
-    } catch (err: any) {
-      throw toGraphInterrupt(err);
-    }
+  protected override handleAuthorizationInterrupts(
+    err: AuthorizationPendingInterrupt | AuthorizationPollingInterrupt
+  ): void {
+    throw toGraphInterrupt(err);
   }
 
   authorizer(): ToolWrapper {

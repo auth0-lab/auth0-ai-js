@@ -1,7 +1,8 @@
 import { Genkit, z } from "genkit";
-import { Context } from "src/context";
 
 import { AccessDeniedError, CIBAAuthorizer } from "@auth0/ai";
+
+import { Context } from "../context";
 
 const ciba = CIBAAuthorizer.create();
 

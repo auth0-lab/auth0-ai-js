@@ -6,9 +6,11 @@
   "main": "index.js",
   "scripts": {
     "start": "npx @langchain/langgraph-cli up",
-    "dev": "npx @langchain/langgraph-cli dev --port 54367",
-    "start:api": "npm --prefix ../sample-api install ../sample-api && npx tsx ../sample-api/app.ts",
-    "scheduler:up": "npx tsx src/services/scheduler.ts"
+    "dev": "run-p -n -l langgraph api scheduler resumer",
+    "langgraph": "npx @langchain/langgraph-cli dev --port 54367",
+    "api": "npm --prefix ../sample-api install ../sample-api && npx tsx watch ../sample-api/app.ts",
+    "scheduler": "npx tsx watch src/services/scheduler.ts",
+    "resumer": "npx tsx watch src/services/resumer.ts"
   },
   "author": {
     "name": "Auth0 Inc.",

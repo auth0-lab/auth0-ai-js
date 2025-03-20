@@ -2,6 +2,7 @@ import { Auth0AI } from "@auth0/ai-langchain";
 import { AIMessage } from "@langchain/core/messages";
 import {
   Annotation,
+  Command,
   END,
   InMemoryStore,
   LangGraphRunnableConfig,
@@ -29,7 +30,6 @@ const store = new InMemoryStore();
 async function shouldContinue(state) {
   const { messages } = state;
   const lastMessage = messages[messages.length - 1] as AIMessage;
-  console.dir(messages);
   if (
     !lastMessage ||
     !lastMessage.tool_calls ||
@@ -88,12 +88,10 @@ async function checkCondition(state, config: LangGraphRunnableConfig) {
  * @returns {any} The updated state after notification.
  */
 function notifyUser(state) {
-  console.dir(state);
-
   console.log("----");
   console.log(`Notifying the user about the trade.`);
+  console.dir(state.result, { depth: null });
   console.log("----");
-
   return state;
 }
 
@@ -109,12 +107,23 @@ const protectTool = auth0AI.withCIBA({
   userID: (_params, config) => {
     return config.configurable?.user_id;
   },
+  onUnauthorized(err: Error) {
+    return new Command({
+      update: {
+        result: {
+          success: false,
+          message: `Unauthorized: ${err.message}`,
+        },
+      },
+    });
+  },
 });
 
 // Define the state annotation
 const StateAnnotation = Annotation.Root({
   ...MessagesAnnotation.spec,
   data: Annotation<ConditionalTrade>(),
+  result: Annotation<{ success: boolean; message: string } | undefined>(),
 });
 
 const stateGraph = new StateGraph(StateAnnotation)
@@ -127,8 +136,17 @@ const stateGraph = new StateGraph(StateAnnotation)
     })
   )
   .addEdge(START, "checkCondition")
-  .addEdge("tools", "notifyUser")
-  .addConditionalEdges("checkCondition", shouldContinue);
+  .addConditionalEdges(
+    "tools",
+    (state) => {
+      if (state.result?.success) {
+        return "notifyUser";
+      }
+      return END;
+    },
+    [END, "notifyUser"]
+  )
+  .addConditionalEdges("checkCondition", shouldContinue, [END, "tools"]);
 
 export const graph = stateGraph.compile({
   checkpointer,

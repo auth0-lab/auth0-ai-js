@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { getCIBACredentials } from "@auth0/ai-langchain";
 import { tool } from "@langchain/core/tools";
-import { LangGraphRunnableConfig } from "@langchain/langgraph";
+import { Command, LangGraphRunnableConfig } from "@langchain/langgraph";
 
 export const tradeTool = tool(
   async (input, config: LangGraphRunnableConfig) => {
@@ -33,7 +33,14 @@ export const tradeTool = tool(
       body: JSON.stringify(body),
     });
 
-    return response.statusText;
+    return new Command({
+      update: {
+        result: {
+          success: true,
+          message: response.statusText,
+        },
+      },
+    });
   },
   {
     name: "trade_tool",

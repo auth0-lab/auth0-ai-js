@@ -1,5 +1,7 @@
 import { AuthenticationClient } from "auth0";
-import { Credentials } from "src/credentials";
+
+import { AuthorizerParams } from "../";
+import { Credentials } from "../../credentials";
 import {
   AccessDeniedInterrupt,
   AuthorizationPendingInterrupt,
@@ -7,10 +9,8 @@ import {
   AuthorizationRequestExpiredInterrupt,
   InvalidGrantInterrupt,
   UserDoesNotHavePushNotificationsInterrupt,
-} from "src/interrupts";
-import { resolveParameter } from "src/parameters";
-
-import { AuthorizerParams } from "../";
+} from "../../interrupts";
+import { resolveParameter } from "../../parameters";
 import { asyncLocalStorage, AsyncStorageValue } from "./asyncLocalStorage";
 import { CIBAAuthorizationRequest } from "./CIBAAuthorizationRequest";
 import { CIBAAuthorizerParams } from "./CIBAAuthorizerParams";
@@ -126,9 +126,6 @@ export class CIBAAuthorizerBase<ToolExecuteArgs extends any[]> {
         );
       }
 
-      //For the rest of exceptions we can delete the auth request.
-      await this.deleteAuthRequest();
-
       if (e.error == "invalid_grant") {
         throw new InvalidGrantInterrupt(e.error_description, authRequest);
       }
@@ -178,7 +175,10 @@ export class CIBAAuthorizerBase<ToolExecuteArgs extends any[]> {
     if (!store) {
       throw new Error("This method should be called from within a tool.");
     }
-    if (this.params.onAuthorizationRequest === "interrupt") {
+    if (
+      !this.params.onAuthorizationRequest ||
+      this.params.onAuthorizationRequest === "interrupt"
+    ) {
       return this.params.storeAuthorizationResponse(
         undefined,
         ...(store.args as ToolExecuteArgs)
@@ -242,16 +242,26 @@ export class CIBAAuthorizerBase<ToolExecuteArgs extends any[]> {
             err instanceof AuthorizationPendingInterrupt ||
             err instanceof AuthorizationPollingInterrupt;
           if (shouldInterrupt) {
-            throw err;
-          } else if (typeof this.params.onUnauthorized === "function") {
-            return this.params.onUnauthorized(err as Error, ...args);
+            return this.handleAuthorizationInterrupts(err);
           } else {
-            return err;
+            await this.deleteAuthRequest();
+            if (typeof this.params.onUnauthorized === "function") {
+              return this.params.onUnauthorized(err as Error, ...args);
+            } else {
+              return err;
+            }
           }
         }
+        await this.deleteAuthRequest();
         storeValue.credentials = credentials;
         return execute(...args);
       });
     };
+  }
+
+  protected handleAuthorizationInterrupts(
+    err: AuthorizationPendingInterrupt | AuthorizationPollingInterrupt
+  ) {
+    throw err;
   }
 }

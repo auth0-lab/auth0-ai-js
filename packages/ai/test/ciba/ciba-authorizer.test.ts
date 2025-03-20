@@ -204,6 +204,10 @@ describe("CIBAAuthorizerBase", () => {
       }
     });
 
+    it("should not call the store function", async () => {
+      expect(mockParams.storeAuthorizationResponse).not.toHaveBeenCalled();
+    });
+
     it("should not start the backchannel authorization again", async () => {
       expect(mockAuth0.backchannel.authorize).not.toHaveBeenCalled();
     });
@@ -257,6 +261,13 @@ describe("CIBAAuthorizerBase", () => {
       } catch (er) {
         err = er as Error;
       }
+    });
+
+    it("should call the store function to delete the value", async () => {
+      expect(mockParams.storeAuthorizationResponse).toHaveBeenCalledWith(
+        undefined,
+        "test-context"
+      );
     });
 
     it('should store the "access_token" in the asyncLocalStorage', async () => {
@@ -315,6 +326,13 @@ describe("CIBAAuthorizerBase", () => {
       }
     });
 
+    it("should call the store function to delete the value", async () => {
+      expect(mockParams.storeAuthorizationResponse).toHaveBeenCalledWith(
+        undefined,
+        "test-context"
+      );
+    });
+
     it("should return the error", () => {
       expect(result.name).toEqual("AUTH0_AI_INTERRUPT");
       expect(result.code).toEqual("CIBA_ACCESS_DENIED");
@@ -365,6 +383,13 @@ describe("CIBAAuthorizerBase", () => {
       } catch (er) {
         err = er as Error;
       }
+    });
+
+    it("should call the store function to delete the value", async () => {
+      expect(mockParams.storeAuthorizationResponse).toHaveBeenCalledWith(
+        undefined,
+        "test-context"
+      );
     });
 
     it("should return the error", () => {
