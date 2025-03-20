@@ -1,14 +1,12 @@
-import z from "zod";
-
 import { FGAAuthorizerBase } from "@auth0/ai/FGA";
 
 import { FGAAuthorizer } from "./FGA";
-import { GenKitToolHandler } from "./FGA/FGAAuthorizer";
 
 type FGAAuthorizerParams = ConstructorParameters<typeof FGAAuthorizerBase>[0];
-type ToolWrapper = ReturnType<FGAAuthorizer["authorizer"]>;
 type FGAParams = ConstructorParameters<typeof FGAAuthorizer>[1];
 
+type ToolFunc = (...args: [any, any]) => any;
+type ToolWrapper = <T extends ToolFunc>(t: T) => T;
 /**
  * A class for integrating Fine-Grained Authorization with AI tools.
  *
@@ -38,17 +36,35 @@ type FGAParams = ConstructorParameters<typeof FGAAuthorizer>[1];
 export class FGA_AI {
   constructor(private fgaParams?: FGAAuthorizerParams) {}
 
+  /**
+   *
+   * Returns a tool authorizer that protects the tool execution
+   * with the Fine Grained Authorization (FGA) authorization control.
+   *
+   * @param params - The parameters for the FGA authorization control.
+   * @returns A tool authorizer.
+   */
   withFGA(params: FGAParams): ToolWrapper;
 
-  withFGA<I extends z.ZodTypeAny, O extends z.ZodTypeAny>(
-    params: FGAParams,
-    tool: GenKitToolHandler<I, O>
-  ): GenKitToolHandler<I, O>;
+  /**
+   *
+   * Protects a tool function with Fine Grained Authorization (FGA) authorization control.
+   *
+   * @param params - The parameters for the FGA authorization control.
+   * @param tool - The tool to protect.
+   * @returns The protected tool.
+   */
+  withFGA<T extends ToolFunc>(params: FGAParams, tool: T): T;
 
-  withFGA<I extends z.ZodTypeAny, O extends z.ZodTypeAny>(
-    params: FGAParams,
-    tool?: GenKitToolHandler<I, O>
-  ) {
+  /**
+   *
+   * Builds an FGA authorizer for a tool.
+   * if a tool is provided, the authorizer is applied to the tool.
+   * @param params - The parameters for the FGA authorization control.
+   * @param tool - The tool function to protect.
+   * @returns
+   */
+  withFGA<T extends ToolFunc>(params: FGAParams, tool?: T): T | ToolWrapper {
     const fc = new FGAAuthorizer(this.fgaParams, params);
     const authorizer = fc.authorizer();
     if (tool) {
