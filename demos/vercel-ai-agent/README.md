@@ -7,7 +7,8 @@ This is a demo application that implements [Auth0 AI](https://auth0.ai) along wi
 ### Prerequisites
 
 - An Auth0 account, you can create one [here](https://auth0.com).
-- An OpenAI account and API key, you can create one [here](https://platform.openai.com).
+- An OpenAI account and API key. You can create one [here](https://platform.openai.com).
+  - [Use this page for instructions on how to find your OpenAI API key](https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key)
 
 ### Prepare the workspace
 
