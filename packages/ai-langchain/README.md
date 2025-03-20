@@ -117,7 +117,7 @@ Create a Retriever instance using the `FGARetriever.create` method.
 
 ```typescript
 // From examples/langchain/retrievers-with-fga
-import { FGARetriever } from "@auth0/ai-langchain";
+import { FGARetriever } from "@auth0/ai-langchain/RAG";
 import { MemoryStore, RetrievalChain } from "./helpers/memory-store";
 import { readDocuments } from "./helpers/read-documents";
 

@@ -24,6 +24,11 @@
       "types": "./dist/esm/index.d.ts",
       "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js"
+    },
+    "./RAG": {
+      "types": "./dist/esm/RAG/index.d.ts",
+      "import": "./dist/esm/RAG/index.js",
+      "require": "./dist/cjs/RAG/index.js"
     }
   },
   "author": {
