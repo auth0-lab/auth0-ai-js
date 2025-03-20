@@ -1,6 +1,5 @@
-import { CIBAInterrupt } from "src/interrupts";
-import { AuthorizerToolParameter } from "src/parameters";
-
+import { CIBAInterrupt } from "../../interrupts";
+import { AuthorizerToolParameter } from "../../parameters";
 import { CIBAAuthorizationRequest } from "./CIBAAuthorizationRequest";
 
 export type OnAuthorizationRequest = "block" | "interrupt";
@@ -41,21 +40,23 @@ export type CIBAAuthorizerParams<ToolExecuteArgs extends any[]> = {
    * Note: The block mode is only useful for development purposes and should not be used in production.
    */
   onAuthorizationRequest?: OnAuthorizationRequest;
+
+  /**
+   *
+   * Optional callback to generate a tool result when the invocation is not authorized.
+   *
+   * By default it will return the instance of the Error.
+   *
+   * @param args - The tool execution arguments.
+   * @returns The response to return when the invocation is not authorized.
+   */
+  onUnauthorized?: (
+    err: Error | CIBAInterrupt,
+    ...args: ToolExecuteArgs
+  ) => any;
 } & (
   | {
       onAuthorizationRequest: "block";
-
-      /**
-       *
-       * Optional callback to generate a tool result when the invocation is not authorized.
-       *
-       * @param args - The tool execution arguments.
-       * @returns The response to return when the invocation is not authorized.
-       */
-      onUnauthorized?: (
-        err: Error | CIBAInterrupt,
-        ...args: ToolExecuteArgs
-      ) => any;
     }
   | {
       onAuthorizationRequest?: "interrupt";
@@ -79,7 +80,7 @@ export type CIBAAuthorizerParams<ToolExecuteArgs extends any[]> = {
        * @remarks The data should be stored in a way that it can be retrieved later by the `getAuthorizationResponse` parameter.
        **/
       storeAuthorizationResponse: (
-        request: CIBAAuthorizationRequest,
+        request: CIBAAuthorizationRequest | undefined,
         ...args: ToolExecuteArgs
       ) => Promise<void>;
     }

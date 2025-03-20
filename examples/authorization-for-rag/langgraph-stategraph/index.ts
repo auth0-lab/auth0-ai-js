@@ -3,11 +3,12 @@
  */
 import "dotenv/config";
 
-import { ChatOpenAI, OpenAIEmbeddings } from "@langchain/openai";
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
-import { Annotation, START, StateGraph } from "@langchain/langgraph";
-import { Document } from "@langchain/core/documents";
+
 import { FGARetriever } from "@auth0/ai-langchain";
+import { Document } from "@langchain/core/documents";
+import { Annotation, START, StateGraph } from "@langchain/langgraph";
+import { ChatOpenAI, OpenAIEmbeddings } from "@langchain/openai";
 
 import { readDocuments } from "./helpers/read-documents";
 
@@ -71,7 +72,7 @@ async function main() {
       const { content } = await llm.invoke([
         {
           role: "system",
-          content: `Answer the user's question based on the following context: ${context}. 
+          content: `Answer the user's question based on the following context: ${context}.
           Only use the information provided in the context. If you need more information, ask for it.`,
         },
         {

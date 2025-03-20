@@ -1,13 +1,14 @@
 import { z } from "zod";
 
-import { getAccessToken } from "@auth0/ai-langchain";
+import { getCIBACredentials } from "@auth0/ai-langchain";
 import { tool } from "@langchain/core/tools";
 import { LangGraphRunnableConfig } from "@langchain/langgraph";
 
 export const tradeTool = tool(
   async (input, config: LangGraphRunnableConfig) => {
     // Get the access token
-    const accessToken = getAccessToken(config);
+    const credentials = getCIBACredentials();
+    const accessToken = credentials?.accessToken?.value;
 
     const headers = {
       Authorization: "",

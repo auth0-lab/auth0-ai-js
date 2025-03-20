@@ -8,15 +8,18 @@ import { SchedulerClient } from "../../services/client";
 export const conditionalTrade = tool(
   async (input, config: LangGraphRunnableConfig) => {
     // Schedule the conditional trade
-    await SchedulerClient().schedule("conditional-trade", {
-      config: {
-        configurable: {
-          user_id: config?.configurable?.user_id,
+    await SchedulerClient().schedule({
+      assistantID: "conditional-trade",
+      payload: {
+        config: {
+          configurable: {
+            user_id: config?.configurable?.user_id ?? process.env.TEST_USER_ID,
+          },
         },
-      },
-      input: {
-        data: {
-          ...input,
+        input: {
+          data: {
+            ...input,
+          },
         },
       },
     });
@@ -29,7 +32,8 @@ export const conditionalTrade = tool(
   },
   {
     name: "conditional_trade_tool",
-    description: "Use this function to trade an stock under certain conditions",
+    description:
+      "Use this function to schedule the trade of an stock based on a condition",
     schema: z.object({
       ticker: z.string(),
       qty: z.number(),

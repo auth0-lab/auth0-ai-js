@@ -9,6 +9,11 @@ export type AsyncStorageValue<TContext> = {
    * The tool execution context.
    */
   context: TContext;
+
+  /**
+   * The tool execution arguments.
+   */
+  args: any[];
 };
 
 export const asyncLocalStorage = new AsyncLocalStorage<

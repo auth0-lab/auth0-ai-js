@@ -5,11 +5,7 @@ import {
   asyncLocalStorage,
   CIBAAuthorizerBase,
 } from "../../src/authorizers/ciba";
-import {
-  AccessDeniedInterrupt,
-  AuthorizationPendingInterrupt,
-  AuthorizationRequestExpiredInterrupt,
-} from "../../src/interrupts";
+import { AuthorizationPendingInterrupt } from "../../src/interrupts";
 
 vi.mock("auth0");
 
@@ -301,19 +297,30 @@ describe("CIBAAuthorizerBase", () => {
     };
     const execute = vi.fn();
     let err: Error;
-
+    let result: any;
     beforeEach(async () => {
       mockParams.getAuthorizationResponse.mockResolvedValue(
         storedAuthorizationResponse
       );
       mockAuth0.backchannel.backchannelGrant.mockImplementation(() => {
-        throw { error: "access_denied" };
+        throw {
+          error: "access_denied",
+          error_description: "the user rejected the authorization request",
+        };
       });
       try {
-        await authorizer.protect((c) => c, execute)("test-context");
+        result = await authorizer.protect((c) => c, execute)("test-context");
       } catch (er) {
         err = er as Error;
       }
+    });
+
+    it("should return the error", () => {
+      expect(result.name).toEqual("AUTH0_AI_INTERRUPT");
+      expect(result.code).toEqual("CIBA_ACCESS_DENIED");
+      expect(result.message).toEqual(
+        "the user rejected the authorization request"
+      );
     });
 
     it("should not start the backchannel authorization again", async () => {
@@ -330,8 +337,8 @@ describe("CIBAAuthorizerBase", () => {
       );
     });
 
-    it('should throw "AccessDeniedInterrupt" error', async () => {
-      expect(err).toBeInstanceOf(AccessDeniedInterrupt);
+    it("should not interrupt the graph", async () => {
+      expect(err).toBeUndefined();
     });
   });
 
@@ -348,16 +355,22 @@ describe("CIBAAuthorizerBase", () => {
     };
     const execute = vi.fn();
     let err: Error;
-
+    let result: any;
     beforeEach(async () => {
       mockParams.getAuthorizationResponse.mockResolvedValue(
         storedAuthorizationResponse
       );
       try {
-        await authorizer.protect((c) => c, execute)("test-context");
+        result = await authorizer.protect((c) => c, execute)("test-context");
       } catch (er) {
         err = er as Error;
       }
+    });
+
+    it("should return the error", () => {
+      expect(result.name).toEqual("AUTH0_AI_INTERRUPT");
+      expect(result.code).toEqual("CIBA_AUTHORIZATION_REQUEST_EXPIRED");
+      expect(result.message).toEqual("The authorization request has expired.");
     });
 
     it("should not call the backchannel grant", async () => {
@@ -379,7 +392,7 @@ describe("CIBAAuthorizerBase", () => {
     });
 
     it('should throw "AccessDeniedInterrupt" error', async () => {
-      expect(err).toBeInstanceOf(AuthorizationRequestExpiredInterrupt);
+      expect(err).toBeUndefined();
     });
   });
 });

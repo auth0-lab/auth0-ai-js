@@ -2,9 +2,10 @@
   "node_version": "20",
   "graphs": {
     "agent": "./src/agents/agent.ts:graph",
-    "conditional-trade": "./src/agents/conditional-trade.ts:graph",
-    "AUTH0_CIBA_POLLER": "./src/agents/ciba.ts:graph"
+    "conditional-trade": "./src/agents/conditional-trade.ts:graph"
   },
   "env": ".env",
-  "dependencies": ["."]
+  "dependencies": [
+    "."
+  ]
 }

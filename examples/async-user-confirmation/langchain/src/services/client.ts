@@ -1,9 +1,15 @@
+/**
+ * This could be replaced by LangGraph Cron Jobs in production
+ * https://langchain-ai.github.io/langgraph/cloud/how-tos/cron_jobs/
+ */
+import { ScheduledRunCreateType } from "./ScheduledRunType";
+
 export function SchedulerClient(url?: string) {
   return {
-    schedule: async (graphId: string, data: any) => {
+    schedule: async (data: ScheduledRunCreateType) => {
       try {
         // TODO: add authentication
-        await fetch(url || `http://localhost:5555/schedule/${graphId}`, {
+        await fetch(url || `http://localhost:5555/schedule`, {
           method: "POST",
           body: JSON.stringify(data),
           headers: {

@@ -1,5 +1,4 @@
 import { randomUUID } from "crypto";
-import z from "zod";
 
 import { FederatedConnectionAuthorizerBase } from "@auth0/ai/FederatedConnections";
 import { FederatedConnectionInterrupt } from "@auth0/ai/interrupts";
@@ -7,10 +6,8 @@ import { DynamicStructuredTool, tool } from "@langchain/core/tools";
 import { LangGraphRunnableConfig } from "@langchain/langgraph";
 
 import { toGraphInterrupt } from "../util/interrrupt";
-
-export type ZodObjectAny = z.ZodObject<any, any, any, any>;
-
-type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
+import { Optional } from "../util/optionalType";
+import { ToolWrapper, ZodObjectAny } from "../util/ToolWrapper";
 
 const defaultGetRefreshToken = () => {
   return async (
@@ -54,10 +51,10 @@ export class FederatedConnectionAuthorizer extends FederatedConnectionAuthorizer
     throw toGraphInterrupt(err);
   }
 
-  authorizer() {
+  authorizer(): ToolWrapper {
     return <T extends ZodObjectAny = ZodObjectAny>(
       t: DynamicStructuredTool<T>
-    ): DynamicStructuredTool<T> => {
+    ) => {
       return tool(
         this.protect((_params, ctx) => {
           const { tread_id, checkpoint_ns, run_id, tool_call_id } =
