@@ -1,7 +1,7 @@
 {
   "name": "@auth0/ai",
   "version": "0.0.0",
-  "description": "",
+  "description": "Auth0AI SDK for JavaScript",
   "types": "dist/esm/index.d.ts",
   "main": "dist/cjs/index.js",
   "module": "./dist/esm/index.js",

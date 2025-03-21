@@ -1,7 +1,7 @@
 {
   "name": "@auth0/ai-components",
   "version": "0.0.0",
-  "description": "Components for Auth0 AI",
+  "description": "Auth0 AI Components",
   "bin": "./bin/cli.js",
   "files": [
     "dist/**/*.{*js,*js.map,d.ts}",
