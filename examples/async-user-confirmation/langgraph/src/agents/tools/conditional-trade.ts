@@ -5,6 +5,13 @@ import { LangGraphRunnableConfig } from "@langchain/langgraph";
 
 import { SchedulerClient } from "../../services/client";
 
+/**
+ * This tool schedules a conditional trade for a stock based on a financial metric.
+ *
+ * This tool is only used in the "agent" graph.
+ *
+ * For example it can be triggerd with the chat command.
+ */
 export const conditionalTrade = tool(
   async (input, config: LangGraphRunnableConfig) => {
     // Schedule the conditional trade

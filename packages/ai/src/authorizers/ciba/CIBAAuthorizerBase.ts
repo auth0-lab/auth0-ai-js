@@ -64,14 +64,23 @@ export class CIBAAuthorizerBase<ToolExecuteArgs extends any[]> {
       toolContext
     );
 
-    const response = await this.auth0.backchannel.authorize(authorizeParams);
+    try {
+      const response = await this.auth0.backchannel.authorize(authorizeParams);
 
-    return {
-      id: response.auth_req_id,
-      requestedAt: requestedAt,
-      expiresIn: response.expires_in,
-      interval: response.interval,
-    };
+      return {
+        id: response.auth_req_id,
+        requestedAt: requestedAt,
+        expiresIn: response.expires_in,
+        interval: response.interval,
+      };
+    } catch (err: any) {
+      if (err.error == "invalid_request") {
+        throw new UserDoesNotHavePushNotificationsInterrupt(
+          err.error_description
+        );
+      }
+      throw err;
+    }
   }
 
   private async getCredentialsInternal(
@@ -135,6 +144,7 @@ export class CIBAAuthorizerBase<ToolExecuteArgs extends any[]> {
           e.error_description
         );
       }
+
       if (e.error == "access_denied") {
         throw new AccessDeniedInterrupt(e.error_description, authRequest);
       }
@@ -206,24 +216,6 @@ export class CIBAAuthorizerBase<ToolExecuteArgs extends any[]> {
         );
       }
 
-      const interruptMode =
-        typeof this.params.onAuthorizationRequest === "undefined" ||
-        this.params.onAuthorizationRequest === "interrupt";
-
-      if (interruptMode) {
-        authRequest = await resolveParameter(
-          this.params.getAuthorizationResponse,
-          args
-        );
-        if (!authRequest) {
-          //Initial request
-          authRequest = await this.start(args);
-          await this.params.storeAuthorizationResponse(authRequest, ...args);
-        }
-      } else {
-        authRequest = await this.start(args);
-      }
-
       const storeValue: AsyncStorageValue<any> = {
         args,
         context: getContext(...args),
@@ -231,10 +223,28 @@ export class CIBAAuthorizerBase<ToolExecuteArgs extends any[]> {
 
       return asyncLocalStorage.run(storeValue, async () => {
         let credentials: Credentials | undefined;
+
+        const interruptMode =
+          typeof this.params.onAuthorizationRequest === "undefined" ||
+          this.params.onAuthorizationRequest === "interrupt";
+
         try {
           if (interruptMode) {
+            authRequest = await resolveParameter(
+              this.params.getAuthorizationResponse,
+              args
+            );
+            if (!authRequest) {
+              //Initial request
+              authRequest = await this.start(args);
+              await this.params.storeAuthorizationResponse(
+                authRequest,
+                ...args
+              );
+            }
             credentials = await this.getCredentials(authRequest);
           } else {
+            authRequest = await this.start(args);
             credentials = await this.getCredentialsPolling(authRequest);
           }
         } catch (err) {

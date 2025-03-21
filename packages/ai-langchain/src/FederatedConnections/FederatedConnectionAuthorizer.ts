@@ -1,5 +1,3 @@
-import { randomUUID } from "crypto";
-
 import { FederatedConnectionAuthorizerBase } from "@auth0/ai/FederatedConnections";
 import { FederatedConnectionInterrupt } from "@auth0/ai/interrupts";
 import { DynamicStructuredTool, tool } from "@langchain/core/tools";
@@ -24,7 +22,6 @@ const defaultGetRefreshToken = () => {
 export class FederatedConnectionAuthorizer extends FederatedConnectionAuthorizerBase<
   [any, LangGraphRunnableConfig]
 > {
-  middlewareInstanceID: string;
   protectedTools: string[] = [];
 
   constructor(
@@ -34,15 +31,12 @@ export class FederatedConnectionAuthorizer extends FederatedConnectionAuthorizer
       "refreshToken"
     >
   ) {
-    const middlewareInstanceID = randomUUID();
     const refreshToken = config.refreshToken ?? defaultGetRefreshToken();
 
     super(auth0, {
       ...config,
       refreshToken,
     });
-
-    this.middlewareInstanceID = middlewareInstanceID;
   }
 
   protected override handleAuthorizationInterrupts(

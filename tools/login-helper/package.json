@@ -1,0 +1,25 @@
+{
+  "name": "@auth0/auth0-ai-js-tools-login-helper",
+  "private": true,
+  "version": "1.0.0",
+  "description": "",
+  "main": "lib/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "npx tsx app.ts"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.20.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-jwt": "^8.5.1",
+    "express-openid-connect": "^2.18.0",
+    "helmet": "^8.0.0",
+    "jose": "^5.9.6",
+    "jwks-rsa": "^3.1.0",
+    "morgan": "^1.10.0"
+  }
+}
