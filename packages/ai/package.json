@@ -69,5 +69,8 @@
     "jose": "^5.9.6",
     "open": "^10.1.0",
     "openid-client": "^6.1.7"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
