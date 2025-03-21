@@ -12,6 +12,7 @@
     "build:cjs": "tsc --module nodenext --moduleResolution nodenext --declaration false --declarationMap false --outDir ./dist/cjs",
     "clean": "rm -rf dist",
     "lint": "eslint \"./**/*.ts*\"",
+    "semantic-release": "npx --no semantic-release",
     "type-check": "tsc --noEmit",
     "test": "vitest run"
   },

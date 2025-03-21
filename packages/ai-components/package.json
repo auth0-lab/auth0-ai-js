@@ -9,7 +9,9 @@
     "templates/**/*"
   ],
   "type": "module",
-  "scripts": {},
+  "scripts": {
+    "semantic-release": "npx --no semantic-release"
+  },
   "author": {
     "name": "Auth0 Inc.",
     "url": "https://auth0.com"
