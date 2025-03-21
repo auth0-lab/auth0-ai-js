@@ -20,8 +20,8 @@ import { Auth0AI } from "@auth0/ai-vercel";
 
 const auth0AI = new Auth0AI({
   domain: "YOUR_AUTH0_DOMAIN",
-  clientId: "YOUR_AUTH_CLIENT_ID",
-  clientSecret: "YOUR_AUTH_CLIENT_SECRET",
+  clientId: "YOUR_AUTH0_CLIENT_ID",
+  clientSecret: "YOUR_AUTH0_CLIENT_SECRET",
 });
 
 // Alternatively you can use the `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID` and `AUTH0_CLIENT_SECRET`

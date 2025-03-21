@@ -6,14 +6,19 @@ This is a [Next.js](https://nextjs.org) application that implements [Auth0 AI](h
 
 ### Prerequisites
 
-- An Auth0 account, you can create one [here](https://auth0.com).
-- An Okta FGA account, you can create one [here](https://dashboard.fga.dev).
 - An OpenAI account and API key. You can create one [here](https://platform.openai.com).
   - [Use this page for instructions on how to find your OpenAI API key](https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key)
+- An Okta FGA account, you can create one [here](https://dashboard.fga.dev).
+  - Set up a new Authorized Client from the `Settings` page and then follow the steps to setup the workspace below.
+- An **[Auth0](https://auth0.com)** account and the following settings and resources configured:
+  - An application to initiate the authorization flow:
+    - **Application Type**: `Web Application`
+    - **Allowed Callback URL**: `http://localhost:5123/callback`
+  - A **Google** social connection enabled for the application.
 
-### Prepare the workspace
+### Setup the workspace `.env` file
 
-Copy the `.env.example` file to `.env` and fill in the required values:
+Copy the `.env.example` file to `.env` and fill in the values for the following variables, using the settings obtained from the prerequisites:
 
 ```bash
 # Auth0

@@ -7,9 +7,10 @@
 - An OpenAI account and API key. You can create one [here](https://platform.openai.com).
   - [Use this page for instructions on how to find your OpenAI API key](https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key)
 - An **[Auth0](https://auth0.com)** account and the following settings and resources configured:
-  - An additional application for CIBA with the following settings:
+  - An application for CIBA with the following settings:
     - **Application Type**: `Web Application`
     - **Grant Type**: `CIBA` (or `urn:openid:params:grant-type:ciba`)
+    - **Allowed Callback URL**: `http://localhost:5123/callback`
   - An API with the following settings:
     - **Name**: `Sample API`
     - **Identifier**: `sample-api`
