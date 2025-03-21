@@ -6,8 +6,9 @@
   "main": "index.js",
   "scripts": {
     "start": "npx @langchain/langgraph-cli up",
+    "chatbot": "npx tsx ./src/chatbot/index.ts",
     "dev": "run-p -n -l langgraph api scheduler resumer",
-    "langgraph": "npx @langchain/langgraph-cli dev --port 54367",
+    "langgraph": "npx @langchain/langgraph-cli dev --port 54367 --no-browser",
     "api": "npm --prefix ../sample-api install ../sample-api && npx tsx watch ../sample-api/app.ts",
     "scheduler": "npx tsx watch src/services/scheduler.ts",
     "resumer": "npx tsx watch src/services/resumer.ts"
@@ -34,8 +35,10 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@auth0/auth0-ai-js-tools-login-helper": "*",
     "@types/body-parser": "^1.19.5",
     "@types/node-cron": "^3.0.11",
-    "@types/node-persist": "^3.1.8"
+    "@types/node-persist": "^3.1.8",
+    "terminal-link": "^3.0.0"
   }
 }

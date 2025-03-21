@@ -2,13 +2,37 @@ import { z } from "zod";
 
 import { getCIBACredentials } from "@auth0/ai-langchain";
 import { tool } from "@langchain/core/tools";
-import { Command, LangGraphRunnableConfig } from "@langchain/langgraph";
+import { LangGraphRunnableConfig } from "@langchain/langgraph";
 
+/**
+ * This is an example tool that calls an API using an access token
+ * from the context to trade a stock.
+ *
+ * In this example this tool can be used directly from the "agent" node,
+ * or in the "conditional purchase" agent.
+ *
+ * In the case is used by the "agent" node, ex. from the chatbot. The access token
+ * is attached to the configuration object.
+ *
+ * In the case is used in the "conditional purchase" agent, the access token is
+ * requested using CIBA (Client Initiated Backchannel Authentication) by the
+ * wrapping authorizer.
+ */
 export const tradeTool = tool(
   async (input, config: LangGraphRunnableConfig) => {
     // Get the access token
-    const credentials = getCIBACredentials();
-    const accessToken = credentials?.accessToken?.value;
+    let accessToken: string | undefined = undefined;
+
+    if (config.configurable?.accessToken) {
+      accessToken = config.configurable.accessToken;
+    } else {
+      const credentials = getCIBACredentials();
+      accessToken = credentials?.accessToken?.value;
+    }
+
+    if (!accessToken) {
+      return `Authorization error - Trade FAILED.`;
+    }
 
     const headers = {
       Authorization: "",
@@ -33,14 +57,12 @@ export const tradeTool = tool(
       body: JSON.stringify(body),
     });
 
-    return new Command({
-      update: {
-        result: {
-          success: true,
-          message: response.statusText,
-        },
-      },
-    });
+    return {
+      success: true,
+      message: `Trade successful - ${response.statusText} - ${input.ticker} - ${input.qty}`,
+      ticker: input.ticker,
+      qty: input.qty,
+    };
   },
   {
     name: "trade_tool",

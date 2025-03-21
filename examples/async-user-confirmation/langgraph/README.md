@@ -37,8 +37,6 @@ OPENAI_API_KEY="openai-api-key"
 # Langchain
 LANGGRAPH_API_URL="http://localhost:54367"
 
-# Alternatively set a test user
-TEST_USER_ID=...
 ```
 
 ### How to run it
@@ -53,6 +51,12 @@ TEST_USER_ID=...
 
    ```sh
    npm run dev
+   ```
+
+3. Starts the chatbot in another terminal:
+
+   ```sh
+   npm run chatbot
    ```
 
 ## How it works

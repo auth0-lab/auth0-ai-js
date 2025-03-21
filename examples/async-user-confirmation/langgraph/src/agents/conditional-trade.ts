@@ -1,8 +1,7 @@
 import { Auth0AI } from "@auth0/ai-langchain";
-import { AIMessage } from "@langchain/core/messages";
+import { AIMessage, ToolMessage } from "@langchain/core/messages";
 import {
   Annotation,
-  Command,
   END,
   InMemoryStore,
   LangGraphRunnableConfig,
@@ -90,7 +89,6 @@ async function checkCondition(state, config: LangGraphRunnableConfig) {
 function notifyUser(state) {
   console.log("----");
   console.log(`Notifying the user about the trade.`);
-  console.dir(state.result, { depth: null });
   console.log("----");
   return state;
 }
@@ -108,14 +106,7 @@ const protectTool = auth0AI.withCIBA({
     return config.configurable?.user_id;
   },
   onUnauthorized(err: Error) {
-    return new Command({
-      update: {
-        result: {
-          success: false,
-          message: `Unauthorized: ${err.message}`,
-        },
-      },
-    });
+    return { error: `Unauthorized ${err.message}`, success: false };
   },
 });
 
@@ -123,7 +114,6 @@ const protectTool = auth0AI.withCIBA({
 const StateAnnotation = Annotation.Root({
   ...MessagesAnnotation.spec,
   data: Annotation<ConditionalTrade>(),
-  result: Annotation<{ success: boolean; message: string } | undefined>(),
 });
 
 const stateGraph = new StateGraph(StateAnnotation)
@@ -139,8 +129,16 @@ const stateGraph = new StateGraph(StateAnnotation)
   .addConditionalEdges(
     "tools",
     (state) => {
-      if (state.result?.success) {
-        return "notifyUser";
+      const lastMessage = state.messages[
+        state.messages.length - 1
+      ] as AIMessage;
+      if (
+        lastMessage instanceof ToolMessage &&
+        lastMessage.name === "trade_tool" &&
+        typeof lastMessage.content === "string"
+      ) {
+        const { success } = JSON.parse(lastMessage.content);
+        return success ? "notifyUser" : END;
       }
       return END;
     },

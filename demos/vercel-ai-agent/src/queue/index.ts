@@ -3,6 +3,8 @@ import { addDays } from "date-fns";
 import ms from "ms";
 import { randomUUID } from "node:crypto";
 
+import { login } from "@auth0/auth0-ai-js-tools-login-helper";
+
 import { ConditionalTrade } from "../ConditionalTrade";
 import { connection } from "../connection";
 
@@ -51,6 +53,11 @@ export const scheduleConditionalBuy = (conditionalTrade: ConditionalTrade) => {
 if (import.meta.url === `file://${process.argv[1]}`) {
   (async () => {
     const id = randomUUID();
+    const { user } = await login({
+      authParams: {
+        scope: "openid profile email",
+      },
+    });
 
     await scheduleConditionalBuy({
       ticker: getRandomElement(["ZEKO", "ATKO"]),
@@ -58,8 +65,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
       tradeID: id,
 
-      userID: process.env.TEST_USER_ID as string,
-      email: process.env.TEST_USER_EMAIL as string,
+      userID: user.sub,
+      email: user.email,
 
       condition: {
         metric: "PE",

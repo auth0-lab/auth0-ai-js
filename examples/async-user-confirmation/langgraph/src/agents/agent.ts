@@ -33,7 +33,7 @@ function shouldContinue(state) {
 
 const stateGraph = new StateGraph(MessagesAnnotation.spec)
   .addNode("callLLM", callLLM)
-  .addNode("tools", new ToolNode([conditionalTrade]))
+  .addNode("tools", new ToolNode([conditionalTrade, tradeTool]))
   .addEdge(START, "callLLM")
   .addEdge("tools", "callLLM")
   .addConditionalEdges("callLLM", shouldContinue);
