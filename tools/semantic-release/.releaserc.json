@@ -1,19 +1,5 @@
 {
-  "extends": "semantic-release-monorepo",
   "branches": [
     "main"
-  ],
-  "plugins": [
-    [
-      "semantic-release-unsquash",
-      {
-        "@semantic-release/commit-analyzer": {
-          "preset": "conventionalcommits"
-        },
-        "@semantic-release/release-notes-generator": {
-          "preset": "conventionalcommits"
-        }
-      }
-    ]
   ]
 }

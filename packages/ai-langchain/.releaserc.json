@@ -1,3 +1,6 @@
 {
-  "extends": "../../tools/semantic-release/.releaserc.json"
+  "extends": [
+    "../../tools/semantic-release/.releaserc.json",
+    "semantic-release-monorepo"
+  ]
 }
