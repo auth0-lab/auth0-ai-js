@@ -1,9 +1,12 @@
 name: Release
 
 on:
-  push:
-    branches:
-      - main
+  workflow_run:
+    workflows:
+      - Continuous Integration
+    types:
+      - completed
+    branches: [main]
 
 permissions:
   contents: read # for checkout
