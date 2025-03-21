@@ -19,7 +19,7 @@
     "@auth0/ai-genkit": "*",
     "genkit": "^0.9.12",
     "@genkit-ai/dev-local-vectorstore": "^0.9.12",
-    "genkitx-openai": "^0.12.0",
+    "genkitx-openai": "^0.20.2",
     "dotenv": "^16.4.5",
     "@openfga/sdk": "^0.8.0"
   }
