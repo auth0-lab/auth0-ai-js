@@ -48,21 +48,12 @@ export class CIBAAuthorizerBase<ToolExecuteArgs extends any[]> {
     const requestedAt = Date.now() / 1000;
     const authorizeParams = {
       scope: ensureOpenIdScope(this.params.scopes).join(" "),
-      binding_message: "",
-      userId: "",
       audience: this.params.audience || "",
-      request_expiry: this.params.requestExpiry?.toString(),
+      request_expiry: (this.params.requestExpiry ?? 300).toString(),
+      binding_message:
+        (await resolveParameter(this.params.bindingMessage, toolContext)) ?? "",
+      userId: (await resolveParameter(this.params.userID, toolContext)) ?? "",
     };
-
-    authorizeParams.binding_message = await resolveParameter(
-      this.params.bindingMessage,
-      toolContext
-    );
-
-    authorizeParams.userId = await resolveParameter(
-      this.params.userID,
-      toolContext
-    );
 
     try {
       const response = await this.auth0.backchannel.authorize(authorizeParams);
