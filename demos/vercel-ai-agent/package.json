@@ -21,7 +21,7 @@
     "@ai-sdk/ui-utils": "^1.1.14",
     "@auth0/ai-vercel": "@auth0/ai-vercel:*",
     "@auth0/auth0-ai-js-tools-login-helper": "*",
-    "ai": "^4.1.54",
+    "ai": "^4.2.4",
     "bullmq": "^5.41.5",
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.5",
