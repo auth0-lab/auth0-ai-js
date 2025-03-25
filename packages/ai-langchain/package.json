@@ -44,7 +44,7 @@
   "peerDependencies": {
     "@langchain/core": "^0.3.19",
     "@langchain/langgraph": "^0.2.55",
-    "@langchain/langgraph-sdk": "^0.0.42",
+    "@langchain/langgraph-sdk": "^0.0.57",
     "@openfga/sdk": "0.8.0",
     "zod": "^3.24.2"
   },
