@@ -18,7 +18,7 @@
     "@auth0/ai-langchain": "*",
     "@langchain/core": "^0.3.19",
     "@langchain/langgraph": "^0.2.24",
-    "@langchain/langgraph-sdk": "^0.0.42",
+    "@langchain/langgraph-sdk": "^0.0.57",
     "@langchain/openai": "^0.3.14",
     "@openfga/sdk": "^0.8.0",
     "dotenv": "^16.4.7",
