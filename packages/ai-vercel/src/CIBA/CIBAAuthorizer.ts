@@ -3,6 +3,8 @@ import { Schema, z } from "zod";
 
 import { CIBAAuthorizerBase } from "@auth0/ai/CIBA";
 
+import { ToolContext } from "../util/ToolContext";
+
 type Parameters = z.ZodTypeAny | Schema<any>;
 
 /**
@@ -26,7 +28,7 @@ export class CIBAAuthorizer extends CIBAAuthorizerBase<
     ): Tool<PARAMETERS, RESULT> => {
       return {
         ...t,
-        execute: this.protect((params, ctx) => ctx, t.execute!),
+        execute: this.protect(ToolContext(t), t.execute!),
       };
     };
   }

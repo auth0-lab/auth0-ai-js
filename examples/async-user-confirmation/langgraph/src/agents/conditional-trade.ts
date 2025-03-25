@@ -97,7 +97,6 @@ const auth0AI = new Auth0AI();
 
 const protectTool = auth0AI.withCIBA({
   audience: process.env["AUDIENCE"]! as string,
-  store: store,
   scopes: ["stock:trade"],
   bindingMessage: async (_) => {
     return `Do you want to buy ${_.qty} ${_.ticker}`;

@@ -1,5 +1,3 @@
-import { ToolWrapper } from "src/util/types";
-
 import { FGAAuthorizerBase } from "@auth0/ai/FGA";
 
 /**

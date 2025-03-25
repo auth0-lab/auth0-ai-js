@@ -3,6 +3,8 @@ import { Schema, z } from "zod";
 
 import { FederatedConnectionAuthorizerBase } from "@auth0/ai/FederatedConnections";
 
+import { ToolContext } from "../util/ToolContext";
+
 type Parameters = z.ZodTypeAny | Schema<any>;
 
 export class FederatedConnectionAuthorizer extends FederatedConnectionAuthorizerBase<
@@ -14,7 +16,7 @@ export class FederatedConnectionAuthorizer extends FederatedConnectionAuthorizer
     ): Tool<PARAMETERS, RESULT> => {
       return {
         ...t,
-        execute: this.protect((params, ctx) => ctx, t.execute!),
+        execute: this.protect(ToolContext(t), t.execute!),
       };
     };
   }

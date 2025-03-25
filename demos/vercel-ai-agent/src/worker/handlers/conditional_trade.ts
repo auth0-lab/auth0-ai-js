@@ -7,6 +7,7 @@ import { compareMetric } from "@/src/tools/compareMetric";
 import { getStockMetric } from "@/src/tools/getStockMetric";
 import { notifyUser } from "@/src/tools/notifyUser";
 import { openai } from "@ai-sdk/openai";
+import { setAIContext } from "@auth0/ai-vercel";
 import { appendToolCall, invokeTools } from "@auth0/ai-vercel/interrupts";
 import {
   Auth0Interrupt,
@@ -23,6 +24,9 @@ export type ConditionalTradeHandlerParams = ConditionalTrade & {
 export const conditionalTrade = async (
   job: Job<ConditionalTradeHandlerParams>
 ) => {
+  console.log(`Handling conditional trade job ${job.id}`);
+  setAIContext({ threadID: job.id! });
+
   const { messages: previousMessages, ...conditionalTrade } = job.data;
   const messages = previousMessages || [
     {
