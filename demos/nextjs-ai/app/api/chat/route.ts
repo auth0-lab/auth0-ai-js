@@ -5,15 +5,19 @@ import { checkUsersCalendar } from "@/lib/ai/tools/check-user-calendar";
 import { getWeather } from "@/lib/ai/tools/get-weather";
 import { generateUUID } from "@/lib/utils";
 import { openai } from "@ai-sdk/openai";
+import { setAIContext } from "@auth0/ai-vercel";
 import { errorSerializer, invokeTools } from "@auth0/ai-vercel/interrupts";
 
 export const maxDuration = 30;
 
 export async function POST(request: Request) {
   const {
+    id,
     messages,
   }: { id: string; messages: Array<Message>; selectedChatModel: string } =
     await request.json();
+
+  setAIContext({ threadID: id });
 
   return createDataStreamResponse({
     execute: async (dataStream) => {

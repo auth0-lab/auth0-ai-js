@@ -2,38 +2,33 @@ import "dotenv/config";
 
 import { CoreMessage, generateText } from "ai";
 import Enquirer from "enquirer";
+import crypto from "node:crypto";
 
 import { openai } from "@ai-sdk/openai";
-import { DeviceAuthorizer } from "@auth0/ai";
+import { setAIContext } from "@auth0/ai-vercel";
 
-import { Context } from "./context";
 import { buy } from "./tools/buy";
 
-async function generate(messages: CoreMessage[], context: Context) {
+async function generate(messages: CoreMessage[]) {
   const result = await generateText({
     model: openai("gpt-4o-mini"),
     messages,
     maxSteps: 2,
     tools: {
-      buy: buy(context),
+      buy,
     },
   });
-
   return result;
 }
 
 async function main() {
+  const threadID = crypto.randomUUID();
+  setAIContext({ threadID });
+  console.log(`Thread ID: ${threadID}`);
   console.log(`<Enter a command (type "exit" to quit)>\n\n`);
 
   const enquirer = new Enquirer<{ prompt: string }>();
-  const authResponse = await DeviceAuthorizer.authorize(
-    {
-      scope: "openid",
-    },
-    {
-      clientId: process.env["AUTH0_PUBLIC_CLIENT_ID"]!,
-    }
-  );
+
   const messages: CoreMessage[] = [];
 
   try {
@@ -53,9 +48,7 @@ async function main() {
       // Add the user's message to the messages
       messages.push({ role: "user", content: prompt });
 
-      const { response, text } = await generate(messages, {
-        userID: authResponse.claims?.sub || "",
-      });
+      const { response, text } = await generate(messages);
 
       // Update the messages with the response
       messages.push(...response.messages);

@@ -2,9 +2,16 @@ import { EventEmitter } from "node:stream";
 
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { CIBAAuthorizationRequest } from "@auth0/ai/CIBA";
-import { CIBAInterrupt } from "@auth0/ai/interrupts";
+import {
+  AuthorizationPendingInterrupt,
+  AuthorizationPollingInterrupt,
+  CIBAInterrupt,
+} from "@auth0/ai/interrupts";
 
-import type { Client, Thread } from "@langchain/langgraph-sdk";
+import { getAuth0Interrupts } from "../util/interrrupt";
+
+import type { Interrupt, Client, Thread } from "@langchain/langgraph-sdk";
+
 type WatchedThread = {
   // The thread ID to watch.
   id: string;
@@ -99,12 +106,14 @@ export class GraphResumer extends EventEmitter<Events> {
 
     //Add new interrupted threads
     for (const thread of allThreads) {
-      const interrupt = this.getFirstInterrupt(thread);
-      if (
-        !interrupt ||
-        !CIBAInterrupt.isInterrupt(interrupt.value) ||
-        !CIBAInterrupt.hasRequestData(interrupt.value)
-      ) {
+      const interrupt = getAuth0Interrupts(thread).find(
+        (i) =>
+          AuthorizationPendingInterrupt.isInterrupt(i.value) &&
+          AuthorizationPollingInterrupt.isInterrupt(i.value)
+      ) as Interrupt<
+        AuthorizationPendingInterrupt | AuthorizationPollingInterrupt
+      >;
+      if (!interrupt || !interrupt.value?.request) {
         continue;
       }
       const key = this.getHashMapID(thread);

@@ -2,9 +2,12 @@ import { GenkitBeta, z } from "genkit/beta";
 
 import { Auth0AI } from "@auth0/ai-genkit";
 
+import { ai } from "../ai";
 import { Context } from "../context";
 
-const auth0AI = new Auth0AI.FGA();
+const auth0AI = new Auth0AI.FGA({
+  genkit: ai,
+});
 
 export function buyTool(ai: GenkitBeta) {
   const useFGA = auth0AI.withFGA({
@@ -23,18 +26,20 @@ export function buyTool(ai: GenkitBeta) {
     },
   });
 
-  return ai.defineTool(
-    {
-      name: "buy",
-      description: "Use this function to buy stock",
-      inputSchema: z.object({
-        ticker: z.string(),
-        qty: z.number(),
-      }),
-      outputSchema: z.string(),
-    },
-    useFGA(async ({ ticker, qty }) => {
-      return `Purchased ${qty} shares of ${ticker}`;
-    })
+  return useFGA(
+    ai.defineTool(
+      {
+        name: "buy",
+        description: "Use this function to buy stock",
+        inputSchema: z.object({
+          ticker: z.string(),
+          qty: z.number(),
+        }),
+        outputSchema: z.string(),
+      },
+      async ({ ticker, qty }) => {
+        return `Purchased ${qty} shares of ${ticker}`;
+      }
+    )
   );
 }

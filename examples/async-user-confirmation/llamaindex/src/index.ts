@@ -2,28 +2,19 @@ import "dotenv/config";
 
 import Enquirer from "enquirer";
 import { OpenAIAgent } from "llamaindex";
+import { randomUUID } from "node:crypto";
 
-import { DeviceAuthorizer } from "@auth0/ai";
+import { setAIContext } from "@auth0/ai-llamaindex";
 
 import { buyTool } from "./tools/buy";
 
 async function main() {
   console.log(`<Enter a command (type "exit" to quit)>\n\n`);
   const enquirer = new Enquirer<{ message: string }>();
-  const authResponse = await DeviceAuthorizer.authorize(
-    {
-      scope: "openid",
-    },
-    {
-      clientId: process.env["AUTH0_PUBLIC_CLIENT_ID"]!,
-    }
-  );
+  setAIContext({ threadID: randomUUID() });
+
   const agent = new OpenAIAgent({
-    tools: [
-      buyTool({
-        userId: authResponse.claims?.sub || "",
-      }),
-    ],
+    tools: [buyTool()],
     verbose: true,
   });
 

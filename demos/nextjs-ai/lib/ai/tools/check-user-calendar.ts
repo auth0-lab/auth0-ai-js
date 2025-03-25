@@ -14,7 +14,8 @@ export const checkUsersCalendar = withTokenForGoogleConnection(
       date: z.coerce.date(),
     }),
     execute: async ({ date }) => {
-      const accessToken = getAccessTokenForConnection();
+      const credentials = getAccessTokenForConnection();
+      const accessToken = credentials?.accessToken;
       const url = "https://www.googleapis.com/calendar/v3/freeBusy";
       const body = JSON.stringify({
         timeMin: date,

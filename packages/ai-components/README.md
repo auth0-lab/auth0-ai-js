@@ -1,7 +1,7 @@
 # Auth0 AI Components
 
 > [!WARNING]
-> `@auth0/ai-components` is currently under development and it is not intended to be used in production, and therefore has no official support.
+> `@auth0/ai-components` is currently **under heavy development**. We strictly follow [Semantic Versioning (SemVer)](https://semver.org/), meaning all **breaking changes will only occur in major versions**. However, please note that during this early phase, **major versions may be released frequently** as the API evolves. We recommend locking versions when using this in production.
 
 This library helps to setup the React components for auth0-ai.
 

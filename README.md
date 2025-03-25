@@ -1,7 +1,7 @@
 # Auth0 AI for JavaScript
 
 > [!WARNING]
-> Auth0 AI is currently under development and it is not intended to be used in production, and therefore has no official support.
+> Auth0 AI is currently **under heavy development**. We strictly follow [Semantic Versioning (SemVer)](https://semver.org/), meaning all **breaking changes will only occur in major versions**. However, please note that during this early phase, **major versions may be released frequently** as the API evolves. We recommend locking versions when using this in production.
 
 [Auth0 AI](https://www.auth0.ai/) helps you build secure AI-powered
 applications.
@@ -38,6 +38,9 @@ a person or organization. Common use cases include:
 
 - [`@auth0/ai-vercel`](https://github.com/auth0-lab/auth0-ai-js/tree/main/packages/ai-vercel) -
   Integration with [AI SDK](https://sdk.vercel.ai/) framework.
+
+- [`@auth0/ai-redis`](https://github.com/auth0-lab/auth0-ai-js/tree/main/packages/ai-redis) - 
+ A secure [Redis](https://redis.com/)-based data store implementation for Credentials and Authorization requests.
 
 - [`@auth0/ai-components`](https://github.com/auth0-lab/auth0-ai-js/tree/main/packages/ai-components) -
   A library of React components to help integrate `@auth0/ai` with a UI.

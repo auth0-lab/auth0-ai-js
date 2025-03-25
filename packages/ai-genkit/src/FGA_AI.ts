@@ -1,14 +1,18 @@
 import { z } from "genkit";
+import { GenkitBeta } from "genkit/beta";
 
 import { FGAAuthorizerBase } from "@auth0/ai/FGA";
 
 import { FGAAuthorizer } from "./FGA";
-import { ToolWrapper } from "./util/types";
+import { ToolWrapper } from "./lib";
 
-import type { ToolFn } from "@genkit-ai/ai/tool";
+import type { ToolAction } from "@genkit-ai/ai/tool";
+type FGAAIParams = {
+  fga?: ConstructorParameters<typeof FGAAuthorizerBase>[0];
+  genkit: GenkitBeta;
+};
 
-type FGAAuthorizerParams = ConstructorParameters<typeof FGAAuthorizerBase>[0];
-type FGAParams = ConstructorParameters<typeof FGAAuthorizer>[1];
+type FGAParams = ConstructorParameters<typeof FGAAuthorizerBase>[1];
 
 /**
  * A class for integrating Fine-Grained Authorization with AI tools.
@@ -19,9 +23,12 @@ type FGAParams = ConstructorParameters<typeof FGAAuthorizer>[1];
  * @example
  * ```typescript
  * const fgaAI = new FGA_AI({
+ *  fga: {
  *   apiUrl: 'https://api.fga.example',
  *   storeId: 'store123',
  *   credentials: { ... }
+ *  },
+ *  genkit: ai
  * });
  *
  * // Wrap an existing tool
@@ -37,7 +44,7 @@ type FGAParams = ConstructorParameters<typeof FGAAuthorizer>[1];
  * ```
  */
 export class FGA_AI {
-  constructor(private fgaParams?: FGAAuthorizerParams) {}
+  constructor(private fgaParams: FGAAIParams) {}
 
   /**
    *
@@ -57,10 +64,10 @@ export class FGA_AI {
    * @param tool - The tool to protect.
    * @returns The protected tool.
    */
-  withFGA<T extends ToolFn<z.AnyZodObject, z.AnyZodObject>>(
+  withFGA<I extends z.ZodTypeAny, O extends z.ZodTypeAny>(
     params: FGAParams,
-    tool: T
-  ): T;
+    tool?: ToolAction<I, O>
+  ): ToolAction<I, O>;
 
   /**
    *
@@ -70,11 +77,12 @@ export class FGA_AI {
    * @param tool - The tool function to protect.
    * @returns
    */
-  withFGA<T extends ToolFn<z.AnyZodObject, z.AnyZodObject>>(
+  withFGA<I extends z.ZodTypeAny, O extends z.ZodTypeAny>(
     params: FGAParams,
-    tool?: T
+    tool?: ToolAction<I, O>
   ) {
-    const fc = new FGAAuthorizer(this.fgaParams, params);
+    const { genkit, fga } = this.fgaParams;
+    const fc = new FGAAuthorizer(genkit, fga, params);
     const authorizer = fc.authorizer();
     if (tool) {
       return authorizer(tool);

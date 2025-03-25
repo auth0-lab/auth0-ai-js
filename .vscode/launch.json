@@ -6,7 +6,7 @@
       "type": "node-terminal",
       "request": "launch",
       "command": "npm run dev",
-      "cwd": "${workspaceFolder}/demos/vercel-ai",
+      "cwd": "${workspaceFolder}/demos/nextjs-ai",
       "sourceMaps": true
     }
   ]

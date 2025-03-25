@@ -11,6 +11,7 @@ import {
 } from "@auth0/ai/interrupts";
 
 import { CIBAAuthorizer } from "../src/CIBA/CIBAAuthorizer";
+import { setAIContext } from "../src/context";
 
 describe("CIBAAuthorizer", () => {
   let authorizer: CIBAAuthorizer;
@@ -19,10 +20,14 @@ describe("CIBAAuthorizer", () => {
   const authorizerParameters = {
     userID: (params: { userID: string }) => params.userID,
     bindingMessage: "Confirm the purchase",
-    scope: "openid stock:trade",
+    scopes: ["openid", "stock:trade"],
     audience: "http://localhost:8081",
-    getAuthorizationResponse: vi.fn(),
-    storeAuthorizationResponse: vi.fn(),
+
+    store: {
+      get: vi.fn(),
+      put: vi.fn(),
+      delete: vi.fn(),
+    },
   };
 
   beforeEach(() => {
@@ -54,19 +59,29 @@ describe("CIBAAuthorizer", () => {
   describe("on authorization pending error", () => {
     let error: CIBAInterrupt;
     beforeEach(async () => {
-      authorizerParameters.getAuthorizationResponse.mockResolvedValue({
-        status: "pending",
-      });
+      authorizerParameters.store.get.mockImplementation((ns, k) =>
+        k === "authResponse"
+          ? {
+              status: "pending",
+            }
+          : undefined
+      );
 
       vi.spyOn(
         CIBAAuthorizerBase.prototype,
         //@ts-ignore
         "getCredentials"
       ).mockImplementation(() => {
-        throw new AuthorizationPendingInterrupt("Authorization pending");
+        throw new AuthorizationPendingInterrupt("Authorization pending", {
+          interval: 10,
+          id: "123",
+          requestedAt: Date.now(),
+          expiresIn: 10,
+        });
       });
 
       try {
+        setAIContext({ threadID: "123" });
         await protectedTool!.execute!(
           { userID: "user1", input: "input" },
           {} as ToolExecutionOptions
@@ -89,9 +104,13 @@ describe("CIBAAuthorizer", () => {
     let error: CIBAInterrupt;
     let result: any;
     beforeEach(async () => {
-      authorizerParameters.getAuthorizationResponse.mockResolvedValue({
-        status: "pending",
-      });
+      authorizerParameters.store.get.mockImplementation((ns, k) =>
+        k === "authResponse"
+          ? {
+              status: "pending",
+            }
+          : undefined
+      );
 
       vi.spyOn(
         CIBAAuthorizerBase.prototype,
@@ -110,6 +129,7 @@ describe("CIBAAuthorizer", () => {
       });
 
       try {
+        setAIContext({ threadID: "123" });
         result = await protectedTool!.execute!(
           { userID: "user1", input: "input" },
           {} as ToolExecutionOptions
@@ -143,9 +163,13 @@ describe("CIBAAuthorizer", () => {
   describe("on completed authorization request", () => {
     let error: CIBAInterrupt;
     beforeEach(async () => {
-      authorizerParameters.getAuthorizationResponse.mockResolvedValue({
-        status: "pending",
-      });
+      authorizerParameters.store.get.mockImplementation((ns, k) =>
+        k === "authResponse"
+          ? {
+              status: "pending",
+            }
+          : undefined
+      );
 
       vi.spyOn(
         CIBAAuthorizerBase.prototype,
@@ -162,6 +186,7 @@ describe("CIBAAuthorizer", () => {
       });
 
       try {
+        setAIContext({ threadID: "123" });
         await protectedTool!.execute!(
           { userID: "user1", input: "input" },
           {} as ToolExecutionOptions

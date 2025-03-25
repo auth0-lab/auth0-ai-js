@@ -5,6 +5,7 @@ import { LangGraphRunnableConfig } from "@langchain/langgraph";
 
 import { toGraphInterrupt } from "../util/interrrupt";
 import { Optional } from "../util/optionalType";
+import { ToolContext } from "../util/ToolContext";
 import { ToolWrapper, ZodObjectAny } from "../util/ToolWrapper";
 
 const defaultGetRefreshToken = () => {
@@ -32,7 +33,6 @@ export class FederatedConnectionAuthorizer extends FederatedConnectionAuthorizer
     >
   ) {
     const refreshToken = config.refreshToken ?? defaultGetRefreshToken();
-
     super(auth0, {
       ...config,
       refreshToken,
@@ -49,18 +49,11 @@ export class FederatedConnectionAuthorizer extends FederatedConnectionAuthorizer
     return <T extends ZodObjectAny = ZodObjectAny>(
       t: DynamicStructuredTool<T>
     ) => {
-      return tool(
-        this.protect((_params, ctx) => {
-          const { tread_id, checkpoint_ns, run_id, tool_call_id } =
-            ctx.configurable ?? {};
-          return { tread_id, checkpoint_ns, run_id, tool_call_id };
-        }, t.invoke.bind(t)),
-        {
-          name: t.name,
-          description: t.description,
-          schema: t.schema,
-        }
-      ) as unknown as DynamicStructuredTool<T>;
+      return tool(this.protect(ToolContext(t), t.invoke.bind(t)), {
+        name: t.name,
+        description: t.description,
+        schema: t.schema,
+      }) as unknown as DynamicStructuredTool<T>;
     };
   }
 }

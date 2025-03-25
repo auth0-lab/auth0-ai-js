@@ -1,21 +1,29 @@
 import { AuthenticationClient } from "auth0";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
 
 import {
   asyncLocalStorage,
   CIBAAuthorizerBase,
 } from "../../src/authorizers/ciba";
+import { ContextGetter } from "../../src/authorizers/context";
 
 vi.mock("auth0");
 
 describe("CIBAAuthorizerBase Block Mode", () => {
   let authorizer: CIBAAuthorizerBase<[string]>;
+  const getContext: ContextGetter<[string]> = vi.fn();
+
   const mockParams = {
     userID: "user123",
     bindingMessage: "test-binding",
     scopes: ["read:users"],
     onAuthorizationRequest: "block" as const,
     onUnauthorized: vi.fn(),
+    store: {
+      get: vi.fn(),
+      put: vi.fn(),
+      delete: vi.fn(),
+    },
   };
 
   const mockAuth0 = {
@@ -27,6 +35,11 @@ describe("CIBAAuthorizerBase Block Mode", () => {
 
   beforeEach(() => {
     (AuthenticationClient as any).mockImplementation(() => mockAuth0);
+    (getContext as Mock).mockReturnValue({
+      threadID: "test-thread",
+      toolCallID: "test-tool-call",
+      toolName: "test-tool",
+    });
   });
 
   afterEach(() => {
@@ -68,10 +81,10 @@ describe("CIBAAuthorizerBase Block Mode", () => {
         });
       execute.mockImplementation(() => {
         const store = asyncLocalStorage.getStore();
-        accessTokenFromAsyncLocalStore = store?.credentials?.accessToken.value;
+        accessTokenFromAsyncLocalStore = store?.credentials?.accessToken;
       });
       try {
-        await authorizer.protect(() => {}, execute)("test-context");
+        await authorizer.protect(getContext, execute)("test-context");
       } catch (er) {
         err = er as Error;
       }
@@ -122,9 +135,10 @@ describe("CIBAAuthorizerBase Block Mode", () => {
         "User rejected the authorization request."
       );
       try {
-        toolResult = await authorizer.protect(() => {}, execute)(
-          "test-context"
-        );
+        toolResult = await authorizer.protect(
+          getContext,
+          execute
+        )("test-context");
       } catch (er) {
         err = er as Error;
       }
@@ -158,11 +172,11 @@ describe("CIBAAuthorizerBase Block Mode", () => {
    * approved the request, the authorizer will call the
    * onUnauthorize function to resolve the result of the tool.
    */
-  describe("when the request is rejected", () => {
+  describe("when the request is expired", () => {
     const startResponse = {
       auth_req_id: "test-id",
       expires_in: 0.0001,
-      interval: 0.0002,
+      interval: 0.001,
     };
     const execute = vi.fn();
     let err: Error;
@@ -178,9 +192,10 @@ describe("CIBAAuthorizerBase Block Mode", () => {
         "User rejected the authorization request."
       );
       try {
-        toolResult = await authorizer.protect(() => {}, execute)(
-          "test-context"
-        );
+        toolResult = await authorizer.protect(
+          getContext,
+          execute
+        )("test-context");
       } catch (er) {
         err = er as Error;
       }
@@ -188,10 +203,6 @@ describe("CIBAAuthorizerBase Block Mode", () => {
 
     it("should start the backchannel authorization", async () => {
       expect(mockAuth0.backchannel.authorize).toHaveBeenCalled();
-    });
-
-    it("should keep calling backchannelGrant until approved", async () => {
-      expect(mockAuth0.backchannel.backchannelGrant).toHaveBeenCalled();
     });
 
     it("should not interrupt", async () => {

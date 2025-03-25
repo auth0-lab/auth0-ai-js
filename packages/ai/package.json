@@ -35,10 +35,25 @@
       "import": "./dist/esm/interrupts/index.js",
       "require": "./dist/cjs/interrupts/index.js"
     },
+    "./stores": {
+      "types": "./dist/esm/stores/index.d.ts",
+      "import": "./dist/esm/stores/index.js",
+      "require": "./dist/cjs/stores/index.js"
+    },
+    "./authorizers": {
+      "types": "./dist/esm/authorizers/index.d.ts",
+      "import": "./dist/esm/authorizers/index.js",
+      "require": "./dist/cjs/authorizers/index.js"
+    },
     "./FederatedConnections": {
       "types": "./dist/esm/authorizers/federated-connections/index.d.ts",
       "import": "./dist/esm/authorizers/federated-connections/index.js",
       "require": "./dist/cjs/authorizers/federated-connections/index.js"
+    },
+    "./Device": {
+      "types": "./dist/esm/authorizers/device-authorizer/index.d.ts",
+      "import": "./dist/esm/authorizers/device-authorizer/index.js",
+      "require": "./dist/cjs/authorizers/device-authorizer/index.js"
     },
     "./CIBA": {
       "types": "./dist/esm/authorizers/ciba/index.d.ts",
@@ -65,10 +80,11 @@
   "dependencies": {
     "@openfga/sdk": "^0.8.0",
     "auth0": "^4.18.0",
-    "enquirer": "^2.4.1",
     "jose": "^5.9.6",
-    "open": "^10.1.0",
-    "openid-client": "^6.1.7"
+    "openid-client": "^6.1.7",
+    "stable-hash": "^0.0.5",
+    "tempbox": "^1.1.1",
+    "zod": "^3.24.2"
   },
   "publishConfig": {
     "access": "public"

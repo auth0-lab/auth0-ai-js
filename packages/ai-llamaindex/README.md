@@ -1,72 +1,291 @@
 # Auth0 AI for LlamaIndex
 
-This package integrates [LlamaIndex](https://ts.llamaindex.ai/) with [Auth0 AI](https://www.auth0.ai/) for enhanced document retrieval capabilities.
-
 `@auth0/ai-llamaindex` is an SDK for building secure AI-powered applications using [Auth0](https://www.auth0.ai/), [Okta FGA](https://docs.fga.dev/) and [LlamaIndex](https://ts.llamaindex.ai/).
 
 ## Features
 
-### FGA Retriever
+- **Authorization for RAG**: Securely filter documents using Okta FGA as a [retriever](https://js.langchain.com/docs/concepts/retrievers/) for RAG applications. This smart retriever performs efficient batch access control checks, ensuring users only see documents they have permission to access.
 
-Provides Okta FGA as a [retriever](https://docs.llamaindex.ai/en/stable/module_guides/querying/retriever/) for RAG applications. The retriever allows filtering documents based on access control checks defined in Okta FGA. This retriever performs batch checks on retrieved documents, returning only the ones that pass the specified access criteria.
+- **Tool Authorization with FGA**: Protect AI tool execution with fine-grained authorization policies through Okta FGA integration, controlling which users can invoke specific tools based on custom authorization rules.
 
-### FGA Authorizer
+- **Client Initiated Backchannel Authentication (CIBA)**: Implement secure, out-of-band user authorization for sensitive AI operations using the [CIBA standard](https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html), enabling user confirmation without disrupting the main interaction flow.
 
-Provides Okta FGA as a tool authorizer that protects the tool execution with FGA.
+- **Federated API Access**: Seamlessly connect to third-party services by leveraging Auth0's Tokens For APIs feature, allowing AI tools to access users' connected services (like Google, Microsoft, etc.) with proper authorization.
 
-### Async Authorizer
+- **Device Authorization Flow**: Support headless and input-constrained environments with the [Device Authorization Flow](https://auth0.com/docs/get-started/authentication-and-authorization-flow/device-authorization-flow), enabling secure user authentication without direct input capabilities.
 
-Provides Async User Authorizer using [Client Initiated Backchannel Authentication (CIBA)](https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html).
 
 ## Install
 
 > [!WARNING]
-> `@auth0/ai-llamaindex` is currently under development and it is not intended to be used in production, and therefore has no official support.
+> `@auth0/ai-llamaindex` is currently **under heavy development**. We strictly follow [Semantic Versioning (SemVer)](https://semver.org/), meaning all **breaking changes will only occur in major versions**. However, please note that during this early phase, **major versions may be released frequently** as the API evolves. We recommend locking versions when using this in production.
 
+```bash
+npm install @auth0/ai @auth0/ai-llamaindex
 ```
-$ npm install @auth0/ai-llamaindex
+
+## Initialization
+
+Initialize the SDK with your Auth0 credentials:
+
+```javascript
+import { Auth0AI, setAIContext } from "@auth0/ai-llamaindex";
+
+const auth0AI = new Auth0AI({
+  // Alternatively, you can use the `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, and `AUTH0_CLIENT_SECRET`
+  // environment variables.
+  auth0: {
+    domain: "YOUR_AUTH0_DOMAIN",
+    clientId: "YOUR_AUTH0_CLIENT_ID",
+    clientSecret: "YOUR_AUTH0_CLIENT_SECRET",
+  },
+  // store: new MemoryStore(), // Optional: Use a custom store
+});
 ```
 
-## Usage
+Set the ThreadID:
 
-Example [RAG Application](../../examples/authorization-for-rag/llamaindex).
+```javascript
+setAIContext({
+  threadID: "...",
+});
+```
 
-Create a Retriever instance using the `FGAReranker.create` method.
+## Calling APIs
 
-```typescript
-import { FGARetriever } from "@auth0/ai-llamaindex";
-import { VectorStoreIndex } from "llamaindex";
-import { readDocuments } from "./helpers";
+The "Tokens for API" feature of Auth0 allows you to exchange refresh tokens for access tokens for third-party APIs. This is useful when you want to use a federated connection (like Google, Facebook, etc.) to authenticate users and then use the access token to call the API on behalf of the user.
 
-async function main() {
-  // UserID
-  const user = "user1";
-  const documents = await readDocuments();
-  // 1. Create `VectorStoreIndex` from documents.
-  const vectorStoreIndex = await VectorStoreIndex.fromDocuments(documents);
-  // 2. Initialize query engine.
-  const queryEngine = vectorStoreIndex.asQueryEngine({
-    // 3. Decorate the retriever with the FGARetriever to check permissions.
-    retriever: FGARetriever.create({
-      retriever: vectorStoreIndex.asRetriever(),
-      buildQuery: (document) => ({
-        user: `user:${user}`,
-        object: `doc:${document.node.metadata.id}`,
-        relation: "viewer",
-      }),
+First initialize the Federated Connection Authorizer as follows:
+
+```javascript
+import { auth0 } from "./auth0";
+
+export const withGoogleAccess = auth0AI.withTokenForConnection({
+  // A function to retrieve the refresh token of the context.
+  // In this case we are assuming this agent is running on next.js app
+  // using next-auth0. "auth0" here is an instance of next-auth0
+  refreshToken: async () => {
+    const session = await auth0.getSession();
+    const refreshToken = session?.tokenSet.refreshToken!;
+    return refreshToken;
+  },
+  // The connection name.
+  connection: 'google-oauth2',
+  // The scopes to request.
+  scopes: ["https://www.googleapis.com/auth/calendar.freebusy"],
+});
+```
+
+Then use the `withGoogleAccess` to wrap the tool and use `getAccessTokenForConnection` from the SDK to get the access token.
+
+```javascript
+import { tool } from "llamaindex";
+import { getAccessTokenForConnection } from "@auth0/ai-llamaindex";
+import { FederatedConnectionError } from "@auth0/ai/interrupts";
+import { addHours } from "date-fns";
+
+export const checkUsersCalendar = withGoogleAccess(
+  tool(async ({ date }) => {
+    const { accessToken } = getAccessTokenForConnection();
+    const url = "https://www.googleapis.com/calendar/v3/freeBusy";
+    const body = JSON.stringify({
+      timeMin: date,
+      timeMax: addHours(date, 1),
+      timeZone: "UTC",
+      items: [{ id: "primary" }],
+    });
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body,
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new FederatedConnectionError(
+          `Authorization required to access the Federated Connection`
+        );
+      }
+      throw new Error(
+        `Invalid response from Google Calendar API: ${
+          response.status
+        } - ${await response.text()}`
+      );
+    }
+
+    const busyResp = await response.json();
+    return { available: busyResp.calendars.primary.busy.length === 0 };
+  }, {
+    description:
+      "Check user availability on a given date time on their calendar",
+    parameters: z.object({
+      date: z.coerce.date(),
+    })
+  })
+);
+```
+
+## CIBA: Client-Initiated Backchannel Authentication
+
+CIBA (Client-Initiated Backchannel Authentication) enables secure, user-in-the-loop authentication for sensitive operations. This flow allows you to request user authorization asynchronously and resume execution once authorization is granted.
+
+```javascript
+import { auth0 } from "./auth0";
+
+export const buyStockAuthorizer = auth0AI.withAsyncUserConfirmation({
+  // A callback to retrieve the userID from tool context.
+  userID: (params: { userID: string }, ctx) => params.userID,
+
+  // The message the user will see on the notification
+  bindingMessage: async ({ qty , ticker }) => {
+    return `Confirm the purchase of ${qty} ${ticker}`;
+  },
+  // The scopes and audience to request
+  audience: process.env["AUDIENCE"],
+  scopes: ["stock:trade"]  
+});
+```
+
+Then wrap the tool as follows:
+
+```javascript
+import { tool } from "llamaindex";
+import { z } from "zod";
+import { getCIBACredentials } from "@auth0/ai-llamaindex";
+
+export const purchaseStock = buyStockAuthorizer(
+  tool(async ({ tradeID, userID, ticker, qty }) => {
+    const { accessToken } = getCIBACredentials();
+    fetch("http://yourapi.com/buy", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ ticker, qty }),
+    });
+    return `Purchased ${qty} shares of ${ticker}`;
+  }, {
+    name: "buy_stock",
+    description: "Execute a stock purchase given stock ticker and quantity",
+    parameters: z.object({
+      tradeID: z
+        .string()
+        .uuid()
+        .describe("The unique identifier for the trade provided by the user"),
+      userID: z
+        .string()
+        .describe("The user ID of the user who created the conditional trade"),
+      ticker: z.string().describe("The stock ticker to trade"),
+      qty: z
+        .number()
+        .int()
+        .positive()
+        .describe("The quantity of shares to trade"),
+    })
+  })
+);
+```
+
+## Device Flow Authorizer
+
+The Device Flow Authorizer enables secure, user-in-the-loop authentication for devices or tools that cannot directly authenticate users. It uses the OAuth 2.0 Device Authorization Grant to request user authorization and resume execution once authorization is granted.
+
+```javascript
+import { auth0 } from "./auth0";
+
+export const deviceFlowAuthorizer = auth0AI.withDeviceAuthorizationFlow({
+  // The scopes and audience to request
+  scopes: ["read:data", "write:data"],
+  audience: "https://api.example.com",
+});
+```
+
+Then wrap the tool as follows:
+
+```javascript
+import { tool } from "llamaindex";
+import { z } from "zod";
+import { getDeviceAuthorizerCredentials } from "@auth0/ai-llamaindex";
+
+export const fetchData = deviceFlowAuthorizer(
+  tool(async ({ resourceID }) => {
+    const credentials = getDeviceAuthorizerCredentials();
+    const response = await fetch(`https://api.example.com/resource/${resourceID}`, {
+      headers: {
+        Authorization: `Bearer ${credentials.accessToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch resource: ${response.statusText}`);
+    }
+
+    return await response.json();
+  }, {
+    name: "fetch_data",
+    description: "Fetch data from a secure API",
+    parameters: z.object({
+      resourceID: z.string().describe("The ID of the resource to fetch"),
+    })
+  })
+);
+```
+
+This flow is particularly useful for devices or tools that cannot directly authenticate users, such as IoT devices or CLI tools.
+
+## FGA
+
+```javascript
+import { Auth0AI } from "@auth0/ai-llamaindex";
+
+const auth0AI = new Auth0AI.FGA({
+  apiScheme,
+  apiHost,
+  storeId,
+  credentials: {
+    method: CredentialsMethod.ClientCredentials,
+    config: {
+      apiTokenIssuer,
+      clientId,
+      clientSecret,
+    },
+  },
+});
+// Alternatively you can use env variables: `FGA_API_SCHEME`, `FGA_API_HOST`, `FGA_STORE_ID`, `FGA_API_TOKEN_ISSUER`, `FGA_CLIENT_ID` and `FGA_CLIENT_SECRET`
+```
+
+Then initialize the tool wrapper:
+
+```javascript
+const authorizedTool = fgaAI.withFGA(
+  {
+    buildQuery: async ({ userID, doc }) => ({
+      user: userID,
+      object: doc,
+      relation: "read",
     }),
-  });
+  },
+  myAITool
+);
 
-  // 4. Execute the query
-  const vsiResponse = await queryEngine.query({
-    query: "Show me forecast for ZEKO?",
-  });
+// Or create a wrapper to apply to tools later
+const authorizer = fgaAI.withFGA({
+  buildQuery: async ({ userID, doc }) => ({
+    user: userID,
+    object: doc,
+    relation: "read",
+  }),
+});
 
-  console.log(vsiResponse.toString());
-}
-
-main().catch(console.error);
+const authorizedTool = authorizer(myAITool);
 ```
+
+Note: the parameters given to the `buildQuery` function are the same provided to the tool's `execute` function.
 
 ## Feedback
 

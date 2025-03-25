@@ -1,282 +1,392 @@
-import * as jose from "jose";
-import open from "open";
 import {
+  DeviceAuthorizationResponse,
   discovery,
   initiateDeviceAuthorization,
-  pollDeviceAuthorizationGrant,
 } from "openid-client";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
 
-import { ToolWithAuthHandler } from "../src/authorizers";
+import { ContextGetter } from "../src/authorizers/context";
 import {
-  DeviceAuthorizer,
-  DeviceAuthorizerOptions,
+  DeviceAuthorizerBase,
+  DeviceAuthorizerParams,
+  getDeviceAuthorizerCredentials,
 } from "../src/authorizers/device-authorizer";
-
-const mockPrompt = vi.fn();
+import { TokenSet } from "../src/credentials";
+import { DeviceInterrupts } from "../src/interrupts";
 
 vi.mock("openid-client", () => ({
   discovery: vi.fn(),
   initiateDeviceAuthorization: vi.fn(),
-  pollDeviceAuthorizationGrant: vi.fn(),
 }));
 
-vi.mock("enquirer", () => ({
-  default: class {
-    prompt = mockPrompt;
-  },
-}));
+vi.stubGlobal("fetch", vi.fn());
 
-vi.mock("open", () => ({
-  default: vi.fn(),
-}));
-
-vi.mock("jose", () => ({
-  decodeJwt: vi.fn(),
-}));
-
-describe("DeviceAuthorizer", () => {
-  const mockDomain = "example.auth0.com";
-  const mockClientId = "test-client-id";
-
-  const mockOptions: DeviceAuthorizerOptions = {
-    scope: "openid profile email",
-    audience: "https://api.example.com",
+describe("DeviceAuthorizerBase", () => {
+  let authorizer: DeviceAuthorizerBase<[string]>;
+  const contextGetter: ContextGetter<[string]> = vi.fn();
+  const mockParams: DeviceAuthorizerParams<[string]> = {
+    scopes: ["read:users"],
+    audience: "foobar",
+    store: {
+      put: vi.fn(),
+      get: vi.fn(),
+      delete: vi.fn(),
+    },
   };
-
-  const mockDiscoveryConfig = {};
-
-  const mockHandle = {
-    verification_uri_complete: "https://example.com/verify?user_code=ABC123",
-    user_code: "ABC123",
-    expires_in: 1800,
-  };
-
-  const mockTokens = {
-    token_type: "bearer",
-    access_token: "access-token-123",
-    id_token: "id-token-456",
-  };
-
-  const mockClaims = { sub: "user123", name: "Test User" };
-
-  let originalEnv: NodeJS.ProcessEnv;
-
-  beforeEach(() => {
-    originalEnv = { ...process.env };
-    process.env.AUTH0_DOMAIN = mockDomain;
-    process.env.AUTH0_CLIENT_ID = mockClientId;
-
-    vi.resetAllMocks();
-
-    (discovery as any).mockResolvedValue(mockDiscoveryConfig);
-
-    (initiateDeviceAuthorization as any).mockResolvedValue(mockHandle);
-
-    (pollDeviceAuthorizationGrant as any).mockResolvedValue(mockTokens);
-
-    mockPrompt.mockResolvedValue({ confirmation: "" });
-
-    (open as any).mockResolvedValue(undefined);
-
-    (jose.decodeJwt as any).mockReturnValue(mockClaims);
-  });
 
   afterEach(() => {
-    process.env = originalEnv;
+    vi.clearAllMocks();
   });
 
-  it("should create an instance with default environment variables", () => {
-    // Act
-    const authorizer = DeviceAuthorizer.create();
-
-    // Assert
-    expect(authorizer).toBeInstanceOf(Function);
-  });
-
-  it("should authorize successfully and return credentials", async () => {
-    // Arrange
-    const authorizer = DeviceAuthorizer.create();
-
-    const mockHandler: ToolWithAuthHandler<any, any, any> = vi
-      .fn()
-      .mockResolvedValue("handler-output");
-
-    // Act
-    const deviceFlow = authorizer(mockOptions);
-    const result = await deviceFlow(mockHandler)({}, undefined);
-
-    // Assert
-    expect(discovery).toHaveBeenCalledWith(
-      new URL(`https://${mockDomain}`),
-      mockClientId
-    );
-
-    expect(initiateDeviceAuthorization).toHaveBeenCalledWith(
-      mockDiscoveryConfig,
-      {
-        scope: mockOptions.scope,
-        audience: mockOptions.audience,
-      }
-    );
-
-    expect(mockPrompt).toHaveBeenCalledWith({
-      type: "input",
-      name: "confirmation",
-      message: expect.stringContaining(mockHandle.user_code),
+  beforeEach(() => {
+    (discovery as Mock).mockReturnValue({
+      configuration: "1234",
     });
-
-    expect(open).toHaveBeenCalledWith(mockHandle.verification_uri_complete);
-
-    expect(pollDeviceAuthorizationGrant).toHaveBeenCalledWith(
-      mockDiscoveryConfig,
-      mockHandle
-    );
-
-    expect(jose.decodeJwt).toHaveBeenCalledWith(mockTokens.id_token);
-
-    expect(mockHandler).toHaveBeenCalledWith(
+    (contextGetter as Mock).mockReturnValue({
+      threadID: "test-thread-id",
+      toolCallID: "test-tool-call-id",
+      toolName: "test-tool-name",
+    });
+    authorizer = new DeviceAuthorizerBase<string[]>(
       {
-        accessToken: mockTokens.access_token,
-        claims: mockClaims,
+        domain: "test.auth0.com",
+        clientId: "test-client",
       },
-      {},
-      undefined
+      mockParams
     );
-
-    expect(result).toBe("handler-output");
   });
 
-  it("should handle access_denied error gracefully", async () => {
-    // Arrange
-    (pollDeviceAuthorizationGrant as any).mockRejectedValue({
-      error: "access_denied",
-      error_description: "User denied access",
+  describe("constructor", () => {
+    it("should initialize with explicit params", () => {
+      const auth = new DeviceAuthorizerBase(
+        {
+          domain: "custom.auth0.com",
+          clientId: "custom-client",
+        },
+        mockParams
+      );
+      expect(auth).toBeInstanceOf(DeviceAuthorizerBase);
     });
 
-    console.error = vi.fn();
-
-    const authorizer = DeviceAuthorizer.create();
-
-    const mockHandler: ToolWithAuthHandler<any, any, any> = vi.fn();
-
-    // Act
-    const deviceFlow = authorizer(mockOptions);
-
-    // Assert
-    await expect(deviceFlow(mockHandler)({}, undefined)).resolves.toBe(
-      "Access denied."
-    );
-  });
-
-  it("should handle expired_token error gracefully", async () => {
-    // Arrange
-    (pollDeviceAuthorizationGrant as any).mockRejectedValue({
-      error: "expired_token",
-      error_description: "The device flow has expired",
+    it("should fallback to environment variables", () => {
+      process.env.AUTH0_DOMAIN = "env.auth0.com";
+      process.env.AUTH0_CLIENT_ID = "env-client";
+      const auth = new DeviceAuthorizerBase({}, mockParams);
+      expect(auth).toBeInstanceOf(DeviceAuthorizerBase);
     });
-
-    console.error = vi.fn();
-
-    const authorizer = DeviceAuthorizer.create();
-
-    const mockHandler: ToolWithAuthHandler<any, any, any> = vi.fn();
-
-    // Act
-    const deviceFlow = authorizer(mockOptions);
-
-    // Assert
-    await expect(deviceFlow(mockHandler)({}, undefined)).resolves.toBe(
-      "Access denied."
-    );
   });
 
-  it("should handle unknown errors gracefully", async () => {
-    // Arrange
-    (pollDeviceAuthorizationGrant as any).mockRejectedValue({
-      error: "server_error",
-      error_description: "An unknown server error occurred",
-    });
-
-    console.error = vi.fn();
-
-    const authorizer = DeviceAuthorizer.create();
-
-    const mockHandler: ToolWithAuthHandler<any, any, any> = vi.fn();
-
-    // Act
-    const deviceFlow = authorizer(mockOptions);
-
-    // Assert
-    await expect(deviceFlow(mockHandler)({}, undefined)).resolves.toBe(
-      "Access denied."
-    );
-  });
-
-  it("should throw an error if tokens are not obtained", async () => {
-    // Arrange
-    (pollDeviceAuthorizationGrant as any).mockResolvedValue(null);
-
-    const authorizer = DeviceAuthorizer.create();
-
-    const mockHandler: ToolWithAuthHandler<any, any, any> = vi.fn();
-
-    // Act
-    const deviceFlow = authorizer(mockOptions);
-
-    // Assert
-    await expect(deviceFlow(mockHandler)({}, undefined)).resolves.toBe(
-      "Access denied."
-    );
-  });
-
-  it("should handle missing id_token gracefully", async () => {
-    // Arrange
-    const tokensWithoutIdToken = {
-      token_type: "bearer",
-      access_token: "access-token-123",
-      // id_token is missing
+  /**
+   * During the first execute call the getAuthorizationResponse should return undefined
+   * and the backchannel.authorize should be called.
+   *
+   * As the request is still pending the protected function will throw an
+   * AuthorizationPendingInterrupt error.
+   */
+  describe("first call", () => {
+    const startResponse: DeviceAuthorizationResponse = {
+      device_code: "test-id",
+      user_code: "test-user-code",
+      verification_uri: "test-verification-uri",
+      verification_uri_complete: "test-verification-uri-complete",
+      expires_in: 3600,
+      interval: 5,
     };
-    (pollDeviceAuthorizationGrant as any).mockResolvedValue(
-      tokensWithoutIdToken
-    );
-
-    const authorizer = DeviceAuthorizer.create();
-
-    const mockHandler: ToolWithAuthHandler<any, any, any> = vi
-      .fn()
-      .mockResolvedValue("handler-output");
-
-    // Act
-    const deviceFlow = authorizer(mockOptions);
-    const result = await deviceFlow(mockHandler)({}, undefined);
-
-    // Assert
-    expect(mockHandler).toHaveBeenCalledWith(
-      {
-        accessToken: tokensWithoutIdToken.access_token,
-        claims: {}, // Since id_token is missing
-      },
-      {},
-      undefined
-    );
-
-    // Verify the final result
-    expect(result).toBe("handler-output");
-  });
-
-  it("should allow overriding clientId and domain via parameters", () => {
-    // Arrange
-    const customDomain = "custom.auth0.com";
-    const customClientId = "custom-client-id";
-
-    // Act
-    const authorizer = DeviceAuthorizer.create({
-      domain: customDomain,
-      clientId: customClientId,
+    const execute = vi.fn();
+    let err: Error;
+    beforeEach(async () => {
+      (initiateDeviceAuthorization as Mock).mockResolvedValue(startResponse);
+      (fetch as Mock).mockResolvedValue({
+        ok: false,
+        headers: new Map([["content-type", ["application/json"]]]),
+        json: () =>
+          Promise.resolve({
+            error: "authorization_pending",
+            error_description: "The authorization request is still pending",
+          }),
+      });
+      try {
+        await authorizer.protect(contextGetter, execute)("test-context");
+      } catch (er) {
+        err = er as Error;
+      }
     });
 
-    // Assert
-    expect(authorizer).toBeInstanceOf(Function);
+    it("should start the backchannel authorization", async () => {
+      expect(initiateDeviceAuthorization).toHaveBeenCalled();
+    });
+
+    it("should store the authorization response", async () => {
+      expect(mockParams.store.put).toHaveBeenCalledOnce();
+      expect((mockParams.store.put as Mock).mock.calls[0]).toEqual([
+        [
+          //The instance id
+          expect.any(String),
+          "AuthResponses",
+          "Threads",
+          "test-thread-id",
+          "Tools",
+          "test-tool-name",
+          "ToolCalls",
+          "test-tool-call-id",
+        ],
+        "authResponse",
+        {
+          deviceCode: "test-id",
+          expiresIn: 3600,
+          requestedAt: expect.any(Number),
+          interval: 5,
+          userCode: "test-user-code",
+          verificationUri: "test-verification-uri",
+          verificationUriComplete: "test-verification-uri-complete",
+        },
+        {
+          expiresIn: 3600000,
+        },
+      ]);
+    });
+
+    it('should throw "AuthorizationPendingInterrupt" error', async () => {
+      expect(err).toBeInstanceOf(
+        DeviceInterrupts.AuthorizationPendingInterrupt
+      );
+    });
+  });
+
+  /**
+   * During the succesive calls, and before the request is expired
+   * and the user taken an action
+   *
+   * As the request is still pending the protected function will throw an
+   * AuthorizationPendingInterrupt error.
+   */
+  describe("authorization pending", () => {
+    const execute = vi.fn();
+    let err: Error;
+
+    beforeEach(async () => {
+      (mockParams.store.get as Mock).mockImplementation((ns, key) =>
+        key === "authResponse"
+          ? {
+              deviceCode: "test-id",
+              expiresIn: 3600,
+              interval: 5,
+              userCode: "test-user-code",
+              verificationUri: "test-verification-uri",
+              verificationUriComplete: "test-verification-uri-complete",
+            }
+          : undefined
+      );
+      (fetch as Mock).mockResolvedValue({
+        ok: false,
+        headers: new Map([["content-type", ["application/json"]]]),
+        json: () =>
+          Promise.resolve({
+            error: "authorization_pending",
+            error_description: "The authorization request is still pending",
+          }),
+      });
+      try {
+        await authorizer.protect(contextGetter, execute)("test-context");
+      } catch (er) {
+        err = er as Error;
+      }
+    });
+
+    it("should not initiate the device authorization flow", async () => {
+      expect(initiateDeviceAuthorization).not.toHaveBeenCalled();
+    });
+
+    it("should not store the authorization response", async () => {
+      expect(mockParams.store.put).not.toHaveBeenCalledOnce();
+    });
+
+    it('should throw "AuthorizationPendingInterrupt" error', async () => {
+      expect(err).toBeInstanceOf(
+        DeviceInterrupts.AuthorizationPendingInterrupt
+      );
+    });
+  });
+
+  /**
+   * Once the request is approved the oauth/token call
+   * should return the token.
+   *
+   * The protected function should be executed allowing the tool
+   * to access the credentials
+   */
+  describe("authorization approved", () => {
+    const execute = vi.fn();
+    let err: Error;
+    let credentials: TokenSet | undefined;
+
+    beforeEach(async () => {
+      (mockParams.store.get as Mock).mockImplementation((ns, key) =>
+        key === "authResponse"
+          ? {
+              deviceCode: "test-id",
+              expiresIn: 3600,
+              interval: 5,
+              userCode: "test-user-code",
+              verificationUri: "test-verification-uri",
+              verificationUriComplete: "test-verification-uri-complete",
+            }
+          : undefined
+      );
+      (fetch as Mock).mockResolvedValue({
+        ok: true,
+        headers: new Map([["content-type", ["application/json"]]]),
+        json: () =>
+          Promise.resolve({
+            scope: "read:users",
+            access_token: "test-access-token",
+            token_type: "Bearer",
+            expires_in: 3600,
+          }),
+      });
+      try {
+        execute.mockImplementation(() => {
+          credentials = getDeviceAuthorizerCredentials();
+        });
+        await authorizer.protect(contextGetter, execute)("test-context");
+      } catch (er) {
+        err = er as Error;
+      }
+    });
+
+    it("should not initiate the device authorization flow", async () => {
+      expect(initiateDeviceAuthorization).not.toHaveBeenCalled();
+    });
+
+    it("should clear the auth response from the store", async () => {
+      expect(mockParams.store.delete).toHaveBeenCalledOnce();
+      expect((mockParams.store.delete as Mock).mock.calls[0]).toEqual([
+        [
+          expect.any(String),
+          "AuthResponses",
+          "Threads",
+          "test-thread-id",
+          "Tools",
+          "test-tool-name",
+          "ToolCalls",
+          "test-tool-call-id",
+        ],
+        "authResponse",
+      ]);
+    });
+
+    it("should store the credentials in the store", async () => {
+      expect(mockParams.store.put).toHaveBeenCalledOnce();
+      expect((mockParams.store.put as Mock).mock.calls[0]).toEqual([
+        [expect.any(String), "Credentials", "Threads", "test-thread-id"],
+        "credential",
+        {
+          accessToken: "test-access-token",
+          expiresIn: 3600,
+          idToken: undefined,
+          refreshToken: undefined,
+          scopes: ["read:users"],
+          tokenType: "Bearer",
+        },
+        {
+          expiresIn: 3600000,
+        },
+      ]);
+    });
+
+    it("should not interrupt error", async () => {
+      expect(err).toBeUndefined();
+    });
+
+    it("should execute the protected function", async () => {
+      expect(execute).toHaveBeenCalled();
+    });
+
+    it("should pass the credentials to the protected function", async () => {
+      expect(credentials).toMatchInlineSnapshot(`
+        {
+          "accessToken": "test-access-token",
+          "expiresIn": 3600,
+          "idToken": undefined,
+          "refreshToken": undefined,
+          "scopes": [
+            "read:users",
+          ],
+          "tokenType": "Bearer",
+        }
+      `);
+    });
+  });
+
+  /**
+   * Once the request is approved the oauth/token call
+   * should return the token.
+   *
+   * The protected function should be executed allowing the tool
+   * to access the credentials.
+   *
+   * If using a credential store the creds should be stored.
+   */
+  describe("when credentials already stored in the credentialsStore", () => {
+    const execute = vi.fn();
+    let err: Error;
+    let credentials: TokenSet | undefined;
+
+    beforeEach(async () => {
+      (mockParams.store.get as Mock).mockImplementation((ns, key) =>
+        key === "credential"
+          ? {
+              accessToken: {
+                type: "Bearer",
+                value: "test-access-token",
+              },
+              expires_in: 3600,
+              scope: "read:users",
+            }
+          : undefined
+      );
+
+      try {
+        execute.mockImplementation(() => {
+          credentials = getDeviceAuthorizerCredentials();
+        });
+        await authorizer.protect(contextGetter, execute)("test-context");
+      } catch (er) {
+        err = er as Error;
+      }
+    });
+
+    it("should not initiate the device authorization flow", async () => {
+      expect(initiateDeviceAuthorization).not.toHaveBeenCalled();
+    });
+
+    it("should not clear the auth response from the store", async () => {
+      expect(mockParams.store.delete).not.toHaveBeenCalledOnce();
+    });
+
+    it("should not interrupt error", async () => {
+      expect(err).toBeUndefined();
+    });
+
+    it("should execute the protected function", async () => {
+      expect(execute).toHaveBeenCalled();
+    });
+
+    it("should not trigger any put in the store", async () => {
+      expect(mockParams.store.put).not.toHaveBeenCalled();
+    });
+
+    it("should pass the credentials to the protected function", async () => {
+      expect(credentials).toMatchInlineSnapshot(`
+        {
+          "accessToken": {
+            "type": "Bearer",
+            "value": "test-access-token",
+          },
+          "expires_in": 3600,
+          "scope": "read:users",
+        }
+      `);
+    });
   });
 });

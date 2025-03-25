@@ -1,56 +1,61 @@
 import { Tool } from "ai";
-import { AuthenticationClient, AuthenticationClientOptions } from "auth0";
+
+import { MemoryStore, Store, SubStore } from "@auth0/ai/stores";
 
 import { CIBAAuthorizer } from "./CIBA";
+import { DeviceAuthorizer } from "./Device";
 import { FederatedConnectionAuthorizer } from "./FederatedConnections";
 import { FGA_AI } from "./FGA_AI";
 
-type AuthorizerParams = Partial<
-  Pick<AuthenticationClientOptions, "domain" | "clientSecret" | "clientId">
+import type { AuthorizerParams } from "@auth0/ai";
+type ToolWrapper = ReturnType<FederatedConnectionAuthorizer["authorizer"]>;
+type FederatedConnectionParams = Omit<
+  ConstructorParameters<typeof FederatedConnectionAuthorizer>[1],
+  "store"
 >;
 
-type ToolWrapper = ReturnType<FederatedConnectionAuthorizer["authorizer"]>;
-type FederatedConnectionParams = ConstructorParameters<
-  typeof FederatedConnectionAuthorizer
->[1];
-type CIBAParams = ConstructorParameters<typeof CIBAAuthorizer>[1];
+export type CIBAParams = Omit<
+  ConstructorParameters<typeof CIBAAuthorizer>[1],
+  "store"
+>;
+
+export type DeviceParams = Omit<
+  ConstructorParameters<typeof DeviceAuthorizer>[1],
+  "store"
+>;
+
+type Auth0AIParams = {
+  auth0?: Partial<AuthorizerParams>;
+  store?: Store;
+};
 
 export class Auth0AI {
-  readonly domain: string;
-  readonly clientId: string;
-  readonly clientSecret: string;
-  readonly authClient: AuthenticationClient;
+  private config: Partial<AuthorizerParams>;
+  private store: SubStore;
 
-  constructor(params: AuthorizerParams = {}) {
-    const domain = params.domain || process.env.AUTH0_DOMAIN;
-    const clientId = params.clientId || process.env.AUTH0_CLIENT_ID;
-    const clientSecret = params.clientSecret || process.env.AUTH0_CLIENT_SECRET;
-    if (!domain) {
-      throw new Error("No domain provided");
-    }
-    if (!clientId) {
-      throw new Error("No clientId provided");
-    }
-    if (!clientSecret) {
-      throw new Error("No clientSecret provided");
-    }
-    this.domain = domain;
-    this.clientId = clientId;
-    this.clientSecret = clientSecret;
-
-    this.authClient = new AuthenticationClient({
-      domain: this.domain,
-      clientId: this.clientId,
-      clientSecret: this.clientSecret,
-    });
+  constructor({ auth0, store }: Auth0AIParams = {}) {
+    this.config = auth0 ?? {};
+    this.store = new SubStore(store ?? new MemoryStore());
   }
 
-  withCIBA(params: CIBAParams): ToolWrapper;
+  /**
+   * Builds a CIBA Authorizer for a tool.
+   * @param params - The CIBA authorizer options.
+   * @returns - The authorizer.
+   */
+  withAsyncUserConfirmation(params: CIBAParams): ToolWrapper;
 
-  withCIBA(params: CIBAParams, tool: Tool): Tool;
+  /**
+   * Protects a tool with the CIBA authorizer.
+   * @param params - The CIBA authorizer options.
+   * @param tool - The tool to protect.
+   * @returns The protected tool.
+   */
+  withAsyncUserConfirmation(params: CIBAParams, tool: Tool): Tool;
 
-  withCIBA(params: CIBAParams, tool?: Tool) {
-    const fc = new CIBAAuthorizer(this, params);
+  withAsyncUserConfirmation(params: CIBAParams, tool?: Tool) {
+    const cibaStore = this.store.createSubStore("AUTH0_AI_CIBA");
+    const fc = new CIBAAuthorizer(this.config, { store: cibaStore, ...params });
     const authorizer = fc.authorizer();
     if (tool) {
       return authorizer(tool);
@@ -58,12 +63,58 @@ export class Auth0AI {
     return authorizer;
   }
 
+  /**
+   * Builds a Federated Connection authorizer for a tool.
+   *
+   * @param params - The Federated Connections authorizer options.
+   * @returns The authorizer.
+   */
   withTokenForConnection(params: FederatedConnectionParams): ToolWrapper;
 
+  /**
+   * Protects a tool execution with the Federated Connection authorizer.
+   *
+   * @param params - The Federated Connections authorizer options.
+   * @param tool - The tool to protect.
+   * @returns The protected tool.
+   */
   withTokenForConnection(params: FederatedConnectionParams, tool: Tool): Tool;
 
   withTokenForConnection(params: FederatedConnectionParams, tool?: Tool) {
-    const fc = new FederatedConnectionAuthorizer(this, params);
+    const store = this.store.createSubStore("AUTH0_AI_FEDERATED_CONNECTION");
+    const fc = new FederatedConnectionAuthorizer(this.config, {
+      store,
+      ...params,
+    });
+    const authorizer = fc.authorizer();
+    if (tool) {
+      return authorizer(tool);
+    }
+    return authorizer;
+  }
+
+  /**
+   * Builds a Device Flow Authorizer for a tool.
+   *
+   * @param params - The Device Flow Authorizer options.
+   * @returns - The authorizer.
+   */
+  withDeviceAuthorizationFlow(params: DeviceParams): ToolWrapper;
+
+  /**
+   * Protects a tool with the Device Flow Authorizer.
+   * @param params - The Device Flow Authorizer options.
+   * @param tool - The tool to protect.
+   * @returns The protected tool.
+   */
+  withDeviceAuthorizationFlow(params: DeviceParams, tool: Tool): Tool;
+
+  withDeviceAuthorizationFlow(params: DeviceParams, tool?: Tool) {
+    const deviceStore = this.store.createSubStore("AUTH0_AI_DEVICE_FLOW");
+    const fc = new DeviceAuthorizer(this.config, {
+      store: deviceStore,
+      ...params,
+    });
     const authorizer = fc.authorizer();
     if (tool) {
       return authorizer(tool);

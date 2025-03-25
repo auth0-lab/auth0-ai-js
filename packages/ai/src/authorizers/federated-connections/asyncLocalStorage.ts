@@ -1,15 +1,18 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 
-export type AsyncStorageValue<TContext> = {
+import { TokenSet } from "../../credentials";
+import { ToolCallContext } from "../context";
+
+export type AsyncStorageValue = {
   /**
    * The Federated Connection access token.
    */
-  accessToken?: string;
+  credentials?: TokenSet;
 
   /**
    * The tool execution context.
    */
-  context: TContext;
+  context: ToolCallContext;
 
   /**
    * The federated connection name.
@@ -27,16 +30,14 @@ export type AsyncStorageValue<TContext> = {
   currentScopes?: string[];
 };
 
-export const asyncLocalStorage = new AsyncLocalStorage<
-  AsyncStorageValue<any>
->();
+export const asyncLocalStorage = new AsyncLocalStorage<AsyncStorageValue>();
 
-export const getAccessTokenForConnection = () => {
+export const getCredentialsForConnection = () => {
   const store = asyncLocalStorage.getStore();
   if (typeof store === "undefined") {
     throw new Error(
-      "The tool must be wrapped with the withFederatedConnections function."
+      "The tool must be wrapped with the withTokenForConnections function."
     );
   }
-  return store?.accessToken;
+  return store?.credentials;
 };

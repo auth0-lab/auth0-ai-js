@@ -1,44 +1,66 @@
 # Auth0 AI for the [AI SDK](https://sdk.vercel.ai/)
 
-`@auth0/ai-vercel` is an SDK for building secure AI-powered applications using [Auth0](https://www.auth0.ai/), [Okta FGA](https://docs.fga.dev/) and [AI SDK](https://sdk.vercel.ai/).
+`@auth0/ai-vercel` is an SDK for building secure AI-powered applications using [Auth0](https://www.auth0.ai/), [Okta FGA](https://docs.fga.dev/), and [AI SDK](https://sdk.vercel.ai/).
+
+## Features
+
+- **Authorization for RAG**: Securely filter documents using Okta FGA as a [retriever](https://js.langchain.com/docs/concepts/retrievers/) for RAG applications. This smart retriever performs efficient batch access control checks, ensuring users only see documents they have permission to access.
+
+- **Tool Authorization with FGA**: Protect AI tool execution with fine-grained authorization policies through Okta FGA integration, controlling which users can invoke specific tools based on custom authorization rules.
+
+- **Client Initiated Backchannel Authentication (CIBA)**: Implement secure, out-of-band user authorization for sensitive AI operations using the [CIBA standard](https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html), enabling user confirmation without disrupting the main interaction flow.
+
+- **Federated API Access**: Seamlessly connect to third-party services by leveraging Auth0's Tokens For APIs feature, allowing AI tools to access users' connected services (like Google, Microsoft, etc.) with proper authorization.
+
+- **Device Authorization Flow**: Support headless and input-constrained environments with the [Device Authorization Flow](https://auth0.com/docs/get-started/authentication-and-authorization-flow/device-authorization-flow), enabling secure user authentication without direct input capabilities.
+
 
 ## Install
 
 > [!WARNING]
-> `@auth0/ai-vercel` is currently under development and it is not intended to be used in production, and therefore has no official support.
+> `@auth0/ai-vercel` is currently **under heavy development**. We strictly follow [Semantic Versioning (SemVer)](https://semver.org/), meaning all **breaking changes will only occur in major versions**. However, please note that during this early phase, **major versions may be released frequently** as the API evolves. We recommend locking versions when using this in production.
 
-```
-$ npm install @auth0/ai-vercel
+```bash
+npm install @auth0/ai @auth0/ai-vercel
 ```
 
-## Usage
+## Initialization
 
 Initialize the SDK with your Auth0 credentials:
 
 ```javascript
-import { Auth0AI } from "@auth0/ai-vercel";
+import { Auth0AI, setAIContext } from "@auth0/ai-vercel";
 
 const auth0AI = new Auth0AI({
-  domain: "YOUR_AUTH0_DOMAIN",
-  clientId: "YOUR_AUTH0_CLIENT_ID",
-  clientSecret: "YOUR_AUTH0_CLIENT_SECRET",
+  // Alternatively, you can use the `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, and `AUTH0_CLIENT_SECRET`
+  // environment variables.
+  auth0: {
+    domain: "YOUR_AUTH0_DOMAIN",
+    clientId: "YOUR_AUTH0_CLIENT_ID",
+    clientSecret: "YOUR_AUTH0_CLIENT_SECRET",
+  },
+  // store: new MemoryStore(), // Optional: Use a custom store
 });
-
-// Alternatively you can use the `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID` and `AUTH0_CLIENT_SECRET`
-// environment variables.
 ```
 
-## Federated Connections
+Set the ThreadID:
 
-The federated connections feature of Auth0 can be used to progresively request scopes in a secure way.
-The `Auth0AI` class provides a method to request scopes for a given connection.
+```javascript
+setAIContext({
+  threadID: "...",
+});
+```
+
+## Calling APIs
+
+The "Tokens for API" feature of Auth0 allows you to exchange refresh tokens for access tokens for third-party APIs. This is useful when you want to use a federated connection (like Google, Facebook, etc.) to authenticate users and then use the access token to call the API on behalf of the user.
 
 First initialize the Federated Connection Authorizer as follows:
 
 ```javascript
 import { auth0 } from "./auth0";
 
-export const withTokenForGoogleConnection = auth0AI.withTokenForConnection({
+export const withGoogleAccess = auth0AI.withTokenForConnection({
   // A function to retrieve the refresh token of the context.
   refreshToken: async () => {
     const session = await auth0.getSession();
@@ -52,15 +74,15 @@ export const withTokenForGoogleConnection = auth0AI.withTokenForConnection({
 });
 ```
 
-Then use the `withTokenForGoogleConnection` to wrap the tool and use `getAccessTokenForConnection` from the SDK to get the access token.
+Then use the `withGoogleAccess` to wrap the tool and use `getAccessTokenForConnection` from the SDK to get the access token.
 
 ```javascript
-import {
-  getAccessTokenForConnection,
-  FederatedConnectionInterrupt,
-} from "@auth0/ai-vercel";
+import { tool } from "ai";
+import { getAccessTokenForConnection } from "@auth0/ai-vercel";
+import { FederatedConnectionError } from "@auth0/ai/interrupts";
+import { addHours } from "date-fns";
 
-export const checkUsersCalendar = withTokenForGoogleConnection(
+export const checkUsersCalendar = withGoogleAccess(
   tool({
     description:
       "Check user availability on a given date time on their calendar",
@@ -68,7 +90,7 @@ export const checkUsersCalendar = withTokenForGoogleConnection(
       date: z.coerce.date(),
     }),
     execute: async ({ date }) => {
-      const accessToken = getAccessTokenForConnection();
+      const { accessToken } = getAccessTokenForConnection();
       const url = "https://www.googleapis.com/calendar/v3/freeBusy";
       const body = JSON.stringify({
         timeMin: date,
@@ -88,7 +110,7 @@ export const checkUsersCalendar = withTokenForGoogleConnection(
 
       if (!response.ok) {
         if (response.status === 401) {
-          throw new FederatedConnectionInterrupt(
+          throw new FederatedConnectionError(
             `Authorization required to access the Federated Connection`
           );
         }
@@ -106,44 +128,31 @@ export const checkUsersCalendar = withTokenForGoogleConnection(
 );
 ```
 
-## CIBA: Client Initiated Backchannel Authentication
+## CIBA: Client-Initiated Backchannel Authentication
+
+CIBA (Client-Initiated Backchannel Authentication) enables secure, user-in-the-loop authentication for sensitive operations. This flow allows you to request user authorization asynchronously and resume execution once authorization is granted.
 
 ```javascript
 import { auth0 } from "./auth0";
 
-export const buyStockAuthorizer = auth0AI.withCIBA({
-  //Same parameters passed to the tool execute function
+export const buyStockAuthorizer = auth0AI.withAsyncUserConfirmation({
+  // Same parameters passed to the tool execute function
   userID: (params: { userID: string }, ctx) => params.userID,
 
-  //The message the user will see on the notification
+  // The message the user will see on the notification
   bindingMessage: "Confirm the purchase",
 
-  //The scopes and audience to request
+  // The scopes and audience to request
   scope: "openid stock:trade",
   audience: "http://localhost:8081",
-
-  //Store the authorization response
-  storeAuthorizationResponse: async (
-    response: AuthorizeResponse,
-    { tradeID }: { tradeID: string }
-  ) => {
-    // eg
-    // await db.set(`auth_response:${tradeID}`, JSON.stringify(response));
-  },
-
-  //Retrieve the authorization response
-  getAuthorizationResponse: async ({ tradeID }: { tradeID: string }) => {
-    //eg
-    // return db.get(`auth_response:${tradeID}`);
-  },
 });
 ```
 
 Then wrap the tool as follows:
 
-```js
+```javascript
 export const purchaseStock = buyStockAuthorizer({
-  description: "Execute an stock purchase given stock ticker and quantity",
+  description: "Execute a stock purchase given stock ticker and quantity",
   parameters: z.object({
     tradeID: z
       .string()
@@ -164,25 +173,72 @@ export const purchaseStock = buyStockAuthorizer({
     ticker,
     qty,
   }: {
-    userID: string,
-    ticker: string,
-    qty: number,
+    userID: string;
+    ticker: string;
+    qty: number;
   }): Promise<string> => {
     const credentials = getCIBACredentials();
-    //use credentials.accessToken to call the stock API.
+    // Use credentials.accessToken to call the stock API.
     return `Just bought ${qty} shares of ${ticker} for ${userID}`;
   },
 });
 ```
 
+## Device Flow Authorizer
+
+The Device Flow Authorizer enables secure, user-in-the-loop authentication for devices or tools that cannot directly authenticate users. It uses the OAuth 2.0 Device Authorization Grant to request user authorization and resume execution once authorization is granted.
+
+```javascript
+import { auth0 } from "./auth0";
+
+export const deviceFlowAuthorizer = auth0AI.withDeviceAuthorizationFlow({
+  // The scopes and audience to request
+  scopes: ["read:data", "write:data"],
+  audience: "https://api.example.com",
+});
+```
+
+Then wrap the tool as follows:
+
+```javascript
+import { tool } from "ai";
+import { z } from "zod";
+import { getDeviceAuthorizerCredentials } from "@auth0/ai-vercel";
+
+export const fetchData = deviceFlowAuthorizer(
+  tool({
+    description: "Fetch data from a secure API",
+    parameters: z.object({
+      resourceID: z.string().describe("The ID of the resource to fetch"),
+    }),
+    execute: async ({ resourceID }): Promise<any> => {
+      const credentials = getDeviceAuthorizerCredentials();
+      const response = await fetch(`https://api.example.com/resource/${resourceID}`, {
+        headers: {
+          Authorization: `Bearer ${credentials.accessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch resource: ${response.statusText}`);
+      }
+
+      return await response.json();
+    },
+  })
+);
+```
+
+This flow is particularly useful for devices or tools that cannot directly authenticate users, such as IoT devices or CLI tools.
+
 ## FGA
 
 ```javascript
-import { FGA_AI } from "@auth0/ai-vercel";
+import { Auth0AI } from "@auth0/ai-vercel";
 
-const auth0AI = new FGA_AI({
+const auth0AI = new Auth0AI.FGA({
   apiScheme,
-  apiHost
+  apiHost,
   storeId,
   credentials: {
     method: CredentialsMethod.ClientCredentials,
@@ -198,7 +254,7 @@ const auth0AI = new FGA_AI({
 
 Then initialize the tool wrapper:
 
-```js
+```javascript
 const authorizedTool = fgaAI.withFGA(
   {
     buildQuery: async ({ userID, doc }) => ({
@@ -222,7 +278,7 @@ const authorizer = fgaAI.withFGA({
 const authorizedTool = authorizer(myAITool);
 ```
 
-Note: the parameter gives to the `buildQuery` function are the same provided to the tool's `execute` function.
+Note: the parameters given to the `buildQuery` function are the same provided to the tool's `execute` function.
 
 ## Interruptions
 
