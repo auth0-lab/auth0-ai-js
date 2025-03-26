@@ -1,11 +1,6 @@
-import z from "zod";
+import { ToolWrapper } from "src/util/types";
 
 import { FGAAuthorizerBase } from "@auth0/ai/FGA";
-
-export type GenKitToolHandler<
-  I extends z.ZodTypeAny,
-  O extends z.ZodTypeAny,
-> = (input: z.infer<I>) => Promise<z.infer<O>>;
 
 /**
  * The FGAAuthorizer class implements the FGA authorization control for a Genkit AI tool.
@@ -21,9 +16,9 @@ export class FGAAuthorizer extends FGAAuthorizerBase<[any, any]> {
    *
    * @returns A tool authorizer.
    */
-  authorizer() {
-    return <T extends (...args: [any, any]) => any>(fn: T): T => {
-      return this.protect(fn) as T;
-    };
+  authorizer(): ToolWrapper {
+    return ((fn) => {
+      return this.protect(fn);
+    }) as ToolWrapper;
   }
 }

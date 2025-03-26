@@ -1,21 +1,40 @@
-import { Genkit, z } from "genkit";
+import { z } from "genkit";
+import { GenkitBeta } from "genkit/beta";
 
-import { AccessDeniedError, CIBAAuthorizer } from "@auth0/ai";
+import { AccessDeniedError } from "@auth0/ai";
+import { Auth0AI, getCIBACredentials } from "@auth0/ai-genkit";
 
 import { Context } from "../context";
 
-const ciba = CIBAAuthorizer.create();
+const auth0AI = new Auth0AI();
 
-export function buyTool(ai: Genkit) {
-  const useCiba = ciba({
+export function buyTool(ai: GenkitBeta) {
+  const useCiba = auth0AI.withCIBA({
     userId: async () => {
       const data = ai.currentSession<Context>();
       return data.state?.userId!;
     },
-    bindingMessage: async ({ ticker, qty }) =>
-      `Do you want to buy ${qty} shares of ${ticker}`,
-    scope: "openid stock:trade",
+
+    bindingMessage: async (_: { ticker: string; qty: number }) => {
+      return `Do you want to buy ${_.qty} shares of ${_.ticker}`;
+    },
+
+    scopes: ["openid", "stock:trade"],
+
     audience: process.env["AUDIENCE"]!,
+
+    onAuthorizationRequest: "block",
+
+    // If `onError` is not provided, Auth0-AI will respond with a generic error message.
+    onUnauthorized: async (e: Error) => {
+      console.log("error", e);
+      // Custom error handling.
+      if (e instanceof AccessDeniedError) {
+        return "The user has deny the request";
+      }
+
+      return e.message;
+    },
   });
 
   return ai.defineTool(
@@ -28,38 +47,30 @@ export function buyTool(ai: Genkit) {
       }),
       outputSchema: z.string(),
     },
-    useCiba(
-      async ({ accessToken }, { ticker, qty }) => {
-        const headers = {
-          Authorization: "",
-          "Content-Type": "application/json",
-        };
-        const body = {
-          ticker: ticker,
-          qty: qty,
-        };
+    useCiba(async ({ ticker, qty }) => {
+      const headers = {
+        Authorization: "",
+        "Content-Type": "application/json",
+      };
+      const body = {
+        ticker: ticker,
+        qty: qty,
+      };
 
-        if (accessToken) {
-          headers["Authorization"] = "Bearer " + accessToken;
-        }
+      const credentials = getCIBACredentials();
+      const accessToken = credentials?.accessToken?.value;
 
-        const response = await fetch(process.env["API_URL"]!, {
-          method: "POST",
-          headers: headers,
-          body: JSON.stringify(body),
-        });
-
-        return response.statusText;
-      },
-      // If `onError` is not provided, Auth0-AI will respond with a generic error message.
-      async (e: Error) => {
-        // Custom error handling.
-        if (e instanceof AccessDeniedError) {
-          return "The user has deny the request";
-        }
-
-        return e.message;
+      if (accessToken) {
+        headers["Authorization"] = "Bearer " + accessToken;
       }
-    )
+
+      const response = await fetch(process.env["API_URL"]!, {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify(body),
+      });
+
+      return response.statusText;
+    })
   );
 }

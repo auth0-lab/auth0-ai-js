@@ -4,8 +4,6 @@ This example demonstrates how to combine [LlamaIndex](https://ts.llamaindex.ai/)
 
 ## Getting Started
 
-## Getting Started
-
 ### Prerequisites
 
 - An OpenAI account and API key. You can create one [here](https://platform.openai.com).

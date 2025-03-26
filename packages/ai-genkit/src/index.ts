@@ -1,11 +1,3 @@
-import { FGA_AI } from "./FGA_AI";
-
+export { Auth0AI } from "./Auth0AI";
+export { getCIBACredentials } from "./CIBA";
 export { FGAReranker, auth0 } from "./FGA/fga-reranker";
-
-// references:
-// https://firebase.google.com/docs/genkit/auth
-// NOTE: This doesn't support "dynamic" negotiation with the API
-
-export class Auth0AI {
-  static FGA = FGA_AI;
-}

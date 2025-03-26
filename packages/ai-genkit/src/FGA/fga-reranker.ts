@@ -1,8 +1,8 @@
 import { Document, Genkit, z } from "genkit";
 import { GenkitPlugin, genkitPlugin } from "genkit/plugin";
 
+import { FGAClientParams, FGAFilter } from "@auth0/ai";
 import { ClientBatchCheckItem, ConsistencyPreference } from "@openfga/sdk";
-import { FGAFilter, FGAClientParams } from "@auth0/ai";
 
 export type FGARerankerCheckerFn = (doc: Document) => ClientBatchCheckItem;
 
