@@ -1,7 +1,7 @@
 import "dotenv/config";
 
 import Enquirer from "enquirer";
-import { genkit } from "genkit";
+import { genkit } from "genkit/beta";
 import { gpt4o, openAI } from "genkitx-openai";
 
 import { Context } from "./context";

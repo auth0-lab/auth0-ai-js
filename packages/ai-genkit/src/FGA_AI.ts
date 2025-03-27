@@ -1,12 +1,15 @@
+import { z } from "genkit";
+
 import { FGAAuthorizerBase } from "@auth0/ai/FGA";
 
 import { FGAAuthorizer } from "./FGA";
+import { ToolWrapper } from "./util/types";
+
+import type { ToolFn } from "@genkit-ai/ai/tool";
 
 type FGAAuthorizerParams = ConstructorParameters<typeof FGAAuthorizerBase>[0];
 type FGAParams = ConstructorParameters<typeof FGAAuthorizer>[1];
 
-type ToolFunc = (...args: [any, any]) => any;
-type ToolWrapper = <T extends ToolFunc>(t: T) => T;
 /**
  * A class for integrating Fine-Grained Authorization with AI tools.
  *
@@ -54,7 +57,10 @@ export class FGA_AI {
    * @param tool - The tool to protect.
    * @returns The protected tool.
    */
-  withFGA<T extends ToolFunc>(params: FGAParams, tool: T): T;
+  withFGA<T extends ToolFn<z.AnyZodObject, z.AnyZodObject>>(
+    params: FGAParams,
+    tool: T
+  ): T;
 
   /**
    *
@@ -64,7 +70,10 @@ export class FGA_AI {
    * @param tool - The tool function to protect.
    * @returns
    */
-  withFGA<T extends ToolFunc>(params: FGAParams, tool?: T): T | ToolWrapper {
+  withFGA<T extends ToolFn<z.AnyZodObject, z.AnyZodObject>>(
+    params: FGAParams,
+    tool?: T
+  ) {
     const fc = new FGAAuthorizer(this.fgaParams, params);
     const authorizer = fc.authorizer();
     if (tool) {

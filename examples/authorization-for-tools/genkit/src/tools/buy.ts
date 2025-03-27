@@ -1,4 +1,4 @@
-import { Genkit, z } from "genkit";
+import { GenkitBeta, z } from "genkit/beta";
 
 import { Auth0AI } from "@auth0/ai-genkit";
 
@@ -6,7 +6,7 @@ import { Context } from "../context";
 
 const auth0AI = new Auth0AI.FGA();
 
-export function buyTool(ai: Genkit) {
+export function buyTool(ai: GenkitBeta) {
   const useFGA = auth0AI.withFGA({
     buildQuery: async ({ ticker }) => {
       const data = ai.currentSession<Context>();
