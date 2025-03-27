@@ -19,7 +19,6 @@ export const errorSerializer = (errHandler?: errorHandler): errorHandler => {
   return (error: any) => {
     if (
       !(error instanceof ToolExecutionError) ||
-      error.cause ||
       !(error.cause instanceof Auth0Interrupt)
     ) {
       if (errHandler) {
