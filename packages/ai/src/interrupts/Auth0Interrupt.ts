@@ -54,6 +54,7 @@ export class Auth0Interrupt extends Error {
     interrupt: any
   ): interrupt is Auth0InterruptData<InstanceType<T>> {
     return (
+      interrupt &&
       interrupt.name === "AUTH0_AI_INTERRUPT" &&
       (typeof this.code === "undefined" || interrupt.code === this.code)
     );
