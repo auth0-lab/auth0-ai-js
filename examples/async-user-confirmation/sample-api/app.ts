@@ -16,9 +16,20 @@ const checkJwt = auth({
 
 app.post("/", checkJwt, requiredScopes(["stock:trade"]), (req, res) => {
   console.log("Received request to purchase stock");
-
   res.status(200).send({ message: "Stock purchase request received" });
 });
+
+app.get(
+  "/portfolio",
+  checkJwt,
+  requiredScopes(["portfolio:read"]),
+  (req, res) => {
+    res.json([
+      { ticker: "ATKO", quantity: 100, price: 100 },
+      { ticker: "ZEKO", quantity: 100, price: 100 },
+    ]);
+  }
+);
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);

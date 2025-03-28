@@ -26,7 +26,7 @@ export const buyStock = withCIBA(
     execute: async ({ userID, ticker, qty }, ctx): Promise<string> => {
       const credentials = getCIBACredentials();
       console.log(
-        `The token obtained with ciba is ${credentials?.accessToken?.value}`
+        `The token obtained with ciba is ${credentials?.accessToken}`
       );
       return `Just bought ${qty} shares of ${ticker} for ${userID}`;
     },

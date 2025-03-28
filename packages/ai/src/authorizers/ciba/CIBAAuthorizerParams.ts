@@ -1,8 +1,8 @@
 import { CIBAInterrupt } from "../../interrupts";
 import { AuthorizerToolParameter } from "../../parameters";
-import { CIBAAuthorizationRequest } from "./CIBAAuthorizationRequest";
-
-export type OnAuthorizationRequest = "block" | "interrupt";
+import { Store } from "../../stores";
+import { AuthContext } from "../context";
+import { OnAuthorizationRequest } from "../types";
 
 export type CIBAAuthorizerParams<ToolExecuteArgs extends any[]> = {
   /**
@@ -44,6 +44,17 @@ export type CIBAAuthorizerParams<ToolExecuteArgs extends any[]> = {
   onAuthorizationRequest?: OnAuthorizationRequest;
 
   /**
+   * AuthContext defines the scope of credential sharing:
+   * - "tool-call": Credentials are valid only for a single invocation of the tool.
+   * - "tool": Credentials are shared across multiple calls to the same tool within the same thread.
+   * - "thread": Credentials are shared across all tools using the same authorizer within the current thread.
+   * - "agent": Credentials are shared globally across all threads and tools in the agent.
+   *
+   * @default "tool-call"
+   */
+  credentialsContext?: AuthContext;
+
+  /**
    *
    * Optional callback to generate a tool result when the invocation is not authorized.
    *
@@ -64,26 +75,9 @@ export type CIBAAuthorizerParams<ToolExecuteArgs extends any[]> = {
       onAuthorizationRequest?: "interrupt";
 
       /**
-       * Retrieves the authorization response data.
-       * @param args - The tool execution arguments.
-       * @returns The authorization response data.
-       * @remarks The data should be stored in a way that it can be retrieved later by the `storeAuthorizationResponse` parameter.
+       * An store used to temporarly store the authorization response data
+       * while the user is completing the authorization in another device.
        */
-      getAuthorizationResponse: AuthorizerToolParameter<
-        ToolExecuteArgs,
-        CIBAAuthorizationRequest | undefined
-      >;
-
-      /**
-       * Stores the authorization response data.
-       * @param request - The authorization response data.
-       * @param args - The tool execution arguments.
-       * @returns A promise that resolves when the data is stored.
-       * @remarks The data should be stored in a way that it can be retrieved later by the `getAuthorizationResponse` parameter.
-       **/
-      storeAuthorizationResponse: (
-        request: CIBAAuthorizationRequest | undefined,
-        ...args: ToolExecuteArgs
-      ) => Promise<void>;
+      store: Store;
     }
 );

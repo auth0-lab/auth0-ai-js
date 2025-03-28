@@ -239,7 +239,7 @@ export const buyTool = protectTool(
   tool(
     async ({ ticker, qty }) => {
       const credentials = getCIBACredentials();
-      const accessToken = credentials?.accessToken?.value;
+      const accessToken = credentials?.accessToken;
       fetch("http://yourapi.com/buy", {
         method: "POST",
         headers: {

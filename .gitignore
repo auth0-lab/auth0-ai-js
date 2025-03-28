@@ -44,3 +44,5 @@ __db_documents.json
 
 *.index
 bun.lock
+
+.store

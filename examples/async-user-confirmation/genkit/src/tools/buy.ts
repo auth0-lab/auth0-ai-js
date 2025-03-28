@@ -58,7 +58,7 @@ export function buyTool(ai: GenkitBeta) {
       };
 
       const credentials = getCIBACredentials();
-      const accessToken = credentials?.accessToken?.value;
+      const accessToken = credentials?.accessToken;
 
       if (accessToken) {
         headers["Authorization"] = "Bearer " + accessToken;
