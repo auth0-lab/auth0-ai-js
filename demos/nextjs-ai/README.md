@@ -12,8 +12,9 @@ This is a [Next.js](https://nextjs.org) application that implements [Auth0 AI](h
   - Set up a new Authorized Client from the `Settings` page and then follow the steps to setup the workspace below.
 - An **[Auth0](https://auth0.com)** account and the following settings and resources configured:
   - An application to initiate the authorization flow:
-    - **Application Type**: `Web Application`
-    - **Allowed Callback URL**: `http://localhost:5123/callback`
+    - **Application Type**: `Regular Web Application`
+    - **Allowed Callback URLs**: `http://localhost:3000/auth/callback`
+    - **Allowed Logout URLs**: `http://localhost:3000`
   - A **Google** social connection enabled for the application.
 
 ### Setup the workspace `.env` file
