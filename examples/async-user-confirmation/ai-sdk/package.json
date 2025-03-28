@@ -17,7 +17,7 @@
     "@ai-sdk/openai": "^1.1.9",
     "@auth0/ai": "*",
     "@auth0/ai-vercel": "*",
-    "ai": "^4.1.35",
+    "ai": "^4.2.8",
     "dotenv": "^16.4.7",
     "enquirer": "^2.4.1"
   }

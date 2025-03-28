@@ -21,9 +21,9 @@
   "dependencies": {
     "@auth0/ai-langchain": "@auth0/ai-langchain:*",
     "@langchain/core": "^0.3.19",
-    "@langchain/langgraph": "^0.2.46",
-    "@langchain/langgraph-cli": "^0.0.17",
-    "@langchain/langgraph-sdk": "^0.0.57",
+    "@langchain/langgraph": "^0.2.60",
+    "@langchain/langgraph-cli": "^0.0.18",
+    "@langchain/langgraph-sdk": "^0.0.61",
     "@langchain/openai": "^0.3.14",
     "body-parser": "^1.20.3",
     "dotenv": "^16.4.7",
