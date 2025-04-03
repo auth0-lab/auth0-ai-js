@@ -69,13 +69,13 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@eslint/js": "^9.18.0",
-    "@types/node": "^22.10.6",
+    "@types/node": "^20.17.30",
     "eslint": "^8.57.0",
     "globals": "^15.11.0",
-    "typedoc": "^0.27.6",
+    "typedoc": "^0.28.1",
     "typescript": "^5.7.3",
-    "typescript-eslint": "^8.20.0",
-    "vitest": "^3.0.9"
+    "typescript-eslint": "^8.29.0",
+    "vitest": "^3.1.1"
   },
   "dependencies": {
     "@openfga/sdk": "^0.8.0",
