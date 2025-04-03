@@ -2,6 +2,8 @@ import { JSONValue } from "llamaindex";
 
 import { FGAAuthorizerBase } from "@auth0/ai/FGA";
 
+import { createToolWrapper } from "../lib";
+
 export type LlamaToolHandler<T> = (input: T) => JSONValue | Promise<JSONValue>;
 
 /**
@@ -11,7 +13,9 @@ export type LlamaToolHandler<T> = (input: T) => JSONValue | Promise<JSONValue>;
  * that protects the tool execution using FGA.
  *
  */
-export class FGAAuthorizer extends FGAAuthorizerBase<[any, any]> {
+export class FGAAuthorizer extends FGAAuthorizerBase<
+  [any, object | undefined]
+> {
   /**
    *
    * Builds a tool authorizer that protects the tool execution with FGA.
@@ -19,8 +23,6 @@ export class FGAAuthorizer extends FGAAuthorizerBase<[any, any]> {
    * @returns A tool authorizer.
    */
   authorizer() {
-    return <T>(t: LlamaToolHandler<T>): LlamaToolHandler<T> => {
-      return this.protect(t) as LlamaToolHandler<T>;
-    };
+    return createToolWrapper(this.protect.bind(this));
   }
 }

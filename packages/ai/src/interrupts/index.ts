@@ -14,3 +14,6 @@ export {
   AuthorizationPollingInterrupt,
   InvalidGrantInterrupt,
 } from "./CIBAInterrupts";
+
+export * as DeviceInterrupts from "./DeviceInterrupts";
+export { DeviceInterrupt } from "./DeviceInterrupts";

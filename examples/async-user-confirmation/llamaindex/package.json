@@ -5,7 +5,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "npx tsx src/index.ts",
+    "start": "npx tsx  --no-deprecation src/index.ts",
     "start:api": "npm --prefix ../sample-api install ../sample-api && npx tsx ../sample-api/app.ts"
   },
   "author": {

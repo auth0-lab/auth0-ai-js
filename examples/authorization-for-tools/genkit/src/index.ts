@@ -1,17 +1,11 @@
 import "dotenv/config";
 
 import Enquirer from "enquirer";
-import { genkit } from "genkit/beta";
-import { gpt4o, openAI } from "genkitx-openai";
 
+import { ai } from "./ai";
 import { Context } from "./context";
 import { systemPrompt } from "./system";
 import { buyTool } from "./tools/buy";
-
-const ai = genkit({
-  plugins: [openAI({ apiKey: process.env.OPENAI_API_KEY })],
-  model: gpt4o,
-});
 
 async function main() {
   try {

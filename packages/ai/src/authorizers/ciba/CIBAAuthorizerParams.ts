@@ -1,8 +1,10 @@
+import { TokenSet } from "../../credentials";
 import { CIBAInterrupt } from "../../interrupts";
 import { AuthorizerToolParameter } from "../../parameters";
+import { Store } from "../../stores";
+import { AuthContext } from "../context";
+import { OnAuthorizationRequest } from "../types";
 import { CIBAAuthorizationRequest } from "./CIBAAuthorizationRequest";
-
-export type OnAuthorizationRequest = "block" | "interrupt";
 
 export type CIBAAuthorizerParams<ToolExecuteArgs extends any[]> = {
   /**
@@ -37,11 +39,28 @@ export type CIBAAuthorizerParams<ToolExecuteArgs extends any[]> = {
    *
    * - `block`: The tool execution is blocked until the user completes the authorization.
    * - `interrupt`: The tool execution is interrupted until the user completes the authorization.
+   * - a callback: Same as "block" but give access to the auth request and executing logic.
    *
    * Defaults to `interrupt`.
    * Note: The block mode is only useful for development purposes and should not be used in production.
    */
-  onAuthorizationRequest?: OnAuthorizationRequest;
+  onAuthorizationRequest?:
+    | OnAuthorizationRequest
+    | ((
+        authReq: CIBAAuthorizationRequest,
+        poll: Promise<TokenSet | undefined>
+      ) => Promise<void>);
+
+  /**
+   * AuthContext defines the scope of credential sharing:
+   * - "tool-call": Credentials are valid only for a single invocation of the tool.
+   * - "tool": Credentials are shared across multiple calls to the same tool within the same thread.
+   * - "thread": Credentials are shared across all tools using the same authorizer within the current thread.
+   * - "agent": Credentials are shared globally across all threads and tools in the agent.
+   *
+   * @default "tool-call"
+   */
+  credentialsContext?: AuthContext;
 
   /**
    *
@@ -56,34 +75,10 @@ export type CIBAAuthorizerParams<ToolExecuteArgs extends any[]> = {
     err: Error | CIBAInterrupt,
     ...args: ToolExecuteArgs
   ) => any;
-} & (
-  | {
-      onAuthorizationRequest: "block";
-    }
-  | {
-      onAuthorizationRequest?: "interrupt";
 
-      /**
-       * Retrieves the authorization response data.
-       * @param args - The tool execution arguments.
-       * @returns The authorization response data.
-       * @remarks The data should be stored in a way that it can be retrieved later by the `storeAuthorizationResponse` parameter.
-       */
-      getAuthorizationResponse: AuthorizerToolParameter<
-        ToolExecuteArgs,
-        CIBAAuthorizationRequest | undefined
-      >;
-
-      /**
-       * Stores the authorization response data.
-       * @param request - The authorization response data.
-       * @param args - The tool execution arguments.
-       * @returns A promise that resolves when the data is stored.
-       * @remarks The data should be stored in a way that it can be retrieved later by the `getAuthorizationResponse` parameter.
-       **/
-      storeAuthorizationResponse: (
-        request: CIBAAuthorizationRequest | undefined,
-        ...args: ToolExecuteArgs
-      ) => Promise<void>;
-    }
-);
+  /**
+   * An store used to temporarly store the authorization response data
+   * while the user is completing the authorization in another device.
+   */
+  store: Store;
+};

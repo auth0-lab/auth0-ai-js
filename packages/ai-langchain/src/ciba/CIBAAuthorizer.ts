@@ -9,8 +9,8 @@ import { DynamicStructuredTool, tool } from "@langchain/core/tools";
 import { LangGraphRunnableConfig } from "@langchain/langgraph";
 
 import { toGraphInterrupt } from "../util/interrrupt";
+import { ToolContext } from "../util/ToolContext";
 import { ToolWrapper } from "../util/ToolWrapper";
-import { CIBAAuthorizerParams, handleLangGraphStore } from "./params";
 
 export type ZodObjectAny = z.ZodObject<any, any, any, any>;
 
@@ -20,15 +20,6 @@ export type ZodObjectAny = z.ZodObject<any, any, any, any>;
 export class CIBAAuthorizer extends CIBAAuthorizerBase<
   [any, LangGraphRunnableConfig]
 > {
-  protectedTools: string[] = [];
-
-  constructor(
-    auth0: ConstructorParameters<typeof CIBAAuthorizerBase>[0],
-    config: CIBAAuthorizerParams<[any, LangGraphRunnableConfig]>
-  ) {
-    super(auth0, handleLangGraphStore(config));
-  }
-
   protected override handleAuthorizationInterrupts(
     err: AuthorizationPendingInterrupt | AuthorizationPollingInterrupt
   ): void {
@@ -39,18 +30,11 @@ export class CIBAAuthorizer extends CIBAAuthorizerBase<
     return <T extends ZodObjectAny = ZodObjectAny>(
       t: DynamicStructuredTool<T>
     ) => {
-      return tool(
-        this.protect((_params, ctx) => {
-          const { tread_id, checkpoint_ns, run_id, tool_call_id } =
-            ctx.configurable ?? {};
-          return { tread_id, checkpoint_ns, run_id, tool_call_id };
-        }, t.invoke.bind(t)),
-        {
-          name: t.name,
-          description: t.description,
-          schema: t.schema,
-        }
-      ) as unknown as DynamicStructuredTool<T>;
+      return tool(this.protect(ToolContext(t), t.invoke.bind(t)), {
+        name: t.name,
+        description: t.description,
+        schema: t.schema,
+      }) as unknown as DynamicStructuredTool<T>;
     };
   }
 }

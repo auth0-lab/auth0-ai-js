@@ -57,6 +57,7 @@
   "[typescript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
+  "typescript.preferences.importModuleSpecifier": "project-relative",
   "[mermaid]": {
     "files.trimTrailingWhitespace": false
   },

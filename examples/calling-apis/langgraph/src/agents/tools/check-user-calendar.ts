@@ -9,8 +9,8 @@ import { LangGraphRunnableConfig } from "@langchain/langgraph";
 export const checkUserCalendar = tool(
   async ({ date }, config: LangGraphRunnableConfig) => {
     // return "Yes you are available";
-    const accessToken = getAccessTokenForConnection();
-    if (!accessToken) {
+    const credentials = getAccessTokenForConnection();
+    if (!credentials?.accessToken) {
       //TODO: what we do?
       throw new Error(
         `Authorization required to access the Federated Connection`
@@ -28,7 +28,7 @@ export const checkUserCalendar = tool(
     const response = await fetch(url, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: `Bearer ${credentials.accessToken}`,
         "Content-Type": "application/json",
       },
       body,

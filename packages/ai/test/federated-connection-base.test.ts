@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
 
 import {
   asyncLocalStorage,
@@ -11,10 +11,16 @@ vi.stubGlobal("fetch", fetchMock);
 
 describe("FederatedConnectionAuthorizerBase", () => {
   let authorizer: FederatedConnectionAuthorizerBase<[string]>;
+  const getContext = vi.fn();
   const mockParams = {
     connection: "test-connection",
     scopes: ["read:calendar"],
     refreshToken: vi.fn().mockResolvedValue("test-refresh-token"),
+    store: {
+      get: vi.fn(),
+      put: vi.fn(),
+      delete: vi.fn(),
+    },
   };
 
   afterEach(() => {
@@ -22,6 +28,11 @@ describe("FederatedConnectionAuthorizerBase", () => {
   });
 
   beforeEach(() => {
+    (getContext as Mock).mockReturnValue({
+      threadID: "test-thread",
+      toolCallID: "test-tool-call",
+      toolName: "test-tool",
+    });
     authorizer = new FederatedConnectionAuthorizerBase<[string]>(
       {
         domain: "test.auth0.com",
@@ -52,6 +63,7 @@ describe("FederatedConnectionAuthorizerBase", () => {
           clientSecret: "custom-secret",
         },
         {
+          store: mockParams.store,
           accessToken: () => {
             return {
               access_token: "test",
@@ -86,7 +98,7 @@ describe("FederatedConnectionAuthorizerBase", () => {
       });
 
       try {
-        await authorizer.protect(() => {}, execute)("test-context");
+        await authorizer.protect(getContext, execute)("test-context");
       } catch (er) {
         err = er as Error;
       }
@@ -121,7 +133,7 @@ describe("FederatedConnectionAuthorizerBase", () => {
       });
 
       try {
-        await authorizer.protect(() => {}, execute)("test-context");
+        await authorizer.protect(getContext, execute)("test-context");
       } catch (er) {
         err = er as Error;
       }
@@ -158,10 +170,10 @@ describe("FederatedConnectionAuthorizerBase", () => {
       });
       execute.mockImplementation(() => {
         const store = asyncLocalStorage.getStore();
-        accessTokenFromAsyncLocalStore = store?.accessToken;
+        accessTokenFromAsyncLocalStore = store?.credentials?.accessToken;
       });
       try {
-        await authorizer.protect(() => {}, execute)("test-context");
+        await authorizer.protect(getContext, execute)("test-context");
       } catch (er) {
         err = er as Error;
       }

@@ -24,17 +24,19 @@ export const buyTool = (context: Context) => {
     },
   });
 
-  return FunctionTool.from(
-    useFGA(async ({ ticker, qty }: { ticker: string; qty: number }) => {
-      return `Purchased ${qty} shares of ${ticker}`;
-    }),
-    {
-      name: "buy",
-      description: "Use this function to buy stock",
-      parameters: z.object({
-        ticker: z.string(),
-        qty: z.number(),
-      }),
-    }
+  return useFGA(
+    FunctionTool.from(
+      async ({ ticker, qty }: { ticker: string; qty: number }) => {
+        return `Purchased ${qty} shares of ${ticker}`;
+      },
+      {
+        name: "buy",
+        description: "Use this function to buy stock",
+        parameters: z.object({
+          ticker: z.string(),
+          qty: z.number(),
+        }),
+      }
+    )
   );
 };

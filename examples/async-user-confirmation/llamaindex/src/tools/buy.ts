@@ -1,66 +1,50 @@
 import "dotenv/config";
 
-import { FunctionTool } from "llamaindex";
+import { tool } from "llamaindex";
 import z from "zod";
 
-import { AccessDeniedError, CIBAAuthorizer } from "@auth0/ai";
+import { getCIBACredentials } from "@auth0/ai-llamaindex";
 
-import { Context } from "../context";
+import { useCIBA } from "../authorizers/ciba";
+import { useDeviceFlow } from "../authorizers/deviceFlow";
 
-const ciba = CIBAAuthorizer.create();
+export const buyTool = () => {
+  return useDeviceFlow(
+    useCIBA(
+      tool(
+        async ({ ticker, qty }) => {
+          const headers = {
+            "Content-Type": "application/json",
+          };
+          const body = {
+            ticker: ticker,
+            qty: qty,
+          };
+          const credentials = getCIBACredentials();
+          const accessToken = credentials?.accessToken;
 
-export const buyTool = (context: Context) => {
-  const useCiba = ciba({
-    userId: context.userId,
-    bindingMessage: async ({ ticker, qty }) =>
-      `Do you want to buy ${qty} shares of ${ticker}`,
-    scope: "openid stock:trade",
-    audience: process.env["AUDIENCE"]!,
-  });
+          if (accessToken) {
+            headers["Authorization"] = "Bearer " + accessToken;
+          } else {
+            return "Not authorized to perform this action";
+          }
 
-  return FunctionTool.from(
-    useCiba(
-      async (
-        { accessToken },
-        { ticker, qty }: { ticker: string; qty: number }
-      ) => {
-        const headers = {
-          "Content-Type": "application/json",
-        };
-        const body = {
-          ticker: ticker,
-          qty: qty,
-        };
-
-        if (accessToken) {
-          headers["Authorization"] = "Bearer " + accessToken;
+          const response = await fetch(process.env["API_URL"]!, {
+            method: "POST",
+            headers: headers,
+            body: JSON.stringify(body),
+          });
+          return response.statusText;
+        },
+        {
+          name: "buy",
+          description: "Use this function to buy stock",
+          parameters: z.object({
+            ticker: z.string(),
+            qty: z.number(),
+          }),
         }
-
-        const response = await fetch(process.env["API_URL"]!, {
-          method: "POST",
-          headers: headers,
-          body: JSON.stringify(body),
-        });
-
-        return response.statusText;
-      },
-      // If `onError` is not provided, Auth0-AI will respond with a generic error message.
-      async (e: Error) => {
-        // Custom error handling.
-        if (e instanceof AccessDeniedError) {
-          return "The user has deny the request";
-        }
-
-        return e.message;
-      }
-    ),
-    {
-      name: "buy",
-      description: "Use this function to buy stock",
-      parameters: z.object({
-        ticker: z.string(),
-        qty: z.number(),
-      }),
-    }
+      )
+    )
   );
 };

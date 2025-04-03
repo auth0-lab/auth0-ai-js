@@ -6,6 +6,7 @@ import { z } from "zod";
 import { FederatedConnectionAuthorizerBase } from "@auth0/ai/FederatedConnections";
 import { FederatedConnectionInterrupt } from "@auth0/ai/interrupts";
 
+import { setAIContext } from "../src/context";
 import {
   FederatedConnectionAuthorizer,
   getAccessTokenForConnection,
@@ -24,6 +25,11 @@ describe("FederatedConnectionAuthorizer", () => {
     connection: "test-connection",
     scopes: ["test-scope"],
     refreshToken: vi.fn(),
+    store: {
+      get: vi.fn(),
+      put: vi.fn(),
+      delete: vi.fn(),
+    },
   };
   let authorizer: FederatedConnectionAuthorizer;
   let protectedTool: Tool;
@@ -62,6 +68,7 @@ describe("FederatedConnectionAuthorizer", () => {
       });
 
       try {
+        setAIContext({ threadID: "123" });
         await protectedTool!.execute!(
           { userID: "user1", input: "input" },
           {} as ToolExecutionOptions
@@ -92,14 +99,17 @@ describe("FederatedConnectionAuthorizer", () => {
         //@ts-ignore
       ).mockImplementation(() => {
         return {
-          access_token: "access_token",
-          scope: "test-scope",
+          accessToken: "access_token",
+          scopes: ["test-scope"],
+          type: "Bearer",
         };
       });
 
       try {
+        setAIContext({ threadID: "123" });
         mockTool.execute.mockImplementation(() => {
-          accessToken = getAccessTokenForConnection();
+          const credentials = getAccessTokenForConnection();
+          accessToken = credentials?.accessToken;
           return { result: "success" };
         });
         await protectedTool!.execute!(

@@ -27,7 +27,7 @@ export const tradeTool = tool(
       accessToken = config.configurable.accessToken;
     } else {
       const credentials = getCIBACredentials();
-      accessToken = credentials?.accessToken?.value;
+      accessToken = credentials?.accessToken;
     }
 
     if (!accessToken) {

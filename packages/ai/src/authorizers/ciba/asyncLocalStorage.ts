@@ -1,9 +1,9 @@
 import { AsyncLocalStorage } from "async_hooks";
 
-import { Credentials } from "../../credentials";
+import { TokenSet } from "../../credentials";
 
 export type AsyncStorageValue<TContext> = {
-  credentials?: Credentials;
+  credentials?: TokenSet;
 
   /**
    * The tool execution context.
@@ -14,6 +14,11 @@ export type AsyncStorageValue<TContext> = {
    * The tool execution arguments.
    */
   args: any[];
+
+  /**
+   * The namespace in the Store for the CIBA authorization response.
+   */
+  authResponseNS: string[];
 };
 
 export const asyncLocalStorage = new AsyncLocalStorage<
@@ -23,7 +28,9 @@ export const asyncLocalStorage = new AsyncLocalStorage<
 export const getCIBACredentials = () => {
   const t = asyncLocalStorage.getStore();
   if (typeof t === "undefined") {
-    throw new Error("The tool must be wrapped with the withCIBA function.");
+    throw new Error(
+      "The tool must be wrapped with the withAsyncUserConfirmation function."
+    );
   }
   return t.credentials;
 };

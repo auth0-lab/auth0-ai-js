@@ -7,7 +7,7 @@ This SDK provides base abstractions for authentication and authorization in AI a
 ## Install
 
 > [!WARNING]
-> `@auth0/ai` is currently under development and it is not intended to be used in production, and therefore has no official support.
+> `@auth0/ai` is currently **under heavy development**. We strictly follow [Semantic Versioning (SemVer)](https://semver.org/), meaning all **breaking changes will only occur in major versions**. However, please note that during this early phase, **major versions may be released frequently** as the API evolves. We recommend locking versions when using this in production.
 
 ```
 $ npm install @auth0/ai

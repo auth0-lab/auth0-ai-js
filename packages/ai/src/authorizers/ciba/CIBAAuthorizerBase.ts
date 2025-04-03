@@ -1,7 +1,8 @@
 import { AuthenticationClient } from "auth0";
+import crypto from "crypto";
+import stableHash from "stable-hash";
 
-import { AuthorizerParams } from "../";
-import { Credentials } from "../../credentials";
+import { TokenSet, tokenSetFromTokenResponse } from "../../credentials";
 import {
   AccessDeniedInterrupt,
   AuthorizationPendingInterrupt,
@@ -11,6 +12,10 @@ import {
   UserDoesNotHavePushNotificationsInterrupt,
 } from "../../interrupts";
 import { resolveParameter } from "../../parameters";
+import { SubStore } from "../../stores";
+import { RequireFields } from "../../util";
+import { ContextGetter, nsFromContext } from "../context";
+import { Auth0ClientParams, Auth0ClientSchema } from "../types";
 import { asyncLocalStorage, AsyncStorageValue } from "./asyncLocalStorage";
 import { CIBAAuthorizationRequest } from "./CIBAAuthorizationRequest";
 import { CIBAAuthorizerParams } from "./CIBAAuthorizerParams";
@@ -24,36 +29,50 @@ function ensureOpenIdScope(scopes: string[]): string[] {
  * the backend.
  */
 export class CIBAAuthorizerBase<ToolExecuteArgs extends any[]> {
-  auth0: AuthenticationClient;
+  private readonly auth0: AuthenticationClient;
+  private readonly authResponseStore: SubStore | undefined;
+  private readonly credentialsStore: SubStore<TokenSet> | undefined;
+
+  private readonly params: RequireFields<
+    CIBAAuthorizerParams<ToolExecuteArgs>,
+    "credentialsContext"
+  >;
 
   constructor(
-    auth0: AuthorizerParams,
-    private readonly params: CIBAAuthorizerParams<ToolExecuteArgs>
+    auth0: Partial<Auth0ClientParams>,
+    params: CIBAAuthorizerParams<ToolExecuteArgs>
   ) {
-    this.auth0 = new AuthenticationClient({
-      domain: auth0?.domain || process.env.AUTH0_DOMAIN!,
-      clientId: auth0?.clientId || process.env.AUTH0_CLIENT_ID!,
-      clientSecret: auth0?.clientSecret || process.env.AUTH0_CLIENT_SECRET,
-      clientAssertionSigningAlg: auth0?.clientAssertionSigningAlg,
-      clientAssertionSigningKey: auth0?.clientAssertionSigningKey,
-      idTokenSigningAlg: auth0?.idTokenSigningAlg,
-      clockTolerance: auth0?.clockTolerance,
-      useMTLS: auth0?.useMTLS,
+    this.auth0 = new AuthenticationClient(Auth0ClientSchema.parse(auth0));
+    this.params = {
+      credentialsContext: "tool-call",
+      ...params,
+    };
+
+    this.authResponseStore = new SubStore<CIBAAuthorizationRequest>(
+      params.store,
+      {
+        getTTL: (authResponse) =>
+          authResponse.expiresIn ? authResponse.expiresIn * 1000 : undefined,
+      }
+    );
+
+    this.credentialsStore = new SubStore<TokenSet>(params.store, {
+      getTTL: (credentials) =>
+        credentials.expiresIn ? credentials.expiresIn * 1000 : undefined,
     });
   }
 
-  private async start(
-    toolContext: ToolExecuteArgs
-  ): Promise<CIBAAuthorizationRequest> {
-    const requestedAt = Date.now() / 1000;
-    const authorizeParams = {
-      scope: ensureOpenIdScope(this.params.scopes).join(" "),
-      audience: this.params.audience || "",
-      request_expiry: (this.params.requestExpiry ?? 300).toString(),
-      binding_message:
-        (await resolveParameter(this.params.bindingMessage, toolContext)) ?? "",
-      userId: (await resolveParameter(this.params.userID, toolContext)) ?? "",
+  private getInstanceID(authorizeParams: any): string {
+    const props = {
+      auth0: this.auth0,
+      params: authorizeParams,
     };
+    const sh = stableHash(props);
+    return crypto.createHash("MD5").update(sh).digest("hex");
+  }
+
+  private async start(authorizeParams: any): Promise<CIBAAuthorizationRequest> {
+    const requestedAt = Date.now() / 1000;
 
     try {
       const response = await this.auth0.backchannel.authorize(authorizeParams);
@@ -74,9 +93,20 @@ export class CIBAAuthorizerBase<ToolExecuteArgs extends any[]> {
     }
   }
 
+  private async getAuthorizeParams(toolContext: ToolExecuteArgs) {
+    return {
+      scope: ensureOpenIdScope(this.params.scopes).join(" "),
+      audience: this.params.audience || "",
+      request_expiry: (this.params.requestExpiry ?? 300).toString(),
+      binding_message:
+        (await resolveParameter(this.params.bindingMessage, toolContext)) ?? "",
+      userId: (await resolveParameter(this.params.userID, toolContext)) ?? "",
+    };
+  }
+
   private async getCredentialsInternal(
     authRequest: CIBAAuthorizationRequest
-  ): Promise<Credentials | undefined> {
+  ): Promise<TokenSet | undefined> {
     try {
       const elapsedSeconds = Date.now() / 1000 - authRequest.requestedAt;
 
@@ -91,24 +121,7 @@ export class CIBAAuthorizerBase<ToolExecuteArgs extends any[]> {
         auth_req_id: authRequest.id,
       });
 
-      const credentials = {
-        accessToken: {
-          type: response.token_type || "bearer",
-          value: response.access_token,
-        },
-        refreshToken: response.refresh_token
-          ? {
-              type: response.token_type || "bearer",
-              value: response.refresh_token,
-            }
-          : undefined,
-        idToken: response.id_token
-          ? {
-              type: response.token_type || "bearer",
-              value: response.id_token,
-            }
-          : undefined,
-      };
+      const credentials = tokenSetFromTokenResponse(response);
 
       return credentials;
     } catch (e: any) {
@@ -150,8 +163,8 @@ export class CIBAAuthorizerBase<ToolExecuteArgs extends any[]> {
 
   protected async getCredentialsPolling(
     authRequest: CIBAAuthorizationRequest
-  ): Promise<Credentials | undefined> {
-    let credentials: Credentials | undefined = undefined;
+  ): Promise<TokenSet | undefined> {
+    let credentials: TokenSet | undefined = undefined;
 
     do {
       try {
@@ -176,15 +189,8 @@ export class CIBAAuthorizerBase<ToolExecuteArgs extends any[]> {
     if (!store) {
       throw new Error("This method should be called from within a tool.");
     }
-    if (
-      !this.params.onAuthorizationRequest ||
-      this.params.onAuthorizationRequest === "interrupt"
-    ) {
-      return this.params.storeAuthorizationResponse(
-        undefined,
-        ...(store.args as ToolExecuteArgs)
-      );
-    }
+    const { authResponseNS } = store;
+    return this.authResponseStore?.delete(authResponseNS, "authResponse");
   }
 
   /**
@@ -196,47 +202,85 @@ export class CIBAAuthorizerBase<ToolExecuteArgs extends any[]> {
    * @returns The wrapped execute method.
    */
   protect(
-    getContext: (...args: ToolExecuteArgs) => any,
+    getContext: ContextGetter<ToolExecuteArgs>,
     execute: (...args: ToolExecuteArgs) => any
   ): (...args: ToolExecuteArgs) => any {
     return async (...args: ToolExecuteArgs) => {
-      let authRequest: CIBAAuthorizationRequest | undefined;
+      let authResponse: CIBAAuthorizationRequest | undefined;
       if (asyncLocalStorage.getStore()) {
         throw new Error(
           "Cannot nest tool calls that require CIBA authorization."
         );
       }
 
+      const context = getContext(...args);
+      const authorizeParams = await this.getAuthorizeParams(args);
+      const instanceID = this.getInstanceID(authorizeParams);
+      const authResponseNS = [
+        instanceID,
+        "AuthResponses",
+        ...nsFromContext("tool-call", context),
+      ];
+      const credentialsNS = [
+        instanceID,
+        "Credentials",
+        ...nsFromContext(this.params.credentialsContext, context),
+      ];
+
       const storeValue: AsyncStorageValue<any> = {
         args,
-        context: getContext(...args),
+        context,
+        authResponseNS,
       };
 
       return asyncLocalStorage.run(storeValue, async () => {
-        let credentials: Credentials | undefined;
+        let credentials: TokenSet | undefined;
 
         const interruptMode =
           typeof this.params.onAuthorizationRequest === "undefined" ||
           this.params.onAuthorizationRequest === "interrupt";
 
         try {
-          if (interruptMode) {
-            authRequest = await resolveParameter(
-              this.params.getAuthorizationResponse,
-              args
-            );
-            if (!authRequest) {
-              //Initial request
-              authRequest = await this.start(args);
-              await this.params.storeAuthorizationResponse(
-                authRequest,
-                ...args
+          credentials = await this.credentialsStore?.get(
+            credentialsNS,
+            "credential"
+          );
+          if (!credentials) {
+            if (interruptMode) {
+              authResponse = await this.authResponseStore?.get(
+                authResponseNS,
+                "authResponse"
+              );
+              if (!authResponse) {
+                //Initial request
+                authResponse = await this.start(authorizeParams);
+                await this.authResponseStore?.put(
+                  authResponseNS,
+                  "authResponse",
+                  authResponse
+                );
+              }
+              credentials = await this.getCredentials(authResponse);
+            } else {
+              authResponse = await this.start(authorizeParams);
+              const credentialsPromise =
+                this.getCredentialsPolling(authResponse);
+              if (typeof this.params.onAuthorizationRequest === "function") {
+                await this.params.onAuthorizationRequest(
+                  authResponse,
+                  credentialsPromise
+                );
+              }
+              credentials = await credentialsPromise;
+            }
+            await this.deleteAuthRequest();
+            if (typeof credentials !== "undefined") {
+              this.credentialsStore?.put(
+                credentialsNS,
+                "credential",
+                credentials
               );
             }
-            credentials = await this.getCredentials(authRequest);
-          } else {
-            authRequest = await this.start(args);
-            credentials = await this.getCredentialsPolling(authRequest);
           }
         } catch (err) {
           const shouldInterrupt =
@@ -253,7 +297,6 @@ export class CIBAAuthorizerBase<ToolExecuteArgs extends any[]> {
             }
           }
         }
-        await this.deleteAuthRequest();
         storeValue.credentials = credentials;
         return execute(...args);
       });

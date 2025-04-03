@@ -1,22 +1,28 @@
 import { AuthenticationClient } from "auth0";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
 
 import {
   asyncLocalStorage,
   CIBAAuthorizerBase,
 } from "../../src/authorizers/ciba";
+import { ContextGetter } from "../../src/authorizers/context";
 import { AuthorizationPendingInterrupt } from "../../src/interrupts";
 
 vi.mock("auth0");
 
 describe("CIBAAuthorizerBase", () => {
   let authorizer: CIBAAuthorizerBase<[string]>;
+  const getContext: ContextGetter<[string]> = vi.fn();
+
   const mockParams = {
     userID: "user123",
     bindingMessage: "test-binding",
     scopes: ["read:users"],
-    getAuthorizationResponse: vi.fn(),
-    storeAuthorizationResponse: vi.fn(),
+    store: {
+      get: vi.fn(),
+      put: vi.fn(),
+      delete: vi.fn(),
+    },
   };
 
   const mockAuth0 = {
@@ -28,6 +34,11 @@ describe("CIBAAuthorizerBase", () => {
 
   beforeEach(() => {
     (AuthenticationClient as any).mockImplementation(() => mockAuth0);
+    (getContext as Mock).mockReturnValue({
+      threadID: "test-thread",
+      toolCallID: "test-tool-call",
+      toolName: "test-tool",
+    });
   });
 
   afterEach(() => {
@@ -85,13 +96,13 @@ describe("CIBAAuthorizerBase", () => {
     let err: Error;
 
     beforeEach(async () => {
-      mockParams.getAuthorizationResponse.mockResolvedValue(undefined);
+      mockParams.store.get.mockResolvedValue(undefined);
       mockAuth0.backchannel.authorize.mockResolvedValue(startResponse);
       mockAuth0.backchannel.backchannelGrant.mockImplementation(() => {
         throw { error: "authorization_pending" };
       });
       try {
-        await authorizer.protect(() => {}, execute)("test-context");
+        await authorizer.protect(getContext, execute)("test-context");
       } catch (er) {
         err = er as Error;
       }
@@ -102,15 +113,29 @@ describe("CIBAAuthorizerBase", () => {
     });
 
     it("should store the authorization response", async () => {
-      expect(mockParams.storeAuthorizationResponse).toHaveBeenCalledWith(
+      expect(mockParams.store.put).toHaveBeenCalledOnce();
+      expect(mockParams.store.put.mock.calls[0]).toEqual([
+        [
+          expect.any(String),
+          "AuthResponses",
+          "Threads",
+          "test-thread",
+          "Tools",
+          "test-tool",
+          "ToolCalls",
+          "test-tool-call",
+        ],
+        "authResponse",
         {
-          id: startResponse.auth_req_id,
+          expiresIn: 3600,
+          id: "test-id",
+          interval: 5,
           requestedAt: expect.any(Number),
-          expiresIn: startResponse.expires_in,
-          interval: startResponse.interval,
         },
-        "test-context"
-      );
+        {
+          expiresIn: 3600000,
+        },
+      ]);
     });
 
     it('should throw "AuthorizationPendingInterrupt" error', async () => {
@@ -135,13 +160,13 @@ describe("CIBAAuthorizerBase", () => {
     let err: Error;
 
     beforeEach(async () => {
-      mockParams.getAuthorizationResponse.mockResolvedValue(undefined);
+      mockParams.store.get.mockResolvedValue(undefined);
       mockAuth0.backchannel.authorize.mockResolvedValue(authorizeResponse);
       mockAuth0.backchannel.backchannelGrant.mockImplementation(() => {
         throw { error: "authorization_pending" };
       });
       try {
-        await authorizer.protect(() => {}, execute)("test-context");
+        await authorizer.protect(getContext, execute)("test-context");
       } catch (er) {
         err = er as Error;
       }
@@ -152,14 +177,27 @@ describe("CIBAAuthorizerBase", () => {
     });
 
     it("should store the authorization response", async () => {
-      expect(mockParams.storeAuthorizationResponse).toHaveBeenCalledWith(
+      expect(mockParams.store.put).toHaveBeenCalledWith(
+        [
+          expect.any(String),
+          "AuthResponses",
+          "Threads",
+          "test-thread",
+          "Tools",
+          "test-tool",
+          "ToolCalls",
+          "test-tool-call",
+        ],
+        "authResponse",
         {
-          id: authorizeResponse.auth_req_id,
+          expiresIn: 3600,
+          id: "test-id",
+          interval: 5,
           requestedAt: expect.any(Number),
-          expiresIn: authorizeResponse.expires_in,
-          interval: authorizeResponse.interval,
         },
-        "test-context"
+        {
+          expiresIn: 3600000,
+        }
       );
     });
 
@@ -191,21 +229,21 @@ describe("CIBAAuthorizerBase", () => {
     let err: Error;
 
     beforeEach(async () => {
-      mockParams.getAuthorizationResponse.mockResolvedValue(
-        storedAuthorizationResponse
+      mockParams.store.get.mockImplementation((ns, key) =>
+        key === "authResponse" ? storedAuthorizationResponse : undefined
       );
       mockAuth0.backchannel.backchannelGrant.mockImplementation(() => {
         throw { error: "authorization_pending" };
       });
       try {
-        await authorizer.protect((c) => c, execute)("test-context");
+        await authorizer.protect(getContext, execute)("test-context");
       } catch (er) {
         err = er as Error;
       }
     });
 
     it("should not call the store function", async () => {
-      expect(mockParams.storeAuthorizationResponse).not.toHaveBeenCalled();
+      expect(mockParams.store.put).not.toHaveBeenCalled();
     });
 
     it("should not start the backchannel authorization again", async () => {
@@ -214,12 +252,6 @@ describe("CIBAAuthorizerBase", () => {
 
     it("should not execute the protected function", async () => {
       expect(execute).not.toHaveBeenCalled();
-    });
-
-    it("should get the request with the provided context", async () => {
-      expect(mockParams.getAuthorizationResponse).toHaveBeenCalledWith(
-        "test-context"
-      );
     });
 
     it('should throw "AuthorizationPendingInterrupt" error', async () => {
@@ -245,8 +277,8 @@ describe("CIBAAuthorizerBase", () => {
     let accessTokenFromAsyncLocalStore: string | undefined;
 
     beforeEach(async () => {
-      mockParams.getAuthorizationResponse.mockResolvedValue(
-        storedAuthorizationResponse
+      mockParams.store.get.mockImplementation((ns, key) =>
+        key === "authResponse" ? storedAuthorizationResponse : undefined
       );
       mockAuth0.backchannel.backchannelGrant.mockResolvedValue({
         token_type: "bearer",
@@ -254,20 +286,30 @@ describe("CIBAAuthorizerBase", () => {
       });
       execute.mockImplementation(() => {
         const store = asyncLocalStorage.getStore();
-        accessTokenFromAsyncLocalStore = store?.credentials?.accessToken.value;
+        accessTokenFromAsyncLocalStore = store?.credentials?.accessToken;
       });
       try {
-        await authorizer.protect((c) => c, execute)("test-context");
+        await authorizer.protect(getContext, execute)("test-context");
       } catch (er) {
         err = er as Error;
       }
     });
 
     it("should call the store function to delete the value", async () => {
-      expect(mockParams.storeAuthorizationResponse).toHaveBeenCalledWith(
-        undefined,
-        "test-context"
-      );
+      expect(mockParams.store.delete).toHaveBeenCalledOnce();
+      expect(mockParams.store.delete.mock.calls[0]).toEqual([
+        [
+          expect.any(String),
+          "AuthResponses",
+          "Threads",
+          "test-thread",
+          "Tools",
+          "test-tool",
+          "ToolCalls",
+          "test-tool-call",
+        ],
+        "authResponse",
+      ]);
     });
 
     it('should store the "access_token" in the asyncLocalStorage', async () => {
@@ -283,9 +325,20 @@ describe("CIBAAuthorizerBase", () => {
     });
 
     it("should get the request with the provided context", async () => {
-      expect(mockParams.getAuthorizationResponse).toHaveBeenCalledWith(
-        "test-context"
-      );
+      expect(mockParams.store.get).toHaveBeenCalledTimes(2);
+      expect(mockParams.store.get.mock.calls[1]).toEqual([
+        [
+          expect.any(String),
+          "AuthResponses",
+          "Threads",
+          "test-thread",
+          "Tools",
+          "test-tool",
+          "ToolCalls",
+          "test-tool-call",
+        ],
+        "authResponse",
+      ]);
     });
 
     it("should not throw any error", async () => {
@@ -310,8 +363,8 @@ describe("CIBAAuthorizerBase", () => {
     let err: Error;
     let result: any;
     beforeEach(async () => {
-      mockParams.getAuthorizationResponse.mockResolvedValue(
-        storedAuthorizationResponse
+      mockParams.store.get.mockImplementation((ns, key) =>
+        key === "authResponse" ? storedAuthorizationResponse : undefined
       );
       mockAuth0.backchannel.backchannelGrant.mockImplementation(() => {
         throw {
@@ -320,16 +373,25 @@ describe("CIBAAuthorizerBase", () => {
         };
       });
       try {
-        result = await authorizer.protect((c) => c, execute)("test-context");
+        result = await authorizer.protect(getContext, execute)("test-context");
       } catch (er) {
         err = er as Error;
       }
     });
 
     it("should call the store function to delete the value", async () => {
-      expect(mockParams.storeAuthorizationResponse).toHaveBeenCalledWith(
-        undefined,
-        "test-context"
+      expect(mockParams.store.delete).toHaveBeenCalledWith(
+        [
+          expect.any(String),
+          "AuthResponses",
+          "Threads",
+          "test-thread",
+          "Tools",
+          "test-tool",
+          "ToolCalls",
+          "test-tool-call",
+        ],
+        "authResponse"
       );
     });
 
@@ -350,9 +412,20 @@ describe("CIBAAuthorizerBase", () => {
     });
 
     it("should get the request with the provided context", async () => {
-      expect(mockParams.getAuthorizationResponse).toHaveBeenCalledWith(
-        "test-context"
-      );
+      expect(mockParams.store.get).toHaveBeenCalled();
+      expect(mockParams.store.get.mock.calls[1]).toEqual([
+        [
+          expect.any(String),
+          "AuthResponses",
+          "Threads",
+          "test-thread",
+          "Tools",
+          "test-tool",
+          "ToolCalls",
+          "test-tool-call",
+        ],
+        "authResponse",
+      ]);
     });
 
     it("should not interrupt the graph", async () => {
@@ -375,20 +448,29 @@ describe("CIBAAuthorizerBase", () => {
     let err: Error;
     let result: any;
     beforeEach(async () => {
-      mockParams.getAuthorizationResponse.mockResolvedValue(
-        storedAuthorizationResponse
+      mockParams.store.get.mockImplementation((ns, key) =>
+        key === "authResponse" ? storedAuthorizationResponse : undefined
       );
       try {
-        result = await authorizer.protect((c) => c, execute)("test-context");
+        result = await authorizer.protect(getContext, execute)("test-context");
       } catch (er) {
         err = er as Error;
       }
     });
 
     it("should call the store function to delete the value", async () => {
-      expect(mockParams.storeAuthorizationResponse).toHaveBeenCalledWith(
-        undefined,
-        "test-context"
+      expect(mockParams.store.delete).toHaveBeenCalledWith(
+        [
+          expect.any(String),
+          "AuthResponses",
+          "Threads",
+          "test-thread",
+          "Tools",
+          "test-tool",
+          "ToolCalls",
+          "test-tool-call",
+        ],
+        "authResponse"
       );
     });
 
@@ -411,12 +493,74 @@ describe("CIBAAuthorizerBase", () => {
     });
 
     it("should get the request with the provided context", async () => {
-      expect(mockParams.getAuthorizationResponse).toHaveBeenCalledWith(
-        "test-context"
-      );
+      expect(mockParams.store.get).toHaveBeenCalled();
+      expect(mockParams.store.get.mock.calls[1]).toEqual([
+        [
+          expect.any(String),
+          "AuthResponses",
+          "Threads",
+          "test-thread",
+          "Tools",
+          "test-tool",
+          "ToolCalls",
+          "test-tool-call",
+        ],
+        "authResponse",
+      ]);
     });
 
     it('should throw "AccessDeniedInterrupt" error', async () => {
+      expect(err).toBeUndefined();
+    });
+  });
+
+  /**
+   * If credentials are in the store
+   * - the backchannel authorization should not be called
+   * - the stored credentials should be used
+   */
+  describe("credentials stored", () => {
+    const execute = vi.fn();
+    let err: Error;
+    let accessTokenFromAsyncLocalStore: string | undefined;
+
+    beforeEach(async () => {
+      mockParams.store.get.mockImplementation((ns, key) =>
+        key === "credential"
+          ? {
+              tokenType: "bearer",
+              accessToken: "test-token",
+            }
+          : undefined
+      );
+      execute.mockImplementation(() => {
+        const store = asyncLocalStorage.getStore();
+        accessTokenFromAsyncLocalStore = store?.credentials?.accessToken;
+      });
+      try {
+        await authorizer.protect(getContext, execute)("test-context");
+      } catch (er) {
+        err = er as Error;
+      }
+    });
+
+    it("should not start a backchannel auth", async () => {
+      expect(mockAuth0.backchannel.backchannelGrant).not.toHaveBeenCalledOnce();
+    });
+
+    it("should not start the backchannel authorization again", async () => {
+      expect(mockAuth0.backchannel.authorize).not.toHaveBeenCalled();
+    });
+
+    it('should store the "access_token" in the asyncLocalStorage', async () => {
+      expect(accessTokenFromAsyncLocalStore).toEqual("test-token");
+    });
+
+    it("should execute the protected function", async () => {
+      expect(execute).toHaveBeenCalledWith("test-context");
+    });
+
+    it("should not throw any error", async () => {
       expect(err).toBeUndefined();
     });
   });
