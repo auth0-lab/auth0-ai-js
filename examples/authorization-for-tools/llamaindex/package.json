@@ -16,7 +16,7 @@
   "dependencies": {
     "@auth0/ai-llamaindex": "@auth0/ai-llamaindex:*",
     "@openfga/sdk": "^0.8.0",
-    "llamaindex": "^0.9.0",
+    "llamaindex": "^0.9.15",
     "dotenv": "^16.4.7",
     "enquirer": "^2.4.1",
     "zod": "^3.24.1"
