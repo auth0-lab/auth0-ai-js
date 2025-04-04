@@ -4,6 +4,10 @@ import {
   asyncLocalStorage,
   FederatedConnectionAuthorizerBase,
 } from "../src/authorizers/federated-connections";
+import {
+  FederatedConnectionError,
+  FederatedConnectionInterrupt,
+} from "../src/interrupts";
 
 const fetchMock = vi.fn();
 
@@ -139,6 +143,21 @@ describe("FederatedConnectionAuthorizerBase", () => {
       }
     });
 
+    it("should delete the current credentials", async () => {
+      expect(mockParams.store.delete).toHaveBeenCalled();
+      expect(mockParams.store.delete.mock.calls[0]).toMatchInlineSnapshot(`
+        [
+          [
+            "7c7cbb63071e42d9c0fd403fcb140b3b",
+            "Credentials",
+            "Threads",
+            "test-thread",
+          ],
+          "credential",
+        ]
+      `);
+    });
+
     it('should throw "Authorization required" error', async () => {
       expect(err.message).toMatchInlineSnapshot(
         `"Authorization required to access the Federated Connection: test-connection. Missing scopes: read:calendar"`
@@ -214,6 +233,58 @@ describe("FederatedConnectionAuthorizerBase", () => {
           "subject_token_type": "urn:ietf:params:oauth:token-type:refresh_token",
         }
       `);
+    });
+  });
+
+  /**
+   * When the the tool call throws a FederatedConnectionError
+   * the authorizer should delete the credentials
+   * throw an interrupt error
+   */
+  describe("on FederatedConnectionError", () => {
+    const execute = vi.fn().mockImplementation(() => {
+      throw new FederatedConnectionError(
+        "Authorization required to access the Federated Connection: test-connection. Missing scopes: read:calendar"
+      );
+    });
+    let err: Error;
+    beforeEach(async () => {
+      mockParams.store.get.mockReturnValue({
+        accessToken: "foboar",
+        tokenType: "Bearer",
+      });
+
+      try {
+        await authorizer.protect(getContext, execute)("test-context");
+      } catch (er) {
+        err = er as Error;
+      }
+    });
+
+    it("should delete the current credentials", async () => {
+      expect(mockParams.store.delete).toHaveBeenCalled();
+      expect(mockParams.store.delete.mock.calls[0]).toMatchInlineSnapshot(`
+          [
+            [
+              "7c7cbb63071e42d9c0fd403fcb140b3b",
+              "Credentials",
+              "Threads",
+              "test-thread",
+            ],
+            "credential",
+          ]
+        `);
+    });
+
+    it('should throw "Authorization required" interrupt', async () => {
+      expect(err).toBeInstanceOf(FederatedConnectionInterrupt);
+      expect(err.message).toMatchInlineSnapshot(
+        `"Authorization required to access the Federated Connection: test-connection. Missing scopes: read:calendar"`
+      );
+    });
+
+    it("should not call the protected execute method", async () => {
+      expect(execute).toHaveBeenCalled();
     });
   });
 });
