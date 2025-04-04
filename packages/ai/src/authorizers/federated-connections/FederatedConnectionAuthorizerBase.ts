@@ -151,6 +151,7 @@ export class FederatedConnectionAuthorizerBase<ToolExecuteArgs extends any[]> {
     });
 
     if (!res.ok) {
+      //TODO: handle all type of response errors.
       return;
     }
 
@@ -210,7 +211,7 @@ export class FederatedConnectionAuthorizerBase<ToolExecuteArgs extends any[]> {
           context
         );
         try {
-          let credentials = await this.credentialsStore.get(
+          let credentials: TokenSet = await this.credentialsStore.get(
             credentialsNS,
             "credential"
           );
@@ -226,6 +227,7 @@ export class FederatedConnectionAuthorizerBase<ToolExecuteArgs extends any[]> {
           return await execute(...args);
         } catch (err) {
           if (err instanceof FederatedConnectionError) {
+            this.credentialsStore.delete(credentialsNS, "credential");
             const interrupt = new FederatedConnectionInterrupt(
               err.message,
               asyncStore.connection,
@@ -235,6 +237,7 @@ export class FederatedConnectionAuthorizerBase<ToolExecuteArgs extends any[]> {
             return this.handleAuthorizationInterrupts(interrupt);
           }
           if (err instanceof Auth0Interrupt) {
+            this.credentialsStore.delete(credentialsNS, "credential");
             return this.handleAuthorizationInterrupts(err);
           }
           throw err;
