@@ -1,0 +1,65 @@
+{
+  "name": "@auth0/ai-cloudflare",
+  "version": "0.0.0",
+  "description": "Auth0 AI tools for the Agents SDK",
+  "types": "dist/esm/index.d.ts",
+  "main": "dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "scripts": {
+    "build": "npm run clean && npm run build:esm && npm run build:cjs",
+    "build:watch": "run-p 'build:esm -- --watch' 'build:cjs -- -watch'",
+    "build:esm": "tsc --outDir ./dist/esm",
+    "build:cjs": "tsc --module nodenext --moduleResolution nodenext --declaration false --declarationMap false --outDir ./dist/cjs",
+    "clean": "rm -rf dist",
+    "lint": "eslint .",
+    "semantic-release": "npx --no semantic-release",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "files": [
+    "dist/**/*.{*js,*js.map,d.ts}"
+  ],
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/esm/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
+    },
+    "./react": {
+      "types": "./dist/esm/react/index.d.ts",
+      "import": "./dist/esm/react/index.js",
+      "require": "./dist/cjs/react/index.js"
+    },
+    "./hono": {
+      "types": "./dist/esm/hono/index.d.ts",
+      "import": "./dist/esm/hono/index.js",
+      "require": "./dist/cjs/hono/index.js"
+    }
+  },
+  "author": {
+    "name": "Auth0 Inc.",
+    "url": "https://auth0.com"
+  },
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@auth0/ai": "*",
+    "@auth0/ai-vercel": "*"
+  },
+  "peerDependencies": {
+    "agents": "^0.0.51",
+    "hono-agents": "^0.0.41",
+    "@hono/oidc-auth": "^1.6.0"
+  },
+  "devDependencies": {
+    "@eslint/compat": "^1.2.7",
+    "@types/node": "^22.10.6",
+    "eslint": "^9.22.0",
+    "typedoc": "^0.27.6",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.9"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
