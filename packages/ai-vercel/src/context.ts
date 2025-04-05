@@ -21,3 +21,20 @@ export const setAIContext = (params: VercelAIContext) => {
   }
   aiContext.enterWith(params);
 };
+
+/**
+ *
+ * Run a function with the provided AI context.
+ *
+ * This allows you to execute code within a specific AI context scope.
+ *
+ * @param params - The context parameters to use.
+ * @param params.threadID - The thread ID to set in the context.
+ * @param fn - The function to execute within the context.
+ */
+export const runWithAIContext = <T>(params: VercelAIContext, fn: () => T) => {
+  if (typeof params.threadID !== "string") {
+    throw new Error("threadID must be a string");
+  }
+  return aiContext.run(params, fn);
+};

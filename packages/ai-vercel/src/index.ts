@@ -4,4 +4,4 @@ export { getCIBACredentials } from "./CIBA";
 export { getDeviceAuthorizerCredentials } from "./Device";
 export { getAccessTokenForConnection } from "./FederatedConnections";
 
-export { setAIContext } from "./context";
+export { setAIContext, runWithAIContext } from "./context";
