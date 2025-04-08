@@ -7,9 +7,9 @@ import { useCIBA } from "../authorizers/ciba";
 import { useDeviceFLow } from "../authorizers/deviceFlow";
 
 export function buyTool(ai: GenkitBeta) {
-  return useDeviceFLow(
-    useCIBA(
-      ai.defineTool(
+  return ai.defineTool(
+    ...useDeviceFLow(
+      ...useCIBA(
         {
           name: "buy",
           description: "Use this function to buy stock",

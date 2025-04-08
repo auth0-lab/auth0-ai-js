@@ -26,8 +26,8 @@ export function buyTool(ai: GenkitBeta) {
     },
   });
 
-  return useFGA(
-    ai.defineTool(
+  return ai.defineTool(
+    ...useFGA(
       {
         name: "buy",
         description: "Use this function to buy stock",

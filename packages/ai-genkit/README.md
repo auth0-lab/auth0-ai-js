@@ -82,54 +82,52 @@ import { FederatedConnectionError } from "@auth0/ai/interrupts";
 import { addHours } from "date-fns";
 import { z } from "zod";
 
-export const checkCalendarTool = withGoogleAccess(
-  ai.defineTool(
-    {
-      name: "check_user_calendar",
-      description:
-        "Check user availability on a given date time on their calendar",
-      inputSchema: z.object({
-        date: z.coerce.date(),
-      }),
-      outputSchema: z.object({
-        available: z.boolean(),
-      }),
-    },
-    async ({ date }) => {
-      const { accessToken } = getAccessTokenForConnection();
-      const body = JSON.stringify({
-        timeMin: date,
-        timeMax: addHours(date, 1),
-        timeZone: "UTC",
-        items: [{ id: "primary" }],
-      });
+export const checkCalendarTool = ai.defineTool(
+  ...withGoogleAccess({
+    name: "check_user_calendar",
+    description:
+      "Check user availability on a given date time on their calendar",
+    inputSchema: z.object({
+      date: z.coerce.date(),
+    }),
+    outputSchema: z.object({
+      available: z.boolean(),
+    }),
+  },
+  async ({ date }) => {
+    const { accessToken } = getAccessTokenForConnection();
+    const body = JSON.stringify({
+      timeMin: date,
+      timeMax: addHours(date, 1),
+      timeZone: "UTC",
+      items: [{ id: "primary" }],
+    });
 
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body,
-      });
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body,
+    });
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          throw new FederatedConnectionError(
-            `Authorization required to access the Federated Connection`
-          );
-        }
-        throw new Error(
-          `Invalid response from Google Calendar API: ${
-            response.status
-          } - ${await response.text()}`
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new FederatedConnectionError(
+          `Authorization required to access the Federated Connection`
         );
       }
-      const busyResp = await response.json();
-      return { available: busyResp.calendars.primary.busy.length === 0 };
+      throw new Error(
+        `Invalid response from Google Calendar API: ${
+          response.status
+        } - ${await response.text()}`
+      );
     }
-  )
-);
+    const busyResp = await response.json();
+    return { available: busyResp.calendars.primary.busy.length === 0 };
+  }
+));
 ```
 
 ## CIBA: Client-Initiated Backchannel Authentication
@@ -158,41 +156,39 @@ Then wrap the tool as follows:
 import { z } from "zod";
 import { getCIBACredentials } from "@auth0/ai-genkit";
 
-export const buyTool = buyStockAuthorizer(
-  ai.defineTool(
-    {
-      name: "buy_stock",
-      description: "Execute a stock purchase given stock ticker and quantity",
-      inputSchema: z.object({
-        tradeID: z
-          .string()
-          .uuid()
-          .describe("The unique identifier for the trade provided by the user"),
-        userID: z
-          .string()
-          .describe("The user ID of the user who created the conditional trade"),
-        ticker: z.string().describe("The stock ticker to trade"),
-        qty: z
-          .number()
-          .int()
-          .positive()
-          .describe("The quantity of shares to trade"),
-      }),
-      outputSchema: z.string(),
-    },
-    async ({ ticker, qty }) => {
-      const { accessToken } = getCIBACredentials();
-      fetch("http://yourapi.com/buy", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({ ticker, qty }),
-      });
-      return `Purchased ${qty} shares of ${ticker}`;
-    }
-  )
+export const buyTool = ai.defineTool(
+  ...buyStockAuthorizer({
+    name: "buy_stock",
+    description: "Execute a stock purchase given stock ticker and quantity",
+    inputSchema: z.object({
+      tradeID: z
+        .string()
+        .uuid()
+        .describe("The unique identifier for the trade provided by the user"),
+      userID: z
+        .string()
+        .describe("The user ID of the user who created the conditional trade"),
+      ticker: z.string().describe("The stock ticker to trade"),
+      qty: z
+        .number()
+        .int()
+        .positive()
+        .describe("The quantity of shares to trade"),
+    }),
+    outputSchema: z.string(),
+  },
+  async ({ ticker, qty }) => {
+    const { accessToken } = getCIBACredentials();
+    fetch("http://yourapi.com/buy", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ ticker, qty }),
+    });
+    return `Purchased ${qty} shares of ${ticker}`;
+  })
 );
 ```
 
@@ -216,31 +212,29 @@ Then wrap the tool as follows:
 import { z } from "zod";
 import { getDeviceAuthorizerCredentials } from "@auth0/ai-genkit";
 
-export const fetchData = deviceFlowAuthorizer(
-  ai.defineTool(
-    {
-      name: "fetch_data",
-      description: "Fetch data from a secure API",
-      inputSchema: z.object({
-        resourceID: z.string().describe("The ID of the resource to fetch"),
-      }),
-      outputSchema: z.any(),
-    },
-    async ({ resourceID }) => {
-      const credentials = getDeviceAuthorizerCredentials();
-      const response = await fetch(`https://api.example.com/resource/${resourceID}`, {
-        headers: {
-          Authorization: `Bearer ${credentials.accessToken}`,
-        },
-      });
+export const fetchData = ai.defineTool(
+  ...deviceFlowAuthorizer({
+    name: "fetch_data",
+    description: "Fetch data from a secure API",
+    inputSchema: z.object({
+      resourceID: z.string().describe("The ID of the resource to fetch"),
+    }),
+    outputSchema: z.any(),
+  },
+  async ({ resourceID }) => {
+    const credentials = getDeviceAuthorizerCredentials();
+    const response = await fetch(`https://api.example.com/resource/${resourceID}`, {
+      headers: {
+        Authorization: `Bearer ${credentials.accessToken}`,
+      },
+    });
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch resource: ${response.statusText}`);
-      }
-
-      return await response.json();
+    if (!response.ok) {
+      throw new Error(`Failed to fetch resource: ${response.statusText}`);
     }
-  )
+
+    return await response.json();
+  })
 );
 ```
 
