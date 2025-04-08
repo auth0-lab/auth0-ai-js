@@ -60,13 +60,13 @@
     "react": "^19.0.0"
   },
   "devDependencies": {
-    "@eslint/compat": "^1.2.7",
-    "@types/node": "^22.10.6",
+    "@eslint/compat": "^1.2.8",
+    "@types/node": "^20.17.30",
     "@types/react": "^19.0.10",
     "eslint": "^9.22.0",
-    "typedoc": "^0.27.6",
-    "typescript": "^5.7.3",
-    "vitest": "^3.0.9"
+    "typedoc": "^0.28.2",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.1"
   },
   "publishConfig": {
     "access": "public"
