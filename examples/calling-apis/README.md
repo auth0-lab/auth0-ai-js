@@ -1,6 +1,6 @@
 ## Calling APIs on user's behalf
 
-Calling APIs on user's behalf allows you to use secure standards to call APIs from tools, integrating your app with other products. These examples demonstrate how to integrate **Auth0 AI SDK** with **AI SDK**, **LangChain**, **LlamaIndex**, **Genkit** and others to call APIs on behalf of users. For more information, refer to the [documentation](https://demo.auth0.ai/docs/call-apis-on-users-behalf).
+Calling APIs on user's behalf allows you to use secure standards to call APIs from tools, integrating your app with other products. These examples demonstrate how to integrate **Auth0 AI SDK** with **AI SDK**, **LangGraph**, **LlamaIndex**, **Genkit** and others to call APIs on behalf of users. For more information, refer to the [documentation](https://demo.auth0.ai/docs/call-apis-on-users-behalf).
 
 ### How It Works
 
@@ -26,5 +26,16 @@ Below is a high-level workflow:
 
 ### Examples
 
-> [!NOTE]
-> Coming soon...
+Explore the following examples demonstrating how to call APIs on user's behalf:
+
+- **LangGraph:**  
+   An implementation showcasing how integrate `@auth0/ai-langchain` with LangChain to call APIs on user's behalf.  
+   [View Example](/examples/calling-apis/langgraph/)
+
+- **AI SDK:**  
+   An implementation showcasing how integrate `@auth0/ai-vercel` with LlamaIndex to call APIs on user's behalf.  
+   [View Example](/demos/nextjs-ai/)
+
+- **Genkit**: Coming soon
+
+- **LlamaIndex**: Coming soon
