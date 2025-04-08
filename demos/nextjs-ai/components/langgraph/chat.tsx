@@ -7,7 +7,6 @@ import { FederatedConnectionInterrupt } from "@auth0/ai/interrupts";
 import { useStream } from "@langchain/langgraph-sdk/react";
 
 import { EnsureAPIAccessPopup } from "../auth0-ai/FederatedConnections/popup";
-import { GoogleCalendarIcon } from "../icons";
 
 const useFocus = () => {
   const htmlElRef = useRef<HTMLInputElement>(null);
@@ -23,7 +22,6 @@ const useFocus = () => {
 export default function Chat() {
   const [threadId, setThreadId] = useQueryState("threadId");
   const [input, setInput] = useState("");
-
   const thread = useStream({
     apiUrl: `${process.env.NEXT_PUBLIC_URL}/api/langgraph`, // Update this with your domain URL (e.g process.env.NEXT_PUBLIC_API_URL)
     assistantId: "agent",
@@ -34,8 +32,8 @@ export default function Chat() {
       console.dir(err);
     },
   });
-
   const [inputRef, setInputFocus] = useFocus();
+
   useEffect(() => {
     if (thread.isLoading) {
       return;
@@ -83,14 +81,8 @@ export default function Chat() {
             connection={thread.interrupt.value.connection}
             scopes={thread.interrupt.value.requiredScopes}
             connectWidget={{
-              icon: (
-                <div className="bg-gray-200 p-3 rounded-lg flex-wrap">
-                  <GoogleCalendarIcon />
-                </div>
-              ),
-              title: "Manage your calendar",
-              description:
-                "This showcases the Google Calendar API integration...",
+              title: thread.interrupt.value.message,
+              description: "Description...",
               action: { label: "Check" },
             }}
           />

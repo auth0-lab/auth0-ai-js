@@ -1,9 +1,9 @@
-import { createDataStreamResponse, Message, streamText } from "ai";
+import { createDataStreamResponse, generateId, Message, streamText } from "ai";
 
 import { buyStock } from "@/lib/ai/tools/buy-stock";
 import { checkUsersCalendar } from "@/lib/ai/tools/check-user-calendar";
-import { getWeather } from "@/lib/ai/tools/get-weather";
-import { generateUUID } from "@/lib/utils";
+import { listChannels } from "@/lib/ai/tools/list-channels";
+import { listRepositories } from "@/lib/ai/tools/list-repositories";
 import { openai } from "@ai-sdk/openai";
 import { setAIContext } from "@auth0/ai-vercel";
 import { errorSerializer, invokeTools } from "@auth0/ai-vercel/interrupts";
@@ -25,6 +25,8 @@ export async function POST(request: Request) {
         messages,
         tools: {
           checkUsersCalendar,
+          listRepositories,
+          listChannels,
         },
       });
 
@@ -36,15 +38,17 @@ export async function POST(request: Request) {
         maxSteps: 5,
 
         experimental_activeTools: [
-          "getWeather",
           "checkUsersCalendar",
+          "listRepositories",
+          "listChannels",
           "buyStock",
         ],
-        experimental_generateMessageId: generateUUID,
+        experimental_generateMessageId: generateId,
         tools: {
           buyStock,
-          getWeather,
           checkUsersCalendar,
+          listRepositories,
+          listChannels,
         },
       });
 

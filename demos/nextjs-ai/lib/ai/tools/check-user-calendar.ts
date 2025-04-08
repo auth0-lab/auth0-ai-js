@@ -1,12 +1,14 @@
 import { tool } from "ai";
-import { addHours } from "date-fns";
+import { addHours, formatISO } from "date-fns";
+import { GaxiosError } from "gaxios";
+import { google } from "googleapis";
 import { z } from "zod";
 
-import { withTokenForGoogleConnection } from "@/lib/auth0-ai";
+import { withGoogleCalendar } from "@/lib/auth0-ai";
 import { getAccessTokenForConnection } from "@auth0/ai-vercel";
 import { FederatedConnectionError } from "@auth0/ai/interrupts";
 
-export const checkUsersCalendar = withTokenForGoogleConnection(
+export const checkUsersCalendar = withGoogleCalendar(
   tool({
     description:
       "Check user availability on a given date time on their calendar",
@@ -15,39 +17,40 @@ export const checkUsersCalendar = withTokenForGoogleConnection(
     }),
     execute: async ({ date }) => {
       const credentials = getAccessTokenForConnection();
-      const accessToken = credentials?.accessToken;
-      const url = "https://www.googleapis.com/calendar/v3/freeBusy";
-      const body = JSON.stringify({
-        timeMin: date,
-        timeMax: addHours(date, 1),
-        timeZone: "UTC",
-        items: [{ id: "primary" }],
-      });
 
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body,
-      });
+      try {
+        // Google SDK
+        const calendar = google.calendar("v3");
+        const auth = new google.auth.OAuth2();
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          throw new FederatedConnectionError(
-            `Authorization required to access the Federated Connection`
-          );
+        auth.setCredentials({
+          access_token: credentials?.accessToken,
+        });
+
+        const response = await calendar.freebusy.query({
+          auth,
+          requestBody: {
+            timeMin: formatISO(date),
+            timeMax: addHours(date, 1).toISOString(),
+            timeZone: "UTC",
+            items: [{ id: "primary" }],
+          },
+        });
+
+        return {
+          available: response.data?.calendars?.primary?.busy?.length === 0,
+        };
+      } catch (error) {
+        if (error instanceof GaxiosError) {
+          if (error.status === 401) {
+            throw new FederatedConnectionError(
+              `Authorization required to access the Federated Connection`
+            );
+          }
         }
-        throw new Error(
-          `Invalid response from Google Calendar API: ${
-            response.status
-          } - ${await response.text()}`
-        );
-      }
 
-      const busyResp = await response.json();
-      return { available: busyResp.calendars.primary.busy.length === 0 };
+        throw error;
+      }
     },
   })
 );

@@ -11,12 +11,21 @@ import {
 import { ToolNode } from "@langchain/langgraph/prebuilt";
 import { ChatOpenAI } from "@langchain/openai";
 
-import { withCalendarFreeBusyAccess } from "../lib/auth0-ai";
-import { checkCountryHoliday, checkUserCalendar } from "./tools";
+import {
+  checkCountryHoliday,
+  checkUsersCalendar,
+  listChannels,
+  listRepositories,
+} from "./tools";
 
 const model = new ChatOpenAI({
   model: "gpt-4o",
-}).bindTools([checkUserCalendar, checkCountryHoliday]);
+}).bindTools([
+  checkUsersCalendar,
+  checkCountryHoliday,
+  listChannels,
+  listRepositories,
+]);
 
 const callLLM = async (state: typeof MessagesAnnotation.State) => {
   const response = await model.invoke(state.messages);
@@ -38,7 +47,11 @@ const stateGraph = new StateGraph(MessagesAnnotation)
     new ToolNode(
       [
         // A tool with federated connection access
-        withCalendarFreeBusyAccess(checkUserCalendar),
+        checkUsersCalendar,
+        // A tool with federated connection access
+        listChannels,
+        // A tool with federated connection access
+        listRepositories,
         // A tool without federated connection access
         checkCountryHoliday,
       ],
