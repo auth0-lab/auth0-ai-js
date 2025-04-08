@@ -4,7 +4,7 @@ import { auth0 } from "./auth0";
 
 const auth0AI = new Auth0AI();
 
-export const withTokenForGoogleConnection = auth0AI.withTokenForConnection({
+export const withGoogleCalendar = auth0AI.withTokenForConnection({
   refreshToken: async () => {
     const session = await auth0.getSession();
     const refreshToken = session?.tokenSet.refreshToken as string;
@@ -12,6 +12,26 @@ export const withTokenForGoogleConnection = auth0AI.withTokenForConnection({
   },
   connection: "google-oauth2",
   scopes: ["https://www.googleapis.com/auth/calendar.freebusy"],
+});
+
+export const withSlack = auth0AI.withTokenForConnection({
+  refreshToken: async () => {
+    const session = await auth0.getSession();
+    const refreshToken = session?.tokenSet.refreshToken as string;
+    return refreshToken;
+  },
+  connection: "sign-in-with-slack",
+  scopes: ["channels:read", "groups:read"],
+});
+
+export const withGitHub = auth0AI.withTokenForConnection({
+  refreshToken: async () => {
+    const session = await auth0.getSession();
+    const refreshToken = session?.tokenSet.refreshToken as string;
+    return refreshToken;
+  },
+  connection: "github",
+  scopes: ["repo"],
 });
 
 const fgaAI = new Auth0AI.FGA();

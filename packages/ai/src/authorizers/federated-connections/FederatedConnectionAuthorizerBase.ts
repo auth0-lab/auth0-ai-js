@@ -100,7 +100,9 @@ export class FederatedConnectionAuthorizerBase<ToolExecuteArgs extends any[]> {
       );
     }
 
-    const currentScopes = (tokenResponse.scope ?? "").split(" ");
+    const currentScopes = (tokenResponse.scope ?? "")
+      .replace(/,/g, " ")
+      .split(" ");
     const missingScopes = scopes.filter((s) => !currentScopes.includes(s));
     store.currentScopes = currentScopes;
 
