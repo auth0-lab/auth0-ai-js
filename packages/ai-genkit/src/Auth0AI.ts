@@ -9,8 +9,8 @@ import { DeviceAuthorizer } from "./Device/DeviceAuthorizer";
 import { FederatedConnectionAuthorizer } from "./FederatedConnections";
 import { FGA_AI } from "./FGA_AI";
 
-import type { ToolAction } from "@genkit-ai/ai/tool";
-import type { ToolWrapper } from "./lib";
+import type { ToolWrapper, ToolDefinition } from "./lib";
+
 type AuthorizerParams = Pick<
   AuthenticationClientOptions,
   "domain" | "clientId" | "clientSecret"
@@ -68,8 +68,9 @@ export class Auth0AI {
    */
   withAsyncUserConfirmation<I extends z.ZodTypeAny, O extends z.ZodTypeAny>(
     params: CIBAParams,
-    tool?: ToolAction<I, O>
-  ): ToolAction<I, O>;
+    toolConfig?: ToolDefinition<I, O>[0],
+    toolFn?: ToolDefinition<I, O>[1]
+  ): ToolDefinition<I, O>;
 
   /**
    *
@@ -81,15 +82,16 @@ export class Auth0AI {
    */
   withAsyncUserConfirmation<I extends z.ZodTypeAny, O extends z.ZodTypeAny>(
     params: CIBAParams,
-    tool?: ToolAction<I, O>
+    toolConfig?: ToolDefinition<I, O>[0],
+    toolFn?: ToolDefinition<I, O>[1]
   ) {
     const cibaStore = this.store.createSubStore("AUTH0_AI_CIBA");
     const authorizer = new CIBAAuthorizer(this.genkit, this.config, {
       store: cibaStore,
       ...params,
     });
-    if (tool) {
-      return authorizer.authorizer()(tool);
+    if (toolConfig && toolFn) {
+      return authorizer.authorizer()(toolConfig, toolFn);
     }
     return authorizer.authorizer();
   }
@@ -110,8 +112,9 @@ export class Auth0AI {
    */
   withDeviceAuthorizationFlow<I extends z.ZodTypeAny, O extends z.ZodTypeAny>(
     params: DeviceParams,
-    tool?: ToolAction<I, O>
-  ): ToolAction<I, O>;
+    toolConfig?: ToolDefinition<I, O>[0],
+    toolFn?: ToolDefinition<I, O>[1]
+  ): ToolDefinition<I, O>;
 
   /**
    *
@@ -125,7 +128,8 @@ export class Auth0AI {
    */
   withDeviceAuthorizationFlow<I extends z.ZodTypeAny, O extends z.ZodTypeAny>(
     params: DeviceParams,
-    tool?: ToolAction<I, O>
+    toolConfig?: ToolDefinition<I, O>[0],
+    toolFn?: ToolDefinition<I, O>[1]
   ) {
     const deviceAuthorizerStore = this.store.createSubStore(
       "AUTH0_AI_DEVICE_FLOW"
@@ -134,8 +138,8 @@ export class Auth0AI {
       store: deviceAuthorizerStore,
       ...params,
     });
-    if (tool) {
-      return authorizer.authorizer()(tool);
+    if (toolConfig && toolFn) {
+      return authorizer.authorizer()(toolConfig, toolFn);
     }
     return authorizer.authorizer();
   }
@@ -157,12 +161,14 @@ export class Auth0AI {
    */
   withTokenForConnection<I extends z.ZodTypeAny, O extends z.ZodTypeAny>(
     params: FederatedConnectionParams,
-    tool: ToolAction<I, O>
-  ): ToolAction<I, O>;
+    toolConfig?: ToolDefinition<I, O>[0],
+    toolFn?: ToolDefinition<I, O>[1]
+  ): ToolDefinition<I, O>;
 
   withTokenForConnection<I extends z.ZodTypeAny, O extends z.ZodTypeAny>(
     params: FederatedConnectionParams,
-    tool?: ToolAction<I, O>
+    toolConfig?: ToolDefinition<I, O>[0],
+    toolFn?: ToolDefinition<I, O>[1]
   ) {
     const store = this.store.createSubStore("AUTH0_AI_FEDERATED_CONNECTION");
     const fc = new FederatedConnectionAuthorizer(this.genkit, this.config, {
@@ -170,8 +176,8 @@ export class Auth0AI {
       ...params,
     });
     const authorizer = fc.authorizer();
-    if (tool) {
-      return authorizer(tool);
+    if (toolConfig && toolFn) {
+      return authorizer(toolConfig, toolFn);
     }
     return authorizer;
   }

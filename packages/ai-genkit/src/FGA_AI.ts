@@ -4,9 +4,8 @@ import { GenkitBeta } from "genkit/beta";
 import { FGAAuthorizerBase } from "@auth0/ai/FGA";
 
 import { FGAAuthorizer } from "./FGA";
-import { ToolWrapper } from "./lib";
+import { ToolDefinition, ToolWrapper } from "./lib";
 
-import type { ToolAction } from "@genkit-ai/ai/tool";
 type FGAAIParams = {
   fga?: ConstructorParameters<typeof FGAAuthorizerBase>[0];
   genkit: GenkitBeta;
@@ -66,8 +65,9 @@ export class FGA_AI {
    */
   withFGA<I extends z.ZodTypeAny, O extends z.ZodTypeAny>(
     params: FGAParams,
-    tool?: ToolAction<I, O>
-  ): ToolAction<I, O>;
+    toolConfig?: ToolDefinition<I, O>[0],
+    toolFn?: ToolDefinition<I, O>[1]
+  ): ToolDefinition<I, O>;
 
   /**
    *
@@ -79,13 +79,14 @@ export class FGA_AI {
    */
   withFGA<I extends z.ZodTypeAny, O extends z.ZodTypeAny>(
     params: FGAParams,
-    tool?: ToolAction<I, O>
+    toolConfig?: ToolDefinition<I, O>[0],
+    toolFn?: ToolDefinition<I, O>[1]
   ) {
     const { genkit, fga } = this.fgaParams;
     const fc = new FGAAuthorizer(genkit, fga, params);
     const authorizer = fc.authorizer();
-    if (tool) {
-      return authorizer(tool);
+    if (toolConfig && toolFn) {
+      return authorizer(toolConfig, toolFn);
     }
     return authorizer;
   }

@@ -2,7 +2,7 @@ import { z } from "genkit";
 import { GenkitBeta } from "genkit/beta";
 
 export function weather(ai: GenkitBeta) {
-  const r = ai.defineTool(
+  return ai.defineTool(
     {
       name: "weather",
       description: "Use this function to get the weather for a city",
@@ -15,5 +15,4 @@ export function weather(ai: GenkitBeta) {
       return `snowy in ${city} - 10 degrees celsius`;
     }
   );
-  return r;
 }

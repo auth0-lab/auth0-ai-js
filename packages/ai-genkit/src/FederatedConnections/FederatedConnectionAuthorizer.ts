@@ -1,9 +1,10 @@
 import { GenkitBeta } from "genkit/beta";
 
 import { FederatedConnectionAuthorizerBase } from "@auth0/ai/FederatedConnections";
+import { Auth0Interrupt } from "@auth0/ai/interrupts";
 import { ToolFnOptions, ToolRunOptions } from "@genkit-ai/ai/tool";
 
-import { createToolWrapper, ToolWrapper } from "../lib";
+import { createToolWrapper, toGenKitInterrupt, ToolWrapper } from "../lib";
 
 export class FederatedConnectionAuthorizer extends FederatedConnectionAuthorizerBase<
   [any, ToolFnOptions & ToolRunOptions]
@@ -13,6 +14,10 @@ export class FederatedConnectionAuthorizer extends FederatedConnectionAuthorizer
     ...args: ConstructorParameters<typeof FederatedConnectionAuthorizerBase>
   ) {
     super(...args);
+  }
+
+  protected handleAuthorizationInterrupts(err: Auth0Interrupt) {
+    throw toGenKitInterrupt(err);
   }
 
   /**

@@ -63,6 +63,8 @@ export const createToolWrapper = (protect: TProtectFunc): ToolWrapper => {
       };
     }, t.call);
 
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     return FunctionTool.from(execute, t.metadata) as unknown as FunctionTool<
       T,
       R,
