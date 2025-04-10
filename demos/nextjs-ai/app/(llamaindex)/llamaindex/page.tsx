@@ -6,12 +6,13 @@ import { useChat } from "@ai-sdk/react";
 import { useInterruptions } from "@auth0/ai-vercel/react";
 import { FederatedConnectionInterrupt } from "@auth0/ai/interrupts";
 
-import { EnsureAPIAccessPopup } from "./auth0-ai/FederatedConnections/popup";
+import { EnsureAPIAccessPopup } from "../../../components/auth0-ai/FederatedConnections/popup";
 
 export default function Chat() {
   const { messages, handleSubmit, input, setInput, toolInterrupt } =
     useInterruptions((handler) =>
       useChat({
+        api: "/api/llamaindex",
         experimental_throttle: 100,
         sendExtraMessageFields: true,
         generateId,
@@ -25,35 +26,22 @@ export default function Chat() {
         <div key={message.id} className="whitespace-pre-wrap">
           {message.role === "user" ? "User: " : "AI: "}
           {message.content}
-
           {message.parts && message.parts.length > 0 && (
             <div className="flex flex-col gap-4">
-              {message.parts
-                .filter((p) => p.type === "tool-invocation")
-                .map((part) => {
-                  const {
-                    toolInvocation: { toolCallId, toolName, state },
-                  } = part;
-
-                  if (
-                    state === "call" &&
-                    FederatedConnectionInterrupt.isInterrupt(toolInterrupt)
-                  ) {
-                    return (
-                      <EnsureAPIAccessPopup
-                        key={toolCallId}
-                        onFinish={toolInterrupt.resume}
-                        connection={toolInterrupt.connection}
-                        scopes={toolInterrupt.requiredScopes}
-                        connectWidget={{
-                          title: `Requested by: "${toolName}"`,
-                          description: "Description...",
-                          action: { label: "Check" },
-                        }}
-                      />
-                    );
-                  }
-                })}
+              {toolInterrupt?.toolCall.id.includes(message.id) &&
+                FederatedConnectionInterrupt.isInterrupt(toolInterrupt) && (
+                  <EnsureAPIAccessPopup
+                    key={toolInterrupt.toolCall.id}
+                    onFinish={toolInterrupt.resume}
+                    connection={toolInterrupt.connection}
+                    scopes={toolInterrupt.requiredScopes}
+                    connectWidget={{
+                      title: `Requested by: "${toolInterrupt.toolCall.name}"`,
+                      description: "Description...",
+                      action: { label: "Check" },
+                    }}
+                  />
+                )}
             </div>
           )}
         </div>
