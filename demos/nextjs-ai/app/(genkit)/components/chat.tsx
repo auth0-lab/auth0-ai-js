@@ -8,7 +8,6 @@ import Markdown from "react-markdown";
 import { FederatedConnectionInterrupt } from "@auth0/ai/interrupts";
 
 import { EnsureAPIAccessPopup } from "../../../components/auth0-ai/FederatedConnections/popup";
-import { GoogleCalendarIcon } from "../../../components/icons";
 
 const useFocus = () => {
   const htmlElRef = useRef<HTMLInputElement>(null);
@@ -138,11 +137,6 @@ export default function Chat() {
                         connection={interrupt.connection}
                         scopes={interrupt.requiredScopes}
                         connectWidget={{
-                          icon: (
-                            <div className="bg-gray-200 p-3 rounded-lg flex-wrap">
-                              <GoogleCalendarIcon />
-                            </div>
-                          ),
                           title: "Manage your calendar",
                           description:
                             "This showcases the Google Calendar API integration...",

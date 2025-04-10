@@ -19,12 +19,24 @@
   "files": [
     "dist/**/*.{*js,*js.map,d.ts}"
   ],
+  "imports": {
+    "#interrupts": {
+      "types": "./dist/esm/interrupts/index.d.ts",
+      "require": "./dist/cjs/interrupts/index.js",
+      "import": "./dist/esm/interrupts/index.js"
+    }
+  },
   "exports": {
     "./package.json": "./package.json",
     ".": {
       "types": "./dist/esm/index.d.ts",
       "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js"
+    },
+    "./interrupts": {
+      "types": "./dist/esm/interrupts/index.d.ts",
+      "import": "./dist/esm/interrupts/index.js",
+      "require": "./dist/cjs/interrupts/index.js"
     }
   },
   "author": {

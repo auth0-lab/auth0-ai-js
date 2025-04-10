@@ -6,6 +6,8 @@ import { Auth0Interrupt } from "./Auth0Interrupt";
  * Throw this error if the service returns Unauthorized for the current access token.
  */
 export class FederatedConnectionInterrupt extends Auth0Interrupt {
+  public behavior: "resume" | "reload";
+
   /**
    * The auth0 connection name.
    */
@@ -29,9 +31,11 @@ export class FederatedConnectionInterrupt extends Auth0Interrupt {
     message: string,
     connection: string,
     scopes: string[],
-    requiredScopes: string[]
+    requiredScopes: string[],
+    behavior: "resume" | "reload" = "resume"
   ) {
     super(message, FederatedConnectionInterrupt.code);
+    this.behavior = behavior;
     this.connection = connection;
     this.scopes = scopes;
     this.requiredScopes = requiredScopes;

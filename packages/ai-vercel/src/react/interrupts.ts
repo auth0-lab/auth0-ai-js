@@ -16,6 +16,7 @@ type ErrorHandler = (
 export type Auth0InterruptionUI = {
   name: string;
   code: string;
+  bahavior: string; // "resume" | "reload";
 
   tool: {
     id: string;
@@ -53,16 +54,21 @@ export const useInterruptions = (
         ...parsedError,
         resume: (result: any) => {
           setToolInterrupt(null);
-          addToolResult({
-            toolCallId: id,
-            result: { continueInterruption: true, ...result },
-          });
+
+          if (parsedError?.behavior === "reload") {
+            reload();
+          } else {
+            addToolResult({
+              toolCallId: id,
+              result: { continueInterruption: true, ...result },
+            });
+          }
         },
       });
     };
   };
 
-  const { addToolResult, ...chat } = useChatCreator(errorHandler);
+  const { addToolResult, reload, ...chat } = useChatCreator(errorHandler);
 
   let messages = chat.messages;
   if (toolInterrupt) {
@@ -86,6 +92,7 @@ export const useInterruptions = (
   return {
     ...chat,
     messages,
+    reload,
     addToolResult,
     toolInterrupt,
   };

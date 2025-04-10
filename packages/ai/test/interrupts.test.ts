@@ -34,6 +34,7 @@ describe("interrupts", () => {
     it("should contain the interrupt options", () => {
       expect(serialized).toMatchInlineSnapshot(`
         {
+          "behavior": "resume",
           "code": "FEDERATED_CONNECTION_ERROR",
           "connection": "google-oauth2",
           "message": "this is a message",
