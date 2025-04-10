@@ -25,7 +25,6 @@
   "packageManager": "npm@9.8.0",
   "workspaces": [
     "packages/*",
-    "demos/*",
     "examples/**/*",
     "tools/login-helper"
   ],

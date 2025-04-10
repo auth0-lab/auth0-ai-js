@@ -2,18 +2,14 @@ import { CoreMessage, generateText, ToolExecutionError } from "ai";
 import { Job } from "bullmq";
 
 import { queue } from "@/src/queue";
-import { buyStock } from "@/src/tools/buySock";
+import { buyStock } from "@/src/tools/buyStock";
 import { compareMetric } from "@/src/tools/compareMetric";
 import { getStockMetric } from "@/src/tools/getStockMetric";
 import { notifyUser } from "@/src/tools/notifyUser";
 import { openai } from "@ai-sdk/openai";
 import { setAIContext } from "@auth0/ai-vercel";
 import { appendToolCall, invokeTools } from "@auth0/ai-vercel/interrupts";
-import {
-  Auth0Interrupt,
-  AuthorizationPendingInterrupt,
-  AuthorizationPollingInterrupt,
-} from "@auth0/ai/interrupts";
+import { Auth0Interrupt, AuthorizationPendingInterrupt, AuthorizationPollingInterrupt } from "@auth0/ai/interrupts";
 
 import { ConditionalTrade } from "../../ConditionalTrade";
 
