@@ -2,23 +2,10 @@ import { addHours, formatISO } from "date-fns";
 import { tool } from "llamaindex";
 import { z } from "zod";
 
-import { Auth0AI, getAccessTokenForConnection } from "@auth0/ai-llamaindex";
+import { getAccessTokenForConnection } from "@auth0/ai-llamaindex";
 import { FederatedConnectionError } from "@auth0/ai/interrupts";
 
-import { auth0 } from "../../auth0";
-
-const auth0AI = new Auth0AI();
-
-export const withGoogleCalendar = auth0AI.withTokenForConnection({
-  refreshToken: async () => {
-    const session = await auth0.getSession();
-    const refreshToken = session?.tokenSet.refreshToken as string;
-
-    return refreshToken;
-  },
-  connection: "google-oauth2",
-  scopes: ["https://www.googleapis.com/auth/calendar.freebusy"],
-});
+import { withGoogleCalendar } from "../auth0-ai";
 
 export const checkUsersCalendar = () =>
   withGoogleCalendar(

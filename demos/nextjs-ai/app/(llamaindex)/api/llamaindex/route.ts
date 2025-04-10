@@ -7,10 +7,11 @@ import {
 } from "ai";
 import { OpenAIAgent } from "llamaindex";
 
-import { checkUsersCalendar } from "@/lib/ai/llamaindex/check-user-calendar";
 import { setAIContext } from "@auth0/ai-llamaindex";
 import { withInterruptions } from "@auth0/ai-llamaindex/interrupts";
 import { errorSerializer } from "@auth0/ai-vercel/interrupts";
+
+import { checkUsersCalendar } from "../../lib/tools/check-user-calendar";
 
 export async function POST(request: Request) {
   const { id, messages }: { id: string; messages: Message[] } =
