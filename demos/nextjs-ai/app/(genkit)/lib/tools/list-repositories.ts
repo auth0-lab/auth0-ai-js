@@ -1,16 +1,20 @@
-import { tool } from "ai";
 import { Octokit, RequestError } from "octokit";
 import { z } from "zod";
 
-import { withGitHub } from "@/lib/auth0-ai";
-import { getAccessTokenForConnection } from "@auth0/ai-vercel";
+import { getAccessTokenForConnection } from "@auth0/ai-genkit";
 import { FederatedConnectionError } from "@auth0/ai/interrupts";
 
-export const listRepositories = withGitHub(
-  tool({
-    description: "List respositories for the current user on GitHub",
-    parameters: z.object({}),
-    execute: async () => {
+import { withGitHub } from "../auth0-ai";
+import { ai } from "../genkit";
+
+export const listRepositories = ai.defineTool(
+  ...withGitHub(
+    {
+      description: "List respositories for the current user on GitHub",
+      inputSchema: z.object({}),
+      name: "listRepositories",
+    },
+    async () => {
       const credentials = getAccessTokenForConnection();
 
       try {
@@ -33,6 +37,6 @@ export const listRepositories = withGitHub(
 
         throw error;
       }
-    },
-  })
+    }
+  )
 );
