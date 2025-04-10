@@ -119,7 +119,7 @@ export default function Chat() {
           <div key={index} className="whitespace-pre-wrap">
             <Markdown>
               {(message.role === "user" ? "User: " : "AI: ") +
-                message.content[0].text!}
+                (message.content[0].text || "")}
             </Markdown>
             {!isLoading &&
             message.content[0].metadata?.interrupt &&
@@ -127,7 +127,7 @@ export default function Chat() {
               message.content[0].metadata?.interrupt
             )
               ? (() => {
-                  const interrupt = message.content[0].metadata?.interrupt;
+                  const interrupt: any = message.content[0].metadata?.interrupt;
                   return (
                     <div className="whitespace-pre-wrap">
                       <EnsureAPIAccessPopup
@@ -137,9 +137,8 @@ export default function Chat() {
                         connection={interrupt.connection}
                         scopes={interrupt.requiredScopes}
                         connectWidget={{
-                          title: "Manage your calendar",
-                          description:
-                            "This showcases the Google Calendar API integration...",
+                          title: `Requested by: "${interrupt.toolCall.toolName}"`,
+                          description: "Description...",
                           action: { label: "Check" },
                         }}
                       />

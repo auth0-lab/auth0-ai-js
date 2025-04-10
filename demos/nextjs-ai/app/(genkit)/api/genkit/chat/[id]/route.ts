@@ -3,7 +3,8 @@ import path from "path";
 
 import { ai, JsonSessionStore } from "@/app/(genkit)/lib/genkit";
 import { checkUsersCalendar } from "@/app/(genkit)/lib/tools/check-user-calendar";
-import { getWeather } from "@/app/(genkit)/lib/tools/get-weather";
+import { listChannels } from "@/app/(genkit)/lib/tools/list-channels";
+import { listRepositories } from "@/app/(genkit)/lib/tools/list-repositories";
 import { auth0 } from "@/lib/auth0";
 import { resumeAuth0Interrupts } from "@auth0/ai-genkit";
 
@@ -38,7 +39,7 @@ export async function POST(
     });
   }
 
-  const tools = [getWeather, checkUsersCalendar];
+  const tools = [checkUsersCalendar, listChannels, listRepositories];
 
   const chat = session.chat({
     tools: tools,
