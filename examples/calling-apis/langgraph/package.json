@@ -17,9 +17,9 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@auth0/ai-langchain": "@auth0/ai-langchain:*",
-    "@langchain/core": "^0.3.19",
+    "@langchain/core": "^0.3.44",
     "@langchain/langgraph": "^0.2.46",
-    "@langchain/langgraph-sdk": "^0.0.57",
+    "@langchain/langgraph-sdk": "^0.0.66",
     "@langchain/openai": "^0.3.14",
     "@octokit/rest": "^21.1.1",
     "@slack/web-api": "^7.9.1",
