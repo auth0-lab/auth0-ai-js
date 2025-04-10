@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 
-import { withSlack } from "@/lib/auth0-ai";
+import { withSlack } from "@/app/(ai-sdk)/lib/auth0-ai";
 import { getAccessTokenForConnection } from "@auth0/ai-vercel";
 import { FederatedConnectionError } from "@auth0/ai/interrupts";
 import { ErrorCode, WebClient } from "@slack/web-api";
@@ -11,10 +11,11 @@ export const listChannels = withSlack(
     description: "List channels for the current user on Slack",
     parameters: z.object({}),
     execute: async () => {
+      // Get the access token from Auth0 AI
       const credentials = getAccessTokenForConnection();
 
+      // Slack SDK
       try {
-        // Slack SDK
         const web = new WebClient(credentials?.accessToken);
 
         const result = await web.conversations.list({

@@ -33,9 +33,13 @@ Explore the following examples demonstrating how to call APIs on user's behalf:
    [View Example](/examples/calling-apis/langgraph/)
 
 - **AI SDK:**  
-   An implementation showcasing how integrate `@auth0/ai-vercel` with LlamaIndex to call APIs on user's behalf.  
-   [View Example](/demos/nextjs-ai/)
+   An implementation showcasing how integrate `@auth0/ai-vercel` with AI SDK to call APIs on user's behalf.  
+   [View Example](/demos/nextjs-ai/app/(ai-sdk)/)
 
-- **Genkit**: Coming soon
+- **LlamaIndex:**  
+   An implementation showcasing how integrate `@auth0/ai-llamaindex` with LlamaIndex to call APIs on user's behalf.  
+   [View Example](/demos/nextjs-ai/app/(llamaindex)/)
 
-- **LlamaIndex**: Coming soon
+- **GenKit:**  
+   An implementation showcasing how integrate `@auth0/ai-genkit` with GenKit to call APIs on user's behalf.  
+   [View Example](/demos/nextjs-ai/app/(genkit)/)

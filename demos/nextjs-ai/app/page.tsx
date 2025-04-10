@@ -1,6 +1,13 @@
-/* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
+import { ChevronRight } from "lucide-react";
+
 import UserButton from "@/components/auth0/user-button";
-import Chat from "@/components/chat";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { auth0 } from "@/lib/auth0";
 
 export default async function Home() {
@@ -8,12 +15,106 @@ export default async function Home() {
 
   return (
     <div className="font-[family-name:var(--font-geist-sans)]">
-      <header className="w-full max-w-7xl h-14 mx-auto flex items-center justify-between border-b border-gray-200">
-        <div className="font-semibold">Auth0 AI | Demo</div>
+      <header className="w-full max-w-7xl h-20 mx-auto flex items-center justify-between border-b border-gray-200">
+        <div className="font-semibold text-xl">Auth0 AI | Demo</div>
         <UserButton user={session?.user!} logoutUrl="/auth/logout" />
       </header>
       <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start w-full">
-        <Chat />
+        <div className="flex flex-col w-full max-w-md py-24 mx-auto stretch">
+          <Card className="w-full">
+            <CardHeader>
+              <CardTitle>Samples</CardTitle>
+              <CardDescription>
+                Learn how to call APIs on behalf of a user with Auth0 AI.
+              </CardDescription>
+            </CardHeader>
+            <a href="/ai-sdk">
+              <CardContent className="grid gap-4">
+                <div className=" flex items-center space-x-4 rounded-md border p-4">
+                  <div>
+                    <img src="/vercel.svg" className="w-13 h-13" />
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <p className="text-sm font-medium leading-none">AI SDK</p>
+                    <p className="text-sm text-muted-foreground">
+                      Integrate with{" "}
+                      <span className="font-semibold">@auth0/ai-vercel</span>
+                    </p>
+                  </div>
+                  <div className="text-muted-foreground">
+                    <ChevronRight className="h-4 w-4" />
+                  </div>
+                </div>
+              </CardContent>
+            </a>
+
+            <a href="/genkit">
+              <CardContent className="grid gap-4">
+                <div className=" flex items-center space-x-4 rounded-md border p-4">
+                  <div>
+                    <img src="/genkit.svg" className="w-13 h-13" />
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <p className="text-sm font-medium leading-none">GenKit</p>
+                    <p className="text-sm text-muted-foreground">
+                      Integrate with{" "}
+                      <span className="font-semibold">@auth0/ai-genkit</span>
+                    </p>
+                  </div>
+                  <div className="text-muted-foreground">
+                    <ChevronRight className="h-4 w-4" />
+                  </div>
+                </div>
+              </CardContent>
+            </a>
+
+            <a href="/langgraph">
+              <CardContent className="grid gap-4">
+                <div className=" flex items-center space-x-4 rounded-md border p-4">
+                  <div>
+                    <img src="/langchain.svg" className="w-13 h-13" />
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <p className="text-sm font-medium leading-none">
+                      LangGraph
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Integrate with{" "}
+                      <span className="font-semibold">@auth0/ai-langchain</span>
+                    </p>
+                  </div>
+                  <div className="text-muted-foreground">
+                    <ChevronRight className="h-4 w-4" />
+                  </div>
+                </div>
+              </CardContent>
+            </a>
+
+            <a href="/llamaindex">
+              <CardContent className="grid gap-4">
+                <div className=" flex items-center space-x-4 rounded-md border p-4">
+                  <div>
+                    <img src="/llamaindex.svg" className="w-13 h-13" />
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <p className="text-sm font-medium leading-none">
+                      LlamaIndex
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Integrate with{" "}
+                      <span className="font-semibold">
+                        @auth0/ai-llamaindex
+                      </span>
+                    </p>
+                  </div>
+                  <div className="text-muted-foreground">
+                    <ChevronRight className="h-4 w-4" />
+                  </div>
+                </div>
+              </CardContent>
+            </a>
+          </Card>
+        </div>
       </main>
     </div>
   );

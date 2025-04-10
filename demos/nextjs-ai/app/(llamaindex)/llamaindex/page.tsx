@@ -1,60 +1,30 @@
-"use client";
+import { ChevronLeft } from "lucide-react";
 
-import { generateId } from "ai";
+import Chat from "@/app/(llamaindex)/components/chat";
+import UserButton from "@/components/auth0/user-button";
+import { auth0 } from "@/lib/auth0";
 
-import { useChat } from "@ai-sdk/react";
-import { useInterruptions } from "@auth0/ai-vercel/react";
-import { FederatedConnectionInterrupt } from "@auth0/ai/interrupts";
-
-import { EnsureAPIAccessPopup } from "../../../components/auth0-ai/FederatedConnections/popup";
-
-export default function Chat() {
-  const { messages, handleSubmit, input, setInput, toolInterrupt } =
-    useInterruptions((handler) =>
-      useChat({
-        api: "/api/llamaindex",
-        experimental_throttle: 100,
-        sendExtraMessageFields: true,
-        generateId,
-        onError: handler((error) => console.error("Chat error:", error)),
-      })
-    );
+export default async function Home() {
+  const session = await auth0.getSession();
 
   return (
-    <div className="flex flex-col w-full max-w-md py-24 mx-auto stretch">
-      {messages.map((message) => (
-        <div key={message.id} className="whitespace-pre-wrap">
-          {message.role === "user" ? "User: " : "AI: "}
-          {message.content}
-          {message.parts && message.parts.length > 0 && (
-            <div className="flex flex-col gap-4">
-              {toolInterrupt?.toolCall.id.includes(message.id) &&
-                FederatedConnectionInterrupt.isInterrupt(toolInterrupt) && (
-                  <EnsureAPIAccessPopup
-                    key={toolInterrupt.toolCall.id}
-                    onFinish={toolInterrupt.resume}
-                    connection={toolInterrupt.connection}
-                    scopes={toolInterrupt.requiredScopes}
-                    connectWidget={{
-                      title: `Requested by: "${toolInterrupt.toolCall.name}"`,
-                      description: "Description...",
-                      action: { label: "Check" },
-                    }}
-                  />
-                )}
+    <div className="font-[family-name:var(--font-geist-sans)]">
+      <header className="w-full max-w-7xl h-20 mx-auto flex items-center justify-between border-b border-gray-200">
+        <div className="flex flex-col gap-1">
+          <a href="/">
+            <div className="text-muted-foreground flex gap-1 items-center text-sm">
+              <ChevronLeft className="h-4 w-4 -ml-1" /> Back to Home
             </div>
-          )}
+          </a>
+          <div className="font-semibold text-xl">
+            Auth0 AI | LlamaIndex Demo
+          </div>
         </div>
-      ))}
-
-      <form onSubmit={handleSubmit}>
-        <input
-          className="fixed dark:bg-zinc-900 bottom-0 w-full max-w-md p-2 mb-8 border border-zinc-300 dark:border-zinc-800 rounded shadow-xl"
-          value={input}
-          placeholder="Say something..."
-          onChange={(e) => setInput(e.target.value)}
-        />
-      </form>
+        <UserButton user={session?.user!} logoutUrl="/auth/logout" />
+      </header>
+      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start w-full">
+        <Chat />
+      </main>
     </div>
   );
 }

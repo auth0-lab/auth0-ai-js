@@ -1,11 +1,10 @@
 import { Octokit, RequestError } from "octokit";
 import { z } from "zod";
 
+import { withGitHub } from "@/app/(genkit)/lib/auth0-ai";
+import { ai } from "@/app/(genkit)/lib/genkit";
 import { getAccessTokenForConnection } from "@auth0/ai-genkit";
 import { FederatedConnectionError } from "@auth0/ai/interrupts";
-
-import { withGitHub } from "../auth0-ai";
-import { ai } from "../genkit";
 
 export const listRepositories = ai.defineTool(
   ...withGitHub(
@@ -15,10 +14,11 @@ export const listRepositories = ai.defineTool(
       name: "listRepositories",
     },
     async () => {
+      // Get the access token from Auth0 AI
       const credentials = getAccessTokenForConnection();
 
+      // GitHub SDK
       try {
-        // GitHub SDK
         const octokit = new Octokit({
           auth: credentials?.accessToken,
         });

@@ -5,9 +5,8 @@ import { useQueryState } from "nuqs";
 import { FormEventHandler, useEffect, useRef, useState } from "react";
 import Markdown from "react-markdown";
 
+import { EnsureAPIAccessPopup } from "@/components/auth0-ai/FederatedConnections/popup";
 import { FederatedConnectionInterrupt } from "@auth0/ai/interrupts";
-
-import { EnsureAPIAccessPopup } from "../../../components/auth0-ai/FederatedConnections/popup";
 
 const useFocus = () => {
   const htmlElRef = useRef<HTMLInputElement>(null);
@@ -158,6 +157,7 @@ export default function Chat() {
           readOnly={isLoading}
           disabled={isLoading}
           onChange={(e) => setInput(e.target.value)}
+          autoFocus
         />
       </form>
     </div>

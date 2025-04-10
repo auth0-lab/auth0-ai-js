@@ -2,9 +2,11 @@ import { ToolRequestPart } from "genkit";
 import path from "path";
 
 import { ai, JsonSessionStore } from "@/app/(genkit)/lib/genkit";
-import { checkUsersCalendar } from "@/app/(genkit)/lib/tools/check-user-calendar";
-import { listChannels } from "@/app/(genkit)/lib/tools/list-channels";
-import { listRepositories } from "@/app/(genkit)/lib/tools/list-repositories";
+import {
+  checkUsersCalendar,
+  listChannels,
+  listRepositories,
+} from "@/app/(genkit)/lib/tools/";
 import { auth0 } from "@/lib/auth0";
 import { resumeAuth0Interrupts } from "@auth0/ai-genkit";
 
@@ -35,7 +37,7 @@ export async function POST(
   if (!session) {
     session = ai.createSession({
       sessionId: id,
-      store: new JsonSessionStore(path.join(process.cwd(), "./sessions")),
+      store: sessionStore,
     });
   }
 

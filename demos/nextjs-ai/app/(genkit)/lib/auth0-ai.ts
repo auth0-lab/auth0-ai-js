@@ -1,7 +1,6 @@
+import { ai } from "@/app/(genkit)/lib/genkit";
 import { auth0 } from "@/lib/auth0";
 import { Auth0AI } from "@auth0/ai-genkit";
-
-import { ai } from "./genkit";
 
 const auth0AI = new Auth0AI({
   genkit: ai,

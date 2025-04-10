@@ -4,7 +4,7 @@ import { GaxiosError } from "gaxios";
 import { google } from "googleapis";
 import { z } from "zod";
 
-import { withGoogleCalendar } from "@/lib/auth0-ai";
+import { withGoogleCalendar } from "@/app/(ai-sdk)/lib/auth0-ai";
 import { getAccessTokenForConnection } from "@auth0/ai-vercel";
 import { FederatedConnectionError } from "@auth0/ai/interrupts";
 
@@ -16,10 +16,11 @@ export const checkUsersCalendar = withGoogleCalendar(
       date: z.coerce.date(),
     }),
     execute: async ({ date }) => {
+      // Get the access token from Auth0 AI
       const credentials = getAccessTokenForConnection();
 
+      // Google SDK
       try {
-        // Google SDK
         const calendar = google.calendar("v3");
         const auth = new google.auth.OAuth2();
 

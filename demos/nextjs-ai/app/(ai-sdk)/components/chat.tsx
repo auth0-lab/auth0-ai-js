@@ -2,16 +2,16 @@
 
 import { generateId } from "ai";
 
+import { EnsureAPIAccessPopup } from "@/components/auth0-ai/FederatedConnections/popup";
 import { useChat } from "@ai-sdk/react";
 import { useInterruptions } from "@auth0/ai-vercel/react";
 import { FederatedConnectionInterrupt } from "@auth0/ai/interrupts";
-
-import { EnsureAPIAccessPopup } from "./auth0-ai/FederatedConnections/popup";
 
 export default function Chat() {
   const { messages, handleSubmit, input, setInput, toolInterrupt } =
     useInterruptions((handler) =>
       useChat({
+        api: "/api/ai-sdk",
         experimental_throttle: 100,
         sendExtraMessageFields: true,
         generateId,
@@ -65,6 +65,7 @@ export default function Chat() {
           value={input}
           placeholder="Say something..."
           onChange={(e) => setInput(e.target.value)}
+          autoFocus
         />
       </form>
     </div>
