@@ -1,16 +1,23 @@
-/* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
+import { ChevronLeft } from "lucide-react";
+
+import Chat from "@/app/(genkit)/components/chat";
 import UserButton from "@/components/auth0/user-button";
 import { auth0 } from "@/lib/auth0";
-
-import Chat from "../components/chat";
 
 export default async function Home() {
   const session = await auth0.getSession();
 
   return (
     <div className="font-[family-name:var(--font-geist-sans)]">
-      <header className="w-full max-w-7xl h-14 mx-auto flex items-center justify-between border-b border-gray-200">
-        <div className="font-semibold">Auth0 AI | Demo | Genkit</div>
+      <header className="w-full max-w-7xl h-20 mx-auto flex items-center justify-between border-b border-gray-200">
+        <div className="flex flex-col gap-1">
+          <a href="/">
+            <div className="text-muted-foreground flex gap-1 items-center text-sm">
+              <ChevronLeft className="h-4 w-4 -ml-1" /> Back to Home
+            </div>
+          </a>
+          <div className="font-semibold text-xl">Auth0 AI | GenKit Demo</div>
+        </div>
         <UserButton user={session?.user!} logoutUrl="/auth/logout" />
       </header>
       <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start w-full">

@@ -2,7 +2,7 @@ import { tool } from "ai";
 import { Octokit, RequestError } from "octokit";
 import { z } from "zod";
 
-import { withGitHub } from "@/lib/auth0-ai";
+import { withGitHub } from "@/app/(ai-sdk)/lib/auth0-ai";
 import { getAccessTokenForConnection } from "@auth0/ai-vercel";
 import { FederatedConnectionError } from "@auth0/ai/interrupts";
 
@@ -11,10 +11,11 @@ export const listRepositories = withGitHub(
     description: "List respositories for the current user on GitHub",
     parameters: z.object({}),
     execute: async () => {
+      // Get the access token from Auth0 AI
       const credentials = getAccessTokenForConnection();
 
+      // GitHub SDK
       try {
-        // GitHub SDK
         const octokit = new Octokit({
           auth: credentials?.accessToken,
         });

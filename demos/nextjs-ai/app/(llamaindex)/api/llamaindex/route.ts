@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   createDataStreamResponse,
   LlamaIndexAdapter,
@@ -7,11 +6,14 @@ import {
 } from "ai";
 import { OpenAIAgent } from "llamaindex";
 
+import {
+  checkUsersCalendar,
+  listChannels,
+  listRepositories,
+} from "@/app/(llamaindex)/lib/tools/";
 import { setAIContext } from "@auth0/ai-llamaindex";
 import { withInterruptions } from "@auth0/ai-llamaindex/interrupts";
 import { errorSerializer } from "@auth0/ai-vercel/interrupts";
-
-import { checkUsersCalendar } from "../../lib/tools/check-user-calendar";
 
 export async function POST(request: Request) {
   const { id, messages }: { id: string; messages: Message[] } =
@@ -24,7 +26,7 @@ export async function POST(request: Request) {
       async (dataStream) => {
         const agent = new OpenAIAgent({
           systemPrompt: "You are an AI assistant",
-          tools: [checkUsersCalendar()],
+          tools: [checkUsersCalendar(), listChannels(), listRepositories()],
           verbose: true,
         });
 

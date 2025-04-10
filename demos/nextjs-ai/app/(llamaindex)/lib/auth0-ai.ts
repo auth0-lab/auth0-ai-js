@@ -13,3 +13,23 @@ export const withGoogleCalendar = auth0AI.withTokenForConnection({
   connection: "google-oauth2",
   scopes: ["https://www.googleapis.com/auth/calendar.freebusy"],
 });
+
+export const withSlack = auth0AI.withTokenForConnection({
+  refreshToken: async () => {
+    const session = await auth0.getSession();
+    const refreshToken = session?.tokenSet.refreshToken as string;
+    return refreshToken;
+  },
+  connection: "sign-in-with-slack",
+  scopes: ["channels:read", "groups:read"],
+});
+
+export const withGitHub = auth0AI.withTokenForConnection({
+  refreshToken: async () => {
+    const session = await auth0.getSession();
+    const refreshToken = session?.tokenSet.refreshToken as string;
+    return refreshToken;
+  },
+  connection: "github",
+  scopes: ["repo"],
+});

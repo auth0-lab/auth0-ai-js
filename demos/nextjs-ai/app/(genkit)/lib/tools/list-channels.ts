@@ -1,11 +1,10 @@
 import { z } from "zod";
 
+import { withSlack } from "@/app/(genkit)/lib/auth0-ai";
+import { ai } from "@/app/(genkit)/lib/genkit";
 import { getAccessTokenForConnection } from "@auth0/ai-genkit";
 import { FederatedConnectionError } from "@auth0/ai/interrupts";
 import { ErrorCode, WebClient } from "@slack/web-api";
-
-import { withSlack } from "../auth0-ai";
-import { ai } from "../genkit";
 
 export const listChannels = ai.defineTool(
   ...withSlack(
@@ -15,10 +14,11 @@ export const listChannels = ai.defineTool(
       name: "listChannels",
     },
     async () => {
+      // Get the access token from Auth0 AI
       const credentials = getAccessTokenForConnection();
 
+      // Slack SDK
       try {
-        // Slack SDK
         const web = new WebClient(credentials?.accessToken);
 
         const result = await web.conversations.list({

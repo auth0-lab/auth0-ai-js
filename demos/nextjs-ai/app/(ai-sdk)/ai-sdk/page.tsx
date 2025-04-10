@@ -1,6 +1,6 @@
 import { ChevronLeft } from "lucide-react";
 
-import Chat from "@/app/(langgraph)/components/chat";
+import Chat from "@/app/(ai-sdk)/components/chat";
 import UserButton from "@/components/auth0/user-button";
 import { auth0 } from "@/lib/auth0";
 
@@ -16,7 +16,7 @@ export default async function Home() {
               <ChevronLeft className="h-4 w-4 -ml-1" /> Back to Home
             </div>
           </a>
-          <div className="font-semibold text-xl">Auth0 AI | LangGraph Demo</div>
+          <div className="font-semibold text-xl">Auth0 AI | AI SDK Demo</div>
         </div>
         <UserButton user={session?.user!} logoutUrl="/auth/logout" />
       </header>
