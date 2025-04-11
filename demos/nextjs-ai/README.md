@@ -1,6 +1,6 @@
 # Chat Application with Auth0 AI and AI SDK
 
-This is a [Next.js](https://nextjs.org) application that implements [Auth0 AI](https://auth0.ai) along with the [AI SDK](https://sdk.vercel.ai/) and to create a chat bot with [OpenAI](https://platform.openai.com) as engine. The application demonstrates how to integrate the AI SDK with Auth0 AI to implement: Authentication & Authorization of apps & APIs with Auth0 and Tool Authorization with FGA.
+This is a [Next.js](https://nextjs.org) application that implements [Auth0 AI](https://auth0.ai) along with the [AI SDK](https://sdk.vercel.ai/) and to create a chat bot with [OpenAI](https://platform.openai.com) as engine. The application demonstrates how to integrate the AI SDK with Auth0 AI to implement: Authentication & Authorization of apps & APIs with Auth0.
 
 ## Getting Started
 
@@ -8,8 +8,6 @@ This is a [Next.js](https://nextjs.org) application that implements [Auth0 AI](h
 
 - An OpenAI account and API key. You can create one [here](https://platform.openai.com).
   - [Use this page for instructions on how to find your OpenAI API key](https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key)
-- An Okta FGA account, you can create one [here](https://dashboard.fga.dev).
-  - Set up a new Authorized Client from the `Settings` page and then follow the steps to setup the workspace below.
 - An **[Auth0](https://auth0.com)** account and the following settings and resources configured:
   - An application to initiate the authorization flow:
     - **Application Type**: `Regular Web Application`
@@ -29,15 +27,6 @@ AUTH0_CLIENT_SECRET="<auth0-client-secret>"
 
 # OpenAI
 OPENAI_API_KEY=xx-xxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxx
-
-# Okta FGA
-FGA_STORE_ID=xxxxxxxxxxxxxxxxxxxxxxxxxxx
-FGA_CLIENT_ID=xxxxxxxxxxxxxxxxxxxxxxxxxxx
-FGA_CLIENT_SECRET=xxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxx
-
-# Required only for non-US regions
-FGA_API_URL=https://api.xxx.fga.dev
-FGA_API_AUDIENCE=https://api.xxx.fga.dev/
 ```
 
 > [!NOTE]
