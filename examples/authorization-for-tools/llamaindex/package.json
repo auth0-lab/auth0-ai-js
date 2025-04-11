@@ -14,11 +14,12 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "@auth0/ai-llamaindex": "@auth0/ai-llamaindex:*",
+    "@auth0/ai-llamaindex": "*",
     "@openfga/sdk": "^0.8.0",
-    "llamaindex": "^0.9.0",
+    "date-fns": "^4.1.0",
     "dotenv": "^16.4.7",
     "enquirer": "^2.4.1",
+    "llamaindex": "^0.9.0",
     "zod": "^3.24.1"
   }
 }

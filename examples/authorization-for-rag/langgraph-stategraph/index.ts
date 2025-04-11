@@ -5,7 +5,7 @@ import "dotenv/config";
 
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
 
-import { FGARetriever } from "@auth0/ai-langchain";
+import { FGARetriever } from "@auth0/ai-langchain/RAG";
 import { Document } from "@langchain/core/documents";
 import { Annotation, START, StateGraph } from "@langchain/langgraph";
 import { ChatOpenAI, OpenAIEmbeddings } from "@langchain/openai";

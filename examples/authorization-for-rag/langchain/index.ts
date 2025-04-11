@@ -2,12 +2,14 @@
  * LangChain Example: Retrievers with Okta FGA (Fine-Grained Authorization)
  */
 import "dotenv/config";
-import { FGARetriever } from "@auth0/ai-langchain";
+
+import { MemoryVectorStore } from "langchain/vectorstores/memory";
+
+import { FGARetriever } from "@auth0/ai-langchain/RAG";
+import { OpenAIEmbeddings } from "@langchain/openai";
 
 import { RetrievalChain } from "./helpers/langchain";
 import { readDocuments } from "./helpers/read-documents";
-import { MemoryVectorStore } from "langchain/vectorstores/memory";
-import { OpenAIEmbeddings } from "@langchain/openai";
 
 /**
  * Demonstrates the usage of the Okta FGA (Fine-Grained Authorization)
