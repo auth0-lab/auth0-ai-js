@@ -3,7 +3,7 @@ import { GenkitBeta } from "genkit/beta";
 import { FGAAuthorizerBase } from "@auth0/ai/FGA";
 import { ToolFnOptions, ToolRunOptions } from "@genkit-ai/ai/tool";
 
-import { createToolWrapper, ToolWrapper } from "../lib";
+import { ToolWrapper } from "../lib";
 
 /**
  * The FGAAuthorizer class implements the FGA authorization control for a Genkit AI tool.
@@ -29,6 +29,8 @@ export class FGAAuthorizer extends FGAAuthorizerBase<
    * @returns A tool authorizer.
    */
   authorizer(): ToolWrapper {
-    return createToolWrapper(this.genkit, this.protect.bind(this));
+    return (toolMeta, toolFunc) => {
+      return [toolMeta, this.protect(toolFunc)];
+    };
   }
 }
