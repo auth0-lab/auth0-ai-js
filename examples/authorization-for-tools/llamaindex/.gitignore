@@ -1,0 +1,12 @@
+
+# LangGraph API
+.langgraph_api
+
+# env files (can opt-in for committing if needed)
+.env*
+!.env.example
+
+package-lock.json
+yarn.lock
+bun.lock
+pnpm-lock.yaml

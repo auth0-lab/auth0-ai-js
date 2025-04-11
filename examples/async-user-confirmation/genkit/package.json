@@ -14,12 +14,14 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "genkit": "^1.5",
-    "genkitx-openai": "^0.20.2",
     "@auth0/ai": "*",
     "@auth0/ai-genkit": "*",
     "dotenv": "^16.4.7",
     "enquirer": "^2.4.1",
+    "genkit": "^1.5",
+    "genkitx-openai": "^0.20.2",
+    "jwt-decode": "^4.0.0",
+    "open": "^10.1.0",
     "zod": "^3.24.1"
   }
 }

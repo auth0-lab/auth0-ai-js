@@ -3,12 +3,13 @@
  */
 import "dotenv/config";
 
-import { OpenAIEmbeddings } from "@langchain/openai";
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
-import { FGARetriever } from "@auth0/ai-langchain";
 
-import { readDocuments } from "./helpers/read-documents";
+import { FGARetriever } from "@auth0/ai-langchain/RAG";
+import { OpenAIEmbeddings } from "@langchain/openai";
+
 import { RetrievalAgent } from "./helpers/langchain";
+import { readDocuments } from "./helpers/read-documents";
 
 /**
  * Demonstrates the usage of the Okta FGA (Fine-Grained Authorization)
