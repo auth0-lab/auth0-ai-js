@@ -1,8 +1,6 @@
-import { JSONValue } from "llamaindex";
+import { FunctionTool, JSONValue } from "llamaindex";
 
 import { FGAAuthorizerBase } from "@auth0/ai/FGA";
-
-import { createToolWrapper } from "../lib";
 
 export type LlamaToolHandler<T> = (input: T) => JSONValue | Promise<JSONValue>;
 
@@ -23,6 +21,16 @@ export class FGAAuthorizer extends FGAAuthorizerBase<
    * @returns A tool authorizer.
    */
   authorizer() {
-    return createToolWrapper(this.protect.bind(this));
+    return <
+      T,
+      R extends JSONValue | Promise<JSONValue>,
+      AdditionalToolArgument extends object = object,
+    >(
+      t: FunctionTool<T, R, AdditionalToolArgument>
+    ) => {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      return FunctionTool.from(this.protect(t.call), t.metadata);
+    };
   }
 }
