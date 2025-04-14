@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Message } from "ai";
 import { Settings } from "llamaindex";
 

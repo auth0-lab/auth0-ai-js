@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { mkdirSync } from "fs";
 import { readFile, writeFile } from "fs/promises";
 import { genkit, SessionData, SessionStore } from "genkit/beta";

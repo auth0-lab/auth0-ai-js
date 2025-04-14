@@ -19,7 +19,6 @@ export const listRepositories = withGitHub(
         const octokit = new Octokit({
           auth: credentials?.accessToken,
         });
-
         const { data } = await octokit.rest.repos.listForAuthenticatedUser();
 
         return data.map((repo) => repo.name);

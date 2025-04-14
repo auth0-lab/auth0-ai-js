@@ -1,9 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 "use client";
 import { useQueryState } from "nuqs";
 import { FormEventHandler, useEffect, useRef, useState } from "react";
-import Markdown from "react-markdown";
 
 import { EnsureAPIAccessPopup } from "@/components/auth0-ai/FederatedConnections/popup";
 import { FederatedConnectionInterrupt } from "@auth0/ai/interrupts";
@@ -116,10 +113,8 @@ export default function Chat() {
         )
         .map((message, index) => (
           <div key={index} className="whitespace-pre-wrap">
-            <Markdown>
-              {(message.role === "user" ? "User: " : "AI: ") +
-                (message.content[0].text || "")}
-            </Markdown>
+            {message.role === "user" ? "User: " : "AI: "}
+            {message.content[0].text || ""}
             {!isLoading &&
             message.content[0].metadata?.interrupt &&
             FederatedConnectionInterrupt.isInterrupt(
