@@ -103,7 +103,7 @@ export default function Chat() {
   };
 
   return (
-    <div className="flex flex-col w-full max-w-md py-24 mx-auto stretch">
+    <div className="flex flex-col gap-4 w-full max-w-md py-12 sm:py-24 px-4 sm:px-0 mx-auto stretch">
       {messages
         .filter(
           (m) =>
@@ -123,20 +123,18 @@ export default function Chat() {
               ? (() => {
                   const interrupt: any = message.content[0].metadata?.interrupt;
                   return (
-                    <div className="whitespace-pre-wrap">
-                      <EnsureAPIAccessPopup
-                        onFinish={() =>
-                          submit({ interruptedToolRequest: message.content[0] })
-                        }
-                        connection={interrupt.connection}
-                        scopes={interrupt.requiredScopes}
-                        connectWidget={{
-                          title: `Requested by: "${interrupt.toolCall.toolName}"`,
-                          description: "Description...",
-                          action: { label: "Check" },
-                        }}
-                      />
-                    </div>
+                    <EnsureAPIAccessPopup
+                      onFinish={() =>
+                        submit({ interruptedToolRequest: message.content[0] })
+                      }
+                      connection={interrupt.connection}
+                      scopes={interrupt.requiredScopes}
+                      connectWidget={{
+                        title: `Requested by: "${interrupt.toolCall.toolName}"`,
+                        description: "Description...",
+                        action: { label: "Check" },
+                      }}
+                    />
                   );
                 })()
               : null}
@@ -145,7 +143,7 @@ export default function Chat() {
 
       <form onSubmit={handleSubmit}>
         <input
-          className="fixed dark:bg-zinc-900 bottom-0 w-full max-w-md p-2 mb-8 border border-zinc-300 dark:border-zinc-800 rounded shadow-xl"
+          className="fixed dark:bg-zinc-900 bg-white bottom-0 w-full max-w-sm sm:max-w-md p-3 mb-8 border border-zinc-300 dark:border-zinc-800 rounded-lg shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
           value={input}
           ref={inputRef}
           placeholder="Say something..."
