@@ -1,21 +1,19 @@
 import { AIMessage } from "@langchain/core/messages";
 import { RunnableLike } from "@langchain/core/runnables";
-import {
-  END,
-  InMemoryStore,
-  MemorySaver,
-  MessagesAnnotation,
-  START,
-  StateGraph,
-} from "@langchain/langgraph";
+import { END, InMemoryStore, MemorySaver, MessagesAnnotation, START, StateGraph } from "@langchain/langgraph";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
 import { ChatOpenAI } from "@langchain/openai";
 
-import { checkUsersCalendar, listChannels, listRepositories } from "./tools";
+import { calendarCommunityTool, checkUsersCalendar, listChannels, listRepositories } from "./tools";
 
 const model = new ChatOpenAI({
   model: "gpt-4o",
-}).bindTools([checkUsersCalendar, listChannels, listRepositories]);
+}).bindTools([
+  checkUsersCalendar,
+  listChannels,
+  listRepositories,
+  calendarCommunityTool,
+]);
 
 const callLLM = async (state: typeof MessagesAnnotation.State) => {
   const response = await model.invoke(state.messages);
@@ -42,6 +40,8 @@ const stateGraph = new StateGraph(MessagesAnnotation)
         listChannels,
         // A tool with federated connection access
         listRepositories,
+        // A community tool with federated connection access
+        calendarCommunityTool,
       ],
       {
         // Error handler should be disabled in order to

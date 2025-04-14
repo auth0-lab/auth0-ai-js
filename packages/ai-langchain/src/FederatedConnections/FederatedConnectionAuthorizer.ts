@@ -6,7 +6,7 @@ import { LangGraphRunnableConfig } from "@langchain/langgraph";
 import { toGraphInterrupt } from "../util/interrrupt";
 import { Optional } from "../util/optionalType";
 import { ToolContext } from "../util/ToolContext";
-import { ToolWrapper, ZodObjectAny } from "../util/ToolWrapper";
+import { CommunityToolWrapper, ToolWrapper, ZodObjectAny } from "../util/ToolWrapper";
 
 const defaultGetRefreshToken = () => {
   return async (
@@ -54,6 +54,24 @@ export class FederatedConnectionAuthorizer extends FederatedConnectionAuthorizer
         description: t.description,
         schema: t.schema,
       }) as unknown as DynamicStructuredTool<T>;
+    };
+  }
+
+  authorizerForCommunityTool() {
+    return (t: CommunityToolWrapper) => {
+      const toolDescriptor = t("access-token");
+
+      return tool(
+        this.protectWithAccessToken(
+          ToolContext(toolDescriptor as any),
+          t.bind(t)
+        ),
+        {
+          name: toolDescriptor.name,
+          description: toolDescriptor.description,
+          schema: toolDescriptor.schema,
+        }
+      ) as unknown as any;
     };
   }
 }

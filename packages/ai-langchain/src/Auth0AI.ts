@@ -7,7 +7,7 @@ import { CIBAAuthorizer } from "./ciba";
 import { DeviceAuthorizer } from "./Device";
 import { FederatedConnectionAuthorizer } from "./FederatedConnections";
 import { FGA_AI } from "./FGA_AI";
-import { ToolWrapper } from "./util/ToolWrapper";
+import { CommunityToolWrapper, ToolWrapper } from "./util/ToolWrapper";
 
 export type FederatedConnectionAuthorizerParams = Omit<
   ConstructorParameters<typeof FederatedConnectionAuthorizer>[1],
@@ -119,6 +119,21 @@ export class Auth0AI {
       return authorizer.authorizer()(tool);
     }
     return authorizer.authorizer();
+  }
+
+  withTokenForCommunityTool(
+    options: FederatedConnectionAuthorizerParams,
+    toolWrapper?: CommunityToolWrapper
+  ) {
+    const store = this.store.createSubStore("AUTH0_AI_FEDERATED_CONNECTION");
+    const authorizer = new FederatedConnectionAuthorizer(this.config, {
+      store,
+      ...options,
+    });
+    if (toolWrapper) {
+      return authorizer.authorizerForCommunityTool()(toolWrapper);
+    }
+    return authorizer.authorizerForCommunityTool();
   }
 
   /**

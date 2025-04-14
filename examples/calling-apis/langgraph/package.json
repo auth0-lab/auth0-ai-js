@@ -17,6 +17,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@auth0/ai-langchain": "*",
+    "@langchain/community": "^0.3.40",
     "@langchain/core": "^0.3.19",
     "@langchain/langgraph": "^0.2.46",
     "@langchain/langgraph-sdk": "^0.0.57",

@@ -16,3 +16,11 @@ export const withSlack = auth0AI.withTokenForConnection({
   connection: "sign-in-with-slack",
   scopes: ["channels:read", "groups:read"],
 });
+
+export const withGoogleCalendarCommunity = auth0AI.withTokenForCommunityTool({
+  connection: "google-oauth2",
+  scopes: [
+    "https://www.googleapis.com/auth/calendar",
+    "https://www.googleapis.com/auth/calendar.events",
+  ],
+});

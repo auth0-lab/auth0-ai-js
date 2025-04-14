@@ -1,16 +1,8 @@
 import crypto from "crypto";
 import stableHash from "stable-hash";
 
-import {
-  TokenResponse,
-  TokenSet,
-  tokenSetFromTokenResponse,
-} from "../../credentials";
-import {
-  Auth0Interrupt,
-  FederatedConnectionError,
-  FederatedConnectionInterrupt,
-} from "../../interrupts";
+import { TokenResponse, TokenSet, tokenSetFromTokenResponse } from "../../credentials";
+import { Auth0Interrupt, FederatedConnectionError, FederatedConnectionInterrupt } from "../../interrupts";
 import { resolveParameter } from "../../parameters";
 import { SubStore } from "../../stores";
 import { omit, RequireFields } from "../../util";
@@ -181,6 +173,65 @@ export class FederatedConnectionAuthorizerBase<ToolExecuteArgs extends any[]> {
     return await resolveParameter(this.params.refreshToken, toolContext);
   }
 
+  private async executeWithAuthorization(
+    getContext: ContextGetter<ToolExecuteArgs>,
+    args: ToolExecuteArgs,
+    executeCallback: (credentials: TokenSet) => any
+  ) {
+    const context = getContext(...args);
+    const asyncStore: AsyncStorageValue = {
+      context: context,
+      scopes: this.params.scopes,
+      connection: this.params.connection,
+    };
+
+    if (asyncLocalStorage.getStore()) {
+      throw new Error(
+        "Cannot nest tool calls that require federated connection authorization."
+      );
+    }
+
+    return asyncLocalStorage.run(asyncStore, async () => {
+      const credentialsNS = nsFromContext(
+        this.params.credentialsContext,
+        context
+      );
+      try {
+        let credentials: TokenSet = await this.credentialsStore.get(
+          credentialsNS,
+          "credential"
+        );
+        if (!credentials) {
+          credentials = await this.getAccessToken(...args);
+          await this.credentialsStore.put(
+            credentialsNS,
+            "credential",
+            credentials
+          );
+        }
+        asyncStore.credentials = credentials;
+
+        return await executeCallback(credentials);
+      } catch (err) {
+        if (err instanceof FederatedConnectionError) {
+          this.credentialsStore.delete(credentialsNS, "credential");
+          const interrupt = new FederatedConnectionInterrupt(
+            err.message,
+            asyncStore.connection,
+            asyncStore.scopes,
+            asyncStore.scopes
+          );
+          return this.handleAuthorizationInterrupts(interrupt);
+        }
+        if (err instanceof Auth0Interrupt) {
+          this.credentialsStore.delete(credentialsNS, "credential");
+          return this.handleAuthorizationInterrupts(err);
+        }
+        throw err;
+      }
+    });
+  }
+
   /**
    *
    * Wraps the execute method of an AI tool to handle Federated Connections authorization.
@@ -194,57 +245,27 @@ export class FederatedConnectionAuthorizerBase<ToolExecuteArgs extends any[]> {
     execute: (...args: ToolExecuteArgs) => any
   ): (...args: ToolExecuteArgs) => any {
     return async (...args: ToolExecuteArgs) => {
-      const context = getContext(...args);
-      const asyncStore: AsyncStorageValue = {
-        context: context,
-        scopes: this.params.scopes,
-        connection: this.params.connection,
-      };
+      return this.executeWithAuthorization(getContext, args, () =>
+        execute(...args)
+      );
+    };
+  }
 
-      if (asyncLocalStorage.getStore()) {
-        throw new Error(
-          "Cannot nest tool calls that require federated connection authorization."
-        );
-      }
-
-      return asyncLocalStorage.run(asyncStore, async () => {
-        const credentialsNS = nsFromContext(
-          this.params.credentialsContext,
-          context
-        );
-        try {
-          let credentials: TokenSet = await this.credentialsStore.get(
-            credentialsNS,
-            "credential"
-          );
-          if (!credentials) {
-            credentials = await this.getAccessToken(...args);
-            await this.credentialsStore.put(
-              credentialsNS,
-              "credential",
-              credentials
-            );
-          }
-          asyncStore.credentials = credentials;
-          return await execute(...args);
-        } catch (err) {
-          if (err instanceof FederatedConnectionError) {
-            this.credentialsStore.delete(credentialsNS, "credential");
-            const interrupt = new FederatedConnectionInterrupt(
-              err.message,
-              asyncStore.connection,
-              asyncStore.scopes,
-              asyncStore.scopes
-            );
-            return this.handleAuthorizationInterrupts(interrupt);
-          }
-          if (err instanceof Auth0Interrupt) {
-            this.credentialsStore.delete(credentialsNS, "credential");
-            return this.handleAuthorizationInterrupts(err);
-          }
-          throw err;
-        }
-      });
+  /**
+   * Wraps a tool that requires an access token to handle Federated Connections authorization.
+   *
+   * @param getContext - A function that returns the context of the tool execution.
+   * @param toolWrapper - A function that creates a tool instance with the provided access token.
+   * @returns The wrapped execute method.
+   */
+  protectWithAccessToken(
+    getContext: ContextGetter<ToolExecuteArgs>,
+    toolWrapper: (accessToken: string) => any
+  ): (...args: ToolExecuteArgs) => any {
+    return async (...args: ToolExecuteArgs) => {
+      return this.executeWithAuthorization(getContext, args, (credentials) =>
+        toolWrapper(credentials.accessToken).invoke(...args)
+      );
     };
   }
 }
