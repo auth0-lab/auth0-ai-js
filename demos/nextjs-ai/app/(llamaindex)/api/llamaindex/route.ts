@@ -4,7 +4,7 @@ import {
   Message,
   ToolExecutionError,
 } from "ai";
-import { OpenAIAgent } from "llamaindex";
+import { ChatMessage, OpenAIAgent } from "llamaindex";
 
 import {
   checkUsersCalendar,
@@ -27,6 +27,7 @@ export async function POST(request: Request) {
         const agent = new OpenAIAgent({
           systemPrompt: "You are an AI assistant",
           tools: [checkUsersCalendar(), listChannels(), listRepositories()],
+          chatHistory: messages as ChatMessage[],
           verbose: true,
         });
 
