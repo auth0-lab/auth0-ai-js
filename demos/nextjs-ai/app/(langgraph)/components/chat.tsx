@@ -18,6 +18,12 @@ const useFocus = () => {
   return [htmlElRef, setFocus] as const;
 };
 
+const isFederatedConnectionInterrupt = (
+  toolInterrupt: any
+): toolInterrupt is FederatedConnectionInterrupt => {
+  return FederatedConnectionInterrupt.isInterrupt(toolInterrupt);
+};
+
 export default function Chat() {
   const [threadId, setThreadId] = useQueryState("threadId");
   const [input, setInput] = useState("");
@@ -68,8 +74,7 @@ export default function Chat() {
           </div>
         ))}
 
-      {thread.interrupt &&
-      FederatedConnectionInterrupt.isInterrupt(thread.interrupt.value) ? (
+      {/* {FederatedConnectionInterrupt.isInterrupt(thread.interrupt?.value) ? (
         <div
           key={thread.interrupt.ns?.join("")}
           className="whitespace-pre-wrap"
@@ -86,7 +91,26 @@ export default function Chat() {
             }}
           />
         </div>
-      ) : null}
+      ) : null} */}
+
+      {FederatedConnectionInterrupt.isInterrupt(thread.interrupt?.value) && (
+        <div
+          key={thread.interrupt.ns?.join("")}
+          className="whitespace-pre-wrap"
+        >
+          <EnsureAPIAccessPopup
+            // authParams={thread.interrupt.value}
+            onFinish={() => thread.submit(null)}
+            connection={thread.interrupt.value.connection}
+            scopes={thread.interrupt.value.requiredScopes}
+            connectWidget={{
+              title: thread.interrupt.value.message,
+              description: "Description...",
+              action: { label: "Check" },
+            }}
+          />
+        </div>
+      )}
 
       <form onSubmit={handleSubmit}>
         <input

@@ -24,3 +24,11 @@ export const withGoogleCalendarCommunity = auth0AI.withTokenForCommunityTool({
     "https://www.googleapis.com/auth/calendar.events",
   ],
 });
+
+export const withGoogleCalendarCommunity2 = auth0AI.withTokenForConnection({
+  connection: "google-oauth2",
+  scopes: [
+    "https://www.googleapis.com/auth/calendar",
+    "https://www.googleapis.com/auth/calendar.events",
+  ],
+});
