@@ -3,8 +3,6 @@
   "graphs": {
     "agent": "./app/(langgraph)/lib/agent.ts:graph"
   },
-  "env": ".env",
-  "dependencies": [
-    "."
-  ]
+  "env": ".env.local",
+  "dependencies": ["."]
 }

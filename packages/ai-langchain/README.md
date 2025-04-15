@@ -123,6 +123,44 @@ export const checkCalendarTool = withGoogleAccess(
 );
 ```
 
+### Using community tools
+
+First initialize the Federated Connection Authorizer as follows:
+
+```ts
+import { Auth0AI } from "@auth0/ai-langchain";
+
+const auth0AI = new Auth0AI();
+
+export const withGmailCommunity = auth0AI.withTokenForConnection({
+  connection: "google-oauth2",
+  scopes: ["https://mail.google.com/"],
+});
+
+```
+
+Then use the `withGmailCommunity` to create an instance of the community tool and use `getAccessTokenForConnection` from the SDK to get the access token.
+
+
+```ts
+import { getAccessTokenForConnection } from "@auth0/ai-langchain";
+import { GmailSearch } from "@langchain/community/tools/gmail";
+import { DynamicStructuredTool } from "@langchain/core/tools";
+
+import { withGmailCommunity } from "../../lib/auth0-ai";
+
+export const gmailCommunityTool = withGmailCommunity(
+  new GmailSearch({
+    credentials: {
+      accessToken: async () => {
+        const credentials = getAccessTokenForConnection();
+        return credentials?.accessToken!;
+      },
+    },
+  }) as unknown as DynamicStructuredTool
+);
+```
+
 ## CIBA: Client-Initiated Backchannel Authentication
 
 CIBA (Client-Initiated Backchannel Authentication) enables secure, user-in-the-loop authentication for sensitive operations. This flow allows you to request user authorization asynchronously and resume execution once authorization is granted.
