@@ -1,4 +1,5 @@
 import { ChevronLeft } from "lucide-react";
+import Link from "next/link";
 
 import Chat from "@/app/(genkit)/components/chat";
 import UserButton from "@/components/auth0/user-button";
@@ -9,13 +10,13 @@ export default async function Home() {
 
   return (
     <div className="font-[family-name:var(--font-geist-sans)]">
-      <header className="w-full max-w-7xl h-20 mx-auto flex items-center justify-between border-b border-gray-200">
-        <div className="flex flex-col gap-1">
-          <a href="/">
+      <header className="w-full max-w-7xl h-20 mx-auto flex items-center justify-between border-b border-gray-200 px-4 xl:px-0">
+        <div className="flex flex-col gap-2">
+          <Link href="/">
             <div className="text-muted-foreground flex gap-1 items-center text-sm">
               <ChevronLeft className="h-4 w-4 -ml-1" /> Back to Home
             </div>
-          </a>
+          </Link>
           <div className="font-semibold text-xl">Auth0 AI | GenKit Demo</div>
         </div>
         <UserButton user={session?.user!} logoutUrl="/auth/logout" />

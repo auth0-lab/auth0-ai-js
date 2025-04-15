@@ -1,4 +1,5 @@
 import { ChevronRight } from "lucide-react";
+import Link from "next/link";
 
 import UserButton from "@/components/auth0/user-button";
 import {
@@ -15,12 +16,12 @@ export default async function Home() {
 
   return (
     <div className="font-[family-name:var(--font-geist-sans)]">
-      <header className="w-full max-w-7xl h-20 mx-auto flex items-center justify-between border-b border-gray-200">
+      <header className="w-full max-w-7xl h-20 mx-auto flex items-center justify-between border-b border-gray-200 px-4 xl:px-0">
         <div className="font-semibold text-xl">Auth0 AI | Demo</div>
         <UserButton user={session?.user!} logoutUrl="/auth/logout" />
       </header>
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start w-full">
-        <div className="flex flex-col w-full max-w-md py-24 mx-auto stretch">
+      <main className="flex flex-col gap-8 row-start-2 items-start md:items-center sm:items-start w-full">
+        <div className="flex flex-col w-full max-w-md py-12 sm:py-24 px-4 sm:px-0 mx-auto stretch">
           <Card className="w-full">
             <CardHeader>
               <CardTitle>Samples</CardTitle>
@@ -28,9 +29,10 @@ export default async function Home() {
                 Learn how to call APIs on behalf of a user with Auth0 AI.
               </CardDescription>
             </CardHeader>
-            <a href="/ai-sdk">
+
+            <Link href="/ai-sdk">
               <CardContent className="grid gap-4">
-                <div className=" flex items-center space-x-4 rounded-md border p-4">
+                <div className="flex items-center space-x-4 rounded-md border p-4">
                   <div>
                     <img src="/vercel.svg" className="w-13 h-13" />
                   </div>
@@ -46,11 +48,11 @@ export default async function Home() {
                   </div>
                 </div>
               </CardContent>
-            </a>
+            </Link>
 
-            <a href="/genkit">
+            <Link href="/genkit">
               <CardContent className="grid gap-4">
-                <div className=" flex items-center space-x-4 rounded-md border p-4">
+                <div className="flex items-center space-x-4 rounded-md border p-4">
                   <div>
                     <img src="/genkit.svg" className="w-13 h-13" />
                   </div>
@@ -66,11 +68,11 @@ export default async function Home() {
                   </div>
                 </div>
               </CardContent>
-            </a>
+            </Link>
 
-            <a href="/langgraph">
+            <Link href="/langgraph">
               <CardContent className="grid gap-4">
-                <div className=" flex items-center space-x-4 rounded-md border p-4">
+                <div className="flex items-center space-x-4 rounded-md border p-4">
                   <div>
                     <img src="/langchain.svg" className="w-13 h-13" />
                   </div>
@@ -88,11 +90,11 @@ export default async function Home() {
                   </div>
                 </div>
               </CardContent>
-            </a>
+            </Link>
 
-            <a href="/llamaindex">
+            <Link href="/llamaindex">
               <CardContent className="grid gap-4">
-                <div className=" flex items-center space-x-4 rounded-md border p-4">
+                <div className="flex items-center space-x-4 rounded-md border p-4">
                   <div>
                     <img src="/llamaindex.svg" className="w-13 h-13" />
                   </div>
@@ -112,7 +114,7 @@ export default async function Home() {
                   </div>
                 </div>
               </CardContent>
-            </a>
+            </Link>
           </Card>
         </div>
       </main>
