@@ -23,6 +23,7 @@
     "@auth0/ai-llamaindex": "*",
     "@auth0/ai-vercel": "*",
     "@auth0/nextjs-auth0": "^4.2.1",
+    "@langchain/community": "^0.3.40",
     "@langchain/core": "^0.3.44",
     "@langchain/langgraph": "^0.2.46",
     "@langchain/langgraph-sdk": "^0.0.57",
