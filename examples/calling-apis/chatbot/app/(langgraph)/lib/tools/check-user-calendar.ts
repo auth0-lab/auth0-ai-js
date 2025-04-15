@@ -7,7 +7,7 @@ import { getAccessTokenForConnection } from "@auth0/ai-langchain";
 import { FederatedConnectionError } from "@auth0/ai/interrupts";
 import { tool } from "@langchain/core/tools";
 
-import { withGoogleCalendar } from "../../lib/auth0-ai";
+import { withGoogleCalendar } from "../auth0-ai";
 
 export const checkUsersCalendar = withGoogleCalendar(
   tool(

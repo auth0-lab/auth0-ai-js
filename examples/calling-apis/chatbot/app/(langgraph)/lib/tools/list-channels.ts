@@ -5,7 +5,7 @@ import { FederatedConnectionError } from "@auth0/ai/interrupts";
 import { tool } from "@langchain/core/tools";
 import { ErrorCode, WebClient } from "@slack/web-api";
 
-import { withSlack } from "../../lib/auth0-ai";
+import { withSlack } from "../auth0-ai";
 
 export const listChannels = withSlack(
   tool(

@@ -6,7 +6,7 @@
       "type": "node-terminal",
       "request": "launch",
       "command": "npm run dev",
-      "cwd": "${workspaceFolder}/demos/nextjs-ai",
+      "cwd": "${workspaceFolder}/examples/calling-apis/chatbot",
       "sourceMaps": true
     }
   ]
