@@ -13,7 +13,8 @@ This is a [Next.js](https://nextjs.org) application that implements [Auth0 AI](h
     - **Application Type**: `Regular Web Application`
     - **Allowed Callback URLs**: `http://localhost:3000/auth/callback`
     - **Allowed Logout URLs**: `http://localhost:3000`
-  - A **Google** social connection enabled for the application.
+    - **Grant Type**: `Token Exchange (Federated Connection)` (or `urn:auth0:params:oauth:grant-type:token-exchange:federated-connection-access-token`)
+  - Either **Google**, **Slack** or **Github** social connections enabled for the application.
 
 ### Setup the workspace `.env` file
 
@@ -48,13 +49,24 @@ npm run dev
 
 This will start the development server at [http://localhost:3000](http://localhost:3000). You can open the URL with your browser to try the application.
 
+> [!NOTE]
+> For the [Langgraph example](/examples/calling-apis/chatbot/app/(langgraph)/)) to work, it's necessary to run a local Langgraph server with the following command:
+> ```bash
+> npm run langgraph:dev
+> ```
+> Alternatively, you can always use a remote one and update the `LANGGRAPH_API_URL` from the `.env` file here.
+
 ## Learn More
 
-To learn more about the Auth0 AI and the AI SDK, take a look at the following resources:
+To learn more about the Auth0 AI and the other AI SDKs utilized on these examples:
 
 - [Auth0 AI](https://auth0.ai)
 - [AI SDK](https://sdk.vercel.ai/)
+- [Genkit](https://firebase.google.com/docs/genkit)
+- [LlamaIndex](https://ts.llamaindex.ai/)
+- [LangGraph](https://langchain-ai.github.io/langgraph/)
 - [Next.js](https://nextjs.org)
+- [Next.js-Auth0](https://github.com/auth0/nextjs-auth0)
 
 ## License
 

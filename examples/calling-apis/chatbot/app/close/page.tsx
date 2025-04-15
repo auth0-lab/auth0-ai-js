@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 export default function PopupClosePage() {
   const [isClosing, setIsClosing] = useState(true);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleClose = () => {
     if (typeof window !== "undefined") {
       try {

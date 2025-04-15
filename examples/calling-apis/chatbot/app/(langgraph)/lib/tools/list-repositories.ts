@@ -6,7 +6,7 @@ import { tool } from "@langchain/core/tools";
 import { RequestError } from "@octokit/request-error";
 import { Octokit } from "@octokit/rest";
 
-import { withGitHub } from "../../lib/auth0-ai";
+import { withGitHub } from "../auth0-ai";
 
 export const listRepositories = withGitHub(
   tool(

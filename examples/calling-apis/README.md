@@ -28,18 +28,18 @@ Below is a high-level workflow:
 
 Explore the following examples demonstrating how to call APIs on user's behalf:
 
-- **LangGraph:**  
-   An implementation showcasing how integrate `@auth0/ai-langchain` with LangChain to call APIs on user's behalf.  
-   [View Example](/examples/calling-apis/langgraph/)
+- **LangGraph:**
+   An implementation showcasing how integrate `@auth0/ai-langchain` with LangChain to call APIs on user's behalf.
+   [View Example](/examples/calling-apis/chatbot/app/(langgraph)/)
 
-- **AI SDK:**  
-   An implementation showcasing how integrate `@auth0/ai-vercel` with AI SDK to call APIs on user's behalf.  
-   [View Example](/demos/nextjs-ai/app/(ai-sdk)/)
+- **AI SDK:**
+   An implementation showcasing how integrate `@auth0/ai-vercel` with AI SDK to call APIs on user's behalf.
+   [View Example](/examples/calling-apis/chatbot/app/(ai-sdk)/)
 
-- **LlamaIndex:**  
-   An implementation showcasing how integrate `@auth0/ai-llamaindex` with LlamaIndex to call APIs on user's behalf.  
-   [View Example](/demos/nextjs-ai/app/(llamaindex)/)
+- **LlamaIndex:**
+   An implementation showcasing how integrate `@auth0/ai-llamaindex` with LlamaIndex to call APIs on user's behalf.
+   [View Example](/examples/calling-apis/chatbot/app/(llamaindex)/)
 
-- **GenKit:**  
-   An implementation showcasing how integrate `@auth0/ai-genkit` with GenKit to call APIs on user's behalf.  
-   [View Example](/demos/nextjs-ai/app/(genkit)/)
+- **GenKit:**
+   An implementation showcasing how integrate `@auth0/ai-genkit` with GenKit to call APIs on user's behalf.
+   [View Example](/examples/calling-apis/chatbot/app/(genkit)/)
