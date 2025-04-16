@@ -16,6 +16,8 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
+    "@agentic/ai-sdk": "^7.6.4",
+    "@agentic/google-drive": "^7.6.4",
     "@ai-sdk/openai": "^1.2.1",
     "@ai-sdk/react": "^1.1.21",
     "@auth0/ai-genkit": "*",

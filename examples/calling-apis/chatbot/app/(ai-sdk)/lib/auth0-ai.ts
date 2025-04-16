@@ -32,3 +32,13 @@ export const withGitHub = auth0AI.withTokenForConnection({
   connection: "github",
   scopes: ["repo"],
 });
+
+export const withGoogleDriveTools = auth0AI.withTokenForConnection({
+  refreshToken: async () => {
+    const session = await auth0.getSession();
+    const refreshToken = session?.tokenSet.refreshToken as string;
+    return refreshToken;
+  },
+  connection: "google-oauth2",
+  scopes: ["https://www.googleapis.com/auth/drive"],
+});

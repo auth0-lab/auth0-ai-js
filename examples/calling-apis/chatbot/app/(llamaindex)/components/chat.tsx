@@ -30,10 +30,8 @@ export default function Chat() {
               {toolInterrupt?.toolCall.id.includes(message.id) &&
                 FederatedConnectionInterrupt.isInterrupt(toolInterrupt) && (
                   <EnsureAPIAccessPopup
-                    key={toolInterrupt.toolCall.id}
                     onFinish={toolInterrupt.resume}
-                    connection={toolInterrupt.connection}
-                    scopes={toolInterrupt.requiredScopes}
+                    interrupt={toolInterrupt}
                     connectWidget={{
                       title: `Requested by: "${toolInterrupt.toolCall.name}"`,
                       description: "Description...",
