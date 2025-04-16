@@ -7,8 +7,7 @@ import { PromptUserContainer } from "../util/prompt-user-container";
 import { FederatedConnectionAuthProps } from "./FederatedConnectionAuthProps";
 
 export function EnsureAPIAccessPopup({
-  connection,
-  scopes,
+  interrupt: { connection, requiredScopes, resume },
   connectWidget: { icon, title, description, action },
   onFinish,
 }: FederatedConnectionAuthProps) {
@@ -26,8 +25,10 @@ export function EnsureAPIAccessPopup({
         setIsLoading(false);
         setLoginPopup(null);
         clearInterval(interval);
-        if (onFinish) {
+        if (typeof onFinish === "function") {
           onFinish();
+        } else if (typeof resume === "function") {
+          resume();
         }
       }
     }, 1000);
@@ -36,7 +37,7 @@ export function EnsureAPIAccessPopup({
         clearInterval(interval);
       }
     };
-  }, [loginPopup, onFinish]);
+  }, [loginPopup, onFinish, resume]);
 
   //Open the login popup
   const startLoginPopup = useCallback(async () => {
@@ -44,7 +45,7 @@ export function EnsureAPIAccessPopup({
       connection,
       access_type: "offline",
       prompt: "consent",
-      connection_scope: scopes.join(),
+      connection_scope: requiredScopes.join(),
       returnTo: "/close",
     });
     const url = `/auth/login?${params.toString()}`;
@@ -58,7 +59,7 @@ export function EnsureAPIAccessPopup({
       setLoginPopup(popup);
       setIsLoading(true);
     }
-  }, [connection, scopes]);
+  }, [connection, requiredScopes]);
 
   if (isLoading) {
     return <WaitingMessage />;

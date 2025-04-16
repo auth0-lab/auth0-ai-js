@@ -1,7 +1,5 @@
 "use client";
 
-import { generateId } from "ai";
-
 import { EnsureAPIAccessPopup } from "@/components/auth0-ai/FederatedConnections/popup";
 import { useChat } from "@ai-sdk/react";
 import { useInterruptions } from "@auth0/ai-vercel/react";
@@ -12,9 +10,6 @@ export default function Chat() {
     useInterruptions((handler) =>
       useChat({
         api: "/api/ai-sdk",
-        experimental_throttle: 100,
-        sendExtraMessageFields: true,
-        generateId,
         onError: handler((error) => console.error("Chat error:", error)),
       })
     );
@@ -25,39 +20,19 @@ export default function Chat() {
         <div key={message.id} className="whitespace-pre-wrap">
           {message.role === "user" ? "User: " : "AI: "}
           {message.content}
-
-          {message.parts && message.parts.length > 0 && (
-            <div className="flex flex-col gap-4">
-              {message.parts
-                .filter((p) => p.type === "tool-invocation")
-                .map((part) => {
-                  const {
-                    toolInvocation: { toolCallId, toolName, state },
-                  } = part;
-
-                  if (
-                    state === "call" &&
-                    FederatedConnectionInterrupt.isInterrupt(toolInterrupt)
-                  ) {
-                    return (
-                      <EnsureAPIAccessPopup
-                        key={toolCallId}
-                        onFinish={toolInterrupt.resume}
-                        connection={toolInterrupt.connection}
-                        scopes={toolInterrupt.requiredScopes}
-                        connectWidget={{
-                          title: `Requested by: "${toolName}"`,
-                          description: "Description...",
-                          action: { label: "Check" },
-                        }}
-                      />
-                    );
-                  }
-                })}
-            </div>
-          )}
         </div>
       ))}
+
+      {FederatedConnectionInterrupt.isInterrupt(toolInterrupt) && (
+        <EnsureAPIAccessPopup
+          interrupt={toolInterrupt}
+          connectWidget={{
+            title: `Requested by: "${toolInterrupt.toolCall.name}"`,
+            description: "Description...",
+            action: { label: "Check" },
+          }}
+        />
+      )}
 
       <form onSubmit={handleSubmit}>
         <input

@@ -10,8 +10,11 @@ import { ReactNode } from "react";
 export type AuthComponentMode = "redirect" | "popup" | "auto";
 
 export type FederatedConnectionAuthProps = {
-  connection: string;
-  scopes: string[];
+  interrupt: {
+    connection: string;
+    requiredScopes: string[];
+    resume?: () => void;
+  };
   onFinish?: () => void;
   connectWidget: {
     icon?: ReactNode;

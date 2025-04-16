@@ -127,8 +127,7 @@ export default function Chat() {
                       onFinish={() =>
                         submit({ interruptedToolRequest: message.content[0] })
                       }
-                      connection={interrupt.connection}
-                      scopes={interrupt.requiredScopes}
+                      interrupt={interrupt}
                       connectWidget={{
                         title: `Requested by: "${interrupt.toolCall.toolName}"`,
                         description: "Description...",

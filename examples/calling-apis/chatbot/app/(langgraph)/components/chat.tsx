@@ -75,10 +75,8 @@ export default function Chat() {
           className="whitespace-pre-wrap"
         >
           <EnsureAPIAccessPopup
-            key={thread.interrupt.ns?.join("")}
+            interrupt={thread.interrupt.value}
             onFinish={() => thread.submit(null)}
-            connection={thread.interrupt.value.connection}
-            scopes={thread.interrupt.value.requiredScopes}
             connectWidget={{
               title: thread.interrupt.value.message,
               description: "Description...",
