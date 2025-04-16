@@ -6,13 +6,14 @@ import { FederatedConnectionAuthProps } from "./FederatedConnectionAuthProps";
 export function EnsureAPIAccessRedirect({
   connection,
   scopes,
-  connectWidget: { icon, title, description, action },
+  connectWidget: { icon, title, description, action, containerClassName },
 }: FederatedConnectionAuthProps) {
   return (
     <PromptUserContainer
       title={title}
       description={description}
       icon={icon}
+      containerClassName={containerClassName}
       action={{
         label: action?.label ?? "Connect",
         onClick: () => {
