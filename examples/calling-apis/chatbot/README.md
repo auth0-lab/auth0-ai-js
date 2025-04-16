@@ -50,7 +50,7 @@ npm run dev
 This will start the development server at [http://localhost:3000](http://localhost:3000). You can open the URL with your browser to try the application.
 
 > [!NOTE]
-> For the [Langgraph example](/examples/calling-apis/chatbot/app/(langgraph)/)) to work, it's necessary to run a local Langgraph server with the following command:
+> For the [Langgraph example](/examples/calling-apis/chatbot/app/(langgraph)/) to work, it's necessary to run a local Langgraph server with the following command:
 > ```bash
 > npm run langgraph:dev
 > ```

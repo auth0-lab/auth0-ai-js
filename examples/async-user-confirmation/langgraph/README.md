@@ -66,10 +66,10 @@ LANGGRAPH_API_URL="http://localhost:54367"
 
 The command `npm run dev` runs several process in parallel. Here is an explanation of each one:
 
-- **LangGraph**: The LangGraph server that will be run the graphs.
-- **Scheduler**: This is a demo scheduler that works similar to [LangGraph Cron Jobs](https://langchain-ai.github.io/langgraph/cloud/how-tos/cron_jobs/).
-- **API**: An API that is used in the demo that requires certain level of authorization.
-- **GraphResumer**: A service that try to resume CIBA-interrupted graphs in the LangGraph server.
+- **LangGraph**: The server responsible for executing and managing LangGraph-based graphs.
+- **Scheduler**: A demo scheduler that replicates the behavior of [LangGraph Cron Jobs](https://langchain-ai.github.io/langgraph/cloud/how-tos/cron_jobs/).
+- **API**: A demo API with endpoints that require specific authorization levels.
+- **GraphResumer**: A service that attempts to resume threads interrupted during CIBA flows on the LangGraph server.
 
 ### Diagram
 
