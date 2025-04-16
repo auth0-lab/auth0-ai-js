@@ -21,6 +21,7 @@ export type FederatedConnectionAuthProps = {
     title: string;
     description: string;
     action?: { label: string };
+    containerClassName?: string;
   };
   mode?: AuthComponentMode;
 };

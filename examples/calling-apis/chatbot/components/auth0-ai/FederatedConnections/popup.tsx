@@ -8,7 +8,7 @@ import { FederatedConnectionAuthProps } from "./FederatedConnectionAuthProps";
 
 export function EnsureAPIAccessPopup({
   interrupt: { connection, requiredScopes, resume },
-  connectWidget: { icon, title, description, action },
+  connectWidget: { icon, title, description, action, containerClassName },
   onFinish,
 }: FederatedConnectionAuthProps) {
   const [isLoading, setIsLoading] = useState(false);
@@ -70,6 +70,7 @@ export function EnsureAPIAccessPopup({
       title={title}
       description={description}
       icon={icon}
+      containerClassName={containerClassName}
       action={{
         label: action?.label ?? "Connect",
         onClick: startLoginPopup,
