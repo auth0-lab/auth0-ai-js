@@ -4,8 +4,7 @@ import { PromptUserContainer } from "../util/prompt-user-container";
 import { FederatedConnectionAuthProps } from "./FederatedConnectionAuthProps";
 
 export function EnsureAPIAccessRedirect({
-  connection,
-  scopes,
+  interrupt: { requiredScopes, connection },
   connectWidget: { icon, title, description, action, containerClassName },
 }: FederatedConnectionAuthProps) {
   return (
@@ -20,7 +19,7 @@ export function EnsureAPIAccessRedirect({
           const params = new URLSearchParams({
             connection,
             access_type: "offline",
-            connection_scope: scopes.join(),
+            connection_scope: requiredScopes.join(),
             returnTo: window.location.pathname,
           });
           const url = `/api/auth/login?${params.toString()}`;
