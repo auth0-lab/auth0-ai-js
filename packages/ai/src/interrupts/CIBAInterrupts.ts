@@ -14,14 +14,15 @@ export class CIBAInterrupt extends Auth0Interrupt {
   }
 
   static isInterrupt<T extends abstract new (...args: any) => any>(
-    this: T,
+    this: T & { code?: string },
     interrupt: any
   ): interrupt is Auth0InterruptData<InstanceType<T>> {
     return (
       interrupt &&
       Auth0Interrupt.isInterrupt(interrupt) &&
       typeof interrupt.code === "string" &&
-      interrupt.code.startsWith("CIBA_")
+      (this.code === interrupt.code ||
+        (!this.code && interrupt.code.startsWith("CIBA_")))
     );
   }
 
@@ -94,7 +95,7 @@ export class AuthorizationPendingInterrupt
  * An interrupt that is thrown when the authorization polling fails.
  */
 export class AuthorizationPollingInterrupt
-  extends Auth0Interrupt
+  extends CIBAInterrupt
   implements WithRequestData
 {
   public static code: string = "CIBA_AUTHORIZATION_POLLING_ERROR" as const;
@@ -110,7 +111,7 @@ export class AuthorizationPollingInterrupt
  * An interrupt that is thrown when the authorization polling fails.
  */
 export class InvalidGrantInterrupt
-  extends Auth0Interrupt
+  extends CIBAInterrupt
   implements WithRequestData
 {
   public static code: string = "CIBA_INVALID_GRANT" as const;
