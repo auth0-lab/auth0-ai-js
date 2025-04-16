@@ -14,14 +14,15 @@ export class DeviceInterrupt extends Auth0Interrupt {
   }
 
   static isInterrupt<T extends abstract new (...args: any) => any>(
-    this: T,
+    this: T & { code?: string },
     interrupt: any
   ): interrupt is Auth0InterruptData<InstanceType<T>> {
     return (
       interrupt &&
       Auth0Interrupt.isInterrupt(interrupt) &&
       typeof interrupt.code === "string" &&
-      interrupt.code.startsWith("DEVICE_")
+      (this.code === interrupt.code ||
+        (!this.code && interrupt.code.startsWith("DEVICE_")))
     );
   }
 

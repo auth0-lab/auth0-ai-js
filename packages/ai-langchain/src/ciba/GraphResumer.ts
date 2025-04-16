@@ -108,7 +108,7 @@ export class GraphResumer extends EventEmitter<Events> {
     for (const thread of allThreads) {
       const interrupt = getAuth0Interrupts(thread).find(
         (i) =>
-          AuthorizationPendingInterrupt.isInterrupt(i.value) &&
+          AuthorizationPendingInterrupt.isInterrupt(i.value) ||
           AuthorizationPollingInterrupt.isInterrupt(i.value)
       ) as Interrupt<
         AuthorizationPendingInterrupt | AuthorizationPollingInterrupt
