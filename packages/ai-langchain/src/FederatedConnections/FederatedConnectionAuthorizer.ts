@@ -1,12 +1,12 @@
 import { FederatedConnectionAuthorizerBase } from "@auth0/ai/FederatedConnections";
 import { FederatedConnectionInterrupt } from "@auth0/ai/interrupts";
-import { DynamicStructuredTool, tool } from "@langchain/core/tools";
+import { tool } from "@langchain/core/tools";
 import { LangGraphRunnableConfig } from "@langchain/langgraph";
 
 import { toGraphInterrupt } from "../util/interrrupt";
 import { Optional } from "../util/optionalType";
 import { ToolContext } from "../util/ToolContext";
-import { ToolWrapper, ZodObjectAny } from "../util/ToolWrapper";
+import { ToolLike, ToolWrapper } from "../util/ToolWrapper";
 
 const defaultGetRefreshToken = () => {
   return async (
@@ -21,7 +21,7 @@ const defaultGetRefreshToken = () => {
  * Authorizer for federated connections.
  */
 export class FederatedConnectionAuthorizer extends FederatedConnectionAuthorizerBase<
-  [any, LangGraphRunnableConfig]
+  [any, any]
 > {
   protectedTools: string[] = [];
 
@@ -46,14 +46,14 @@ export class FederatedConnectionAuthorizer extends FederatedConnectionAuthorizer
   }
 
   authorizer(): ToolWrapper {
-    return <T extends ZodObjectAny = ZodObjectAny>(
-      t: DynamicStructuredTool<T>
-    ) => {
-      return tool(this.protect(ToolContext(t), t.invoke.bind(t)), {
+    return <T extends ToolLike>(t: T) => {
+      const getContext = ToolContext(t);
+      const protectedFunc = this.protect(getContext, t.invoke.bind(t));
+      return tool(protectedFunc, {
         name: t.name,
         description: t.description,
         schema: t.schema,
-      }) as unknown as DynamicStructuredTool<T>;
+      }) as unknown as T;
     };
   }
 }
