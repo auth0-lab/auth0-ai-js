@@ -1,13 +1,9 @@
-import { DynamicStructuredTool } from "langchain/tools";
+import { ToolLike } from "./ToolWrapper";
 
-import { LangGraphRunnableConfig } from "@langchain/langgraph";
-
-import { ZodObjectAny } from "./ToolWrapper";
-
-export const ToolContext = <T extends ZodObjectAny = ZodObjectAny>(
-  t: DynamicStructuredTool<T>
+export const ToolContext = <TSchema, TInput, TConfig, TReturnType>(
+  t: ToolLike<TSchema, TInput, TConfig, TReturnType>
 ) => {
-  return (_params: any, ctx: LangGraphRunnableConfig) => {
+  return (_params: any, ctx: any) => {
     const { thread_id, tool_call_id } = ctx.configurable ?? {};
     return {
       threadID: thread_id,

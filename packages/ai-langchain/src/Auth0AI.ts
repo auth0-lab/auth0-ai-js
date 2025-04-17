@@ -1,4 +1,4 @@
-import { DynamicStructuredTool } from "langchain/tools";
+import { StructuredTool } from "langchain/tools";
 
 import { AuthorizerParams } from "@auth0/ai";
 import { MemoryStore, Store, SubStore } from "@auth0/ai/stores";
@@ -53,8 +53,8 @@ export class Auth0AI {
    */
   withAsyncUserConfirmation(
     params: CIBAParams,
-    tool: DynamicStructuredTool
-  ): DynamicStructuredTool;
+    tool: StructuredTool
+  ): StructuredTool;
 
   /**
    *
@@ -66,7 +66,7 @@ export class Auth0AI {
    * @param [tool] - The tool to protect.
    * @returns The authorizer or the protected tool.
    */
-  withAsyncUserConfirmation(options: CIBAParams, tool?: DynamicStructuredTool) {
+  withAsyncUserConfirmation(options: CIBAParams, tool?: StructuredTool) {
     const cibaStore = this.store.createSubStore("AUTH0_AI_CIBA");
     const authorizer = new CIBAAuthorizer(this.config, {
       store: cibaStore,
@@ -97,8 +97,8 @@ export class Auth0AI {
    */
   withTokenForConnection(
     params: FederatedConnectionAuthorizerParams,
-    tool: DynamicStructuredTool
-  ): DynamicStructuredTool;
+    tool: StructuredTool
+  ): StructuredTool;
 
   /**
    * Protects a tool execution with the Federated Connection authorizer.
@@ -108,7 +108,7 @@ export class Auth0AI {
    */
   withTokenForConnection(
     options: FederatedConnectionAuthorizerParams,
-    tool?: DynamicStructuredTool
+    tool?: StructuredTool
   ) {
     const store = this.store.createSubStore("AUTH0_AI_FEDERATED_CONNECTION");
     const authorizer = new FederatedConnectionAuthorizer(this.config, {
@@ -137,8 +137,8 @@ export class Auth0AI {
    */
   withDeviceAuthorizationFlow(
     params: DeviceParams,
-    tool: DynamicStructuredTool
-  ): DynamicStructuredTool;
+    tool: StructuredTool
+  ): StructuredTool;
 
   /**
    *
@@ -150,10 +150,7 @@ export class Auth0AI {
    * @param [tool] - The tool to protect.
    * @returns The authorizer or the protected tool.
    */
-  withDeviceAuthorizationFlow(
-    options: DeviceParams,
-    tool?: DynamicStructuredTool
-  ) {
+  withDeviceAuthorizationFlow(options: DeviceParams, tool?: StructuredTool) {
     const deviceAuthorizerStore = this.store.createSubStore(
       "AUTH0_AI_DEVICE_FLOW"
     );
