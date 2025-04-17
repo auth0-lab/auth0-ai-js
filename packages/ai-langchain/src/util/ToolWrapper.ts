@@ -1,9 +1,18 @@
-import { z } from "zod";
+// export type ZodObjectAny = z.ZodObject<any, any, any, any>;
 
-import { DynamicStructuredTool } from "@langchain/core/tools";
+export type ToolLike<TSchema, TInput, TConfig, TReturnType> = {
+  name: string;
+  description: string;
+  schema: TSchema;
+  invoke(input: TInput, config?: TConfig): Promise<TReturnType>;
+};
 
-export type ZodObjectAny = z.ZodObject<any, any, any, any>;
-
-export type ToolWrapper = <T extends ZodObjectAny>(
-  t: DynamicStructuredTool<T>
-) => DynamicStructuredTool<T>;
+export type ToolWrapper = <
+  TSchema,
+  TInput,
+  TConfig,
+  TReturnType,
+  ToolType extends ToolLike<TSchema, TInput, TConfig, TReturnType>,
+>(
+  t: ToolType
+) => ToolType;

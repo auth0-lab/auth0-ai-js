@@ -1,6 +1,5 @@
 import { getAccessTokenForConnection } from "@auth0/ai-langchain";
 import { GoogleCalendarViewTool } from "@langchain/community/tools/google_calendar";
-import { DynamicStructuredTool } from "@langchain/core/tools";
 import { ChatOpenAI } from "@langchain/openai";
 
 import { withGoogleCalendarCommunity } from "../../lib/auth0-ai";
@@ -15,10 +14,11 @@ export const calendarCommunityTool = withGoogleCalendarCommunity(
     credentials: {
       accessToken: async () => {
         const credentials = getAccessTokenForConnection();
+        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         return credentials?.accessToken!;
       },
       calendarId: "primary",
     },
     model,
-  }) as unknown as DynamicStructuredTool
+  })
 );
