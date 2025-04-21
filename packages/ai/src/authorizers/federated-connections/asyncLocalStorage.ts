@@ -1,6 +1,7 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 
 import { TokenSet } from "../../credentials";
+import { FederatedConnectionError } from "../../interrupts";
 import { ToolCallContext } from "../context";
 
 export type AsyncStorageValue = {
@@ -32,6 +33,13 @@ export type AsyncStorageValue = {
 
 export const asyncLocalStorage = new AsyncLocalStorage<AsyncStorageValue>();
 
+/**
+ * Returns the entire tokenset for the current connection.
+ *
+ * Use `getAccessTokenForConnection` if you only need the access token.
+ *
+ * @returns {TokenSet} The current token set.
+ */
 export const getCredentialsForConnection = () => {
   const store = asyncLocalStorage.getStore();
   if (typeof store === "undefined") {
@@ -40,4 +48,18 @@ export const getCredentialsForConnection = () => {
     );
   }
   return store?.credentials;
+};
+
+/**
+ *
+ * Get the access token for the current connection.
+ *
+ * @returns The access token for the current connection.
+ */
+export const getAccessTokenForConnection = () => {
+  const credentials = getCredentialsForConnection();
+  if (!credentials || !credentials.accessToken) {
+    throw new FederatedConnectionError("No credentials found");
+  }
+  return credentials.accessToken;
 };

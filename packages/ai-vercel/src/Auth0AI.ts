@@ -6,9 +6,10 @@ import { CIBAAuthorizer } from "./CIBA";
 import { DeviceAuthorizer } from "./Device";
 import { FederatedConnectionAuthorizer } from "./FederatedConnections";
 import { FGA_AI } from "./FGA_AI";
+import { ToolWrapper } from "./util/ToolWrapper";
 
 import type { AuthorizerParams } from "@auth0/ai";
-type ToolWrapper = ReturnType<FederatedConnectionAuthorizer["authorizer"]>;
+
 type FederatedConnectionParams = Omit<
   ConstructorParameters<typeof FederatedConnectionAuthorizer>[1],
   "store"

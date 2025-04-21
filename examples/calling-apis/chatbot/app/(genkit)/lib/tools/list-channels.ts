@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { withSlack } from "@/app/(genkit)/lib/auth0-ai";
 import { ai } from "@/app/(genkit)/lib/genkit";
-import { getAccessTokenForConnection } from "@auth0/ai-genkit";
+import { getCredentialsForConnection } from "@auth0/ai-genkit";
 import { FederatedConnectionError } from "@auth0/ai/interrupts";
 import { ErrorCode, WebClient } from "@slack/web-api";
 
@@ -15,7 +15,7 @@ export const listChannels = ai.defineTool(
     },
     async () => {
       // Get the access token from Auth0 AI
-      const credentials = getAccessTokenForConnection();
+      const credentials = getCredentialsForConnection();
 
       // Slack SDK
       try {

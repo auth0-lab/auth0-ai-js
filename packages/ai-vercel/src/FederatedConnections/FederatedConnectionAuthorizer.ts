@@ -1,19 +1,15 @@
-import { Tool, ToolExecutionOptions } from "ai";
-import { Schema, z } from "zod";
+import { ToolExecutionOptions } from "ai";
 
 import { FederatedConnectionAuthorizerBase } from "@auth0/ai/FederatedConnections";
 
 import { ToolContext } from "../util/ToolContext";
-
-type Parameters = z.ZodTypeAny | Schema<any>;
+import { ToolWrapper } from "../util/ToolWrapper";
 
 export class FederatedConnectionAuthorizer extends FederatedConnectionAuthorizerBase<
   [any, ToolExecutionOptions]
 > {
-  authorizer() {
-    return <PARAMETERS extends Parameters = any, RESULT = any>(
-      t: Tool<PARAMETERS, RESULT>
-    ): Tool<PARAMETERS, RESULT> => {
+  authorizer(): ToolWrapper {
+    return (t) => {
       return {
         ...t,
         execute: this.protect(ToolContext(t), t.execute!),

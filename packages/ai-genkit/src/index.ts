@@ -3,4 +3,7 @@ export { FGAReranker, auth0 } from "./FGA/fga-reranker";
 export { getDeviceAuthorizerCredentials } from "./Device";
 export { getCIBACredentials } from "./CIBA";
 export { getAuth0Confirmations, resumeAuth0Interrupts } from "./lib";
-export { getAccessTokenForConnection } from "./FederatedConnections";
+export {
+  getCredentialsForConnection,
+  getAccessTokenForConnection,
+} from "./FederatedConnections";

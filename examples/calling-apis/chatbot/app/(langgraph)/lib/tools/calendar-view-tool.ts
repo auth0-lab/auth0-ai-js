@@ -12,11 +12,7 @@ const model = new ChatOpenAI({
 export const calendarCommunityTool = withGoogleCalendarCommunity(
   new GoogleCalendarViewTool({
     credentials: {
-      accessToken: async () => {
-        const credentials = getAccessTokenForConnection();
-        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-        return credentials?.accessToken!;
-      },
+      accessToken: async () => getAccessTokenForConnection(),
       calendarId: "primary",
     },
     model,

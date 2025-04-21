@@ -5,7 +5,7 @@ import { z } from "zod";
 
 import { withTokenForGoogleConnection } from "@/app/(genkit)/lib/auth0-ai";
 import { ai } from "@/app/(genkit)/lib/genkit";
-import { getAccessTokenForConnection } from "@auth0/ai-genkit";
+import { getCredentialsForConnection } from "@auth0/ai-genkit";
 import { FederatedConnectionError } from "@auth0/ai/interrupts";
 
 export const checkUsersCalendar = ai.defineTool(
@@ -25,7 +25,7 @@ export const checkUsersCalendar = ai.defineTool(
     },
     async ({ date }) => {
       // Get the access token from Auth0 AI
-      const credentials = getAccessTokenForConnection();
+      const credentials = getCredentialsForConnection();
 
       // Google SDK
       try {

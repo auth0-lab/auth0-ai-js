@@ -79,7 +79,7 @@ import { addHours } from "date-fns";
 export const checkCalendarTool = withGoogleAccess(
   tool(
     async ({ date }) => {
-      const { accessToken } = getAccessTokenForConnection();
+      const accessToken = getAccessTokenForConnection();
       const body = JSON.stringify({
         timeMin: date,
         timeMax: addHours(date, 1),
@@ -151,10 +151,7 @@ import { withGmailCommunity } from "../../lib/auth0-ai";
 export const gmailCommunityTool = withGmailCommunity(
   new GmailSearch({
     credentials: {
-      accessToken: async () => {
-        const credentials = getAccessTokenForConnection();
-        return credentials?.accessToken!;
-      },
+      accessToken: async () => getAccessTokenForConnection(),
     },
   })
 );

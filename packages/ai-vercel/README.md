@@ -90,7 +90,7 @@ export const checkUsersCalendar = withGoogleAccess(
       date: z.coerce.date(),
     }),
     execute: async ({ date }) => {
-      const { accessToken } = getAccessTokenForConnection();
+      const accessToken = getAccessTokenForConnection();
       const url = "https://www.googleapis.com/calendar/v3/freeBusy";
       const body = JSON.stringify({
         timeMin: date,

@@ -1,11 +1,9 @@
-import { Tool, ToolExecutionOptions } from "ai";
-import { Schema, z } from "zod";
+import { ToolExecutionOptions } from "ai";
 
 import { DeviceAuthorizerBase } from "@auth0/ai/Device";
 
 import { ToolContext } from "../util/ToolContext";
-
-type Parameters = z.ZodTypeAny | Schema<any>;
+import { ToolWrapper } from "../util/ToolWrapper";
 
 /**
  * The DeviceAuthorizer class implements the Device Authorization Flow for a Vercel-AI tool.
@@ -19,10 +17,8 @@ export class DeviceAuthorizer extends DeviceAuthorizerBase<
    *
    * @returns A tool authorizer.
    */
-  authorizer() {
-    return <PARAMETERS extends Parameters = any, RESULT = any>(
-      t: Tool<PARAMETERS, RESULT>
-    ): Tool<PARAMETERS, RESULT> => {
+  authorizer(): ToolWrapper {
+    return (t) => {
       return {
         ...t,
         execute: this.protect(ToolContext(t), t.execute!),
