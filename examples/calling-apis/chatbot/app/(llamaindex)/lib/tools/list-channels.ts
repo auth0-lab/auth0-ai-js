@@ -2,7 +2,7 @@ import { tool } from "llamaindex";
 import { z } from "zod";
 
 import { withSlack } from "@/app/(llamaindex)/lib/auth0-ai";
-import { getAccessTokenForConnection } from "@auth0/ai-llamaindex";
+import { getCredentialsForConnection } from "@auth0/ai-llamaindex";
 import { FederatedConnectionError } from "@auth0/ai/interrupts";
 import { ErrorCode, WebClient } from "@slack/web-api";
 
@@ -11,7 +11,7 @@ export const listChannels = () =>
     tool(
       async () => {
         // Get the access token from Auth0 AI
-        const credentials = getAccessTokenForConnection();
+        const credentials = getCredentialsForConnection();
 
         // Slack SDK
         try {

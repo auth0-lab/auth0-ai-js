@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { getAccessTokenForConnection } from "@auth0/ai-langchain";
+import { getCredentialsForConnection } from "@auth0/ai-langchain";
 import { FederatedConnectionError } from "@auth0/ai/interrupts";
 import { tool } from "@langchain/core/tools";
 import { RequestError } from "@octokit/request-error";
@@ -12,12 +12,12 @@ export const listRepositories = withGitHub(
   tool(
     async () => {
       // Get the access token from Auth0 AI
-      const credentials = getAccessTokenForConnection();
+      const accessToken = getCredentialsForConnection();
 
       // GitHub SDK
       try {
         const octokit = new Octokit({
-          auth: credentials?.accessToken,
+          auth: accessToken,
         });
 
         const { data } = await octokit.rest.repos.listForAuthenticatedUser();

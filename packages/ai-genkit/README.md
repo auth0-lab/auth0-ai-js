@@ -95,7 +95,7 @@ export const checkCalendarTool = ai.defineTool(
     }),
   },
   async ({ date }) => {
-    const { accessToken } = getAccessTokenForConnection();
+    const accessToken = getAccessTokenForConnection();
     const body = JSON.stringify({
       timeMin: date,
       timeMax: addHours(date, 1),

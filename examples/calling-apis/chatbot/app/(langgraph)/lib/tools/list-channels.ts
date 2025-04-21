@@ -11,11 +11,11 @@ export const listChannels = withSlack(
   tool(
     async () => {
       // Get the access token from Auth0 AI
-      const credentials = getAccessTokenForConnection();
+      const accessToken = getAccessTokenForConnection();
 
       // Slack SDK
       try {
-        const web = new WebClient(credentials?.accessToken);
+        const web = new WebClient(accessToken);
 
         const result = await web.conversations.list({
           exclude_archived: true,

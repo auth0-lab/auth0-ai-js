@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { withGitHub } from "@/app/(genkit)/lib/auth0-ai";
 import { ai } from "@/app/(genkit)/lib/genkit";
-import { getAccessTokenForConnection } from "@auth0/ai-genkit";
+import { getCredentialsForConnection } from "@auth0/ai-genkit";
 import { FederatedConnectionError } from "@auth0/ai/interrupts";
 
 export const listRepositories = ai.defineTool(
@@ -15,7 +15,7 @@ export const listRepositories = ai.defineTool(
     },
     async () => {
       // Get the access token from Auth0 AI
-      const credentials = getAccessTokenForConnection();
+      const credentials = getCredentialsForConnection();
 
       // GitHub SDK
       try {

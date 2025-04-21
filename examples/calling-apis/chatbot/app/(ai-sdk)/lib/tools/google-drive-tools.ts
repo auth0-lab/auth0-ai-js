@@ -22,10 +22,10 @@ export const googleDriveTools = Object.fromEntries(
           : jsonSchema(asAgenticSchema(fn.inputSchema).jsonSchema),
         execute: async (args) => {
           // Get the access token from Auth0 AI
-          const credentials = getAccessTokenForConnection();
+          const accessToken = getAccessTokenForConnection();
 
           auth.setCredentials({
-            access_token: credentials?.accessToken,
+            access_token: accessToken,
           });
 
           // Execute Google Drive function from `@agentic`

@@ -12,16 +12,15 @@ import { withGoogleCalendar } from "../auth0-ai";
 export const checkUsersCalendar = withGoogleCalendar(
   tool(
     async ({ date }) => {
-      // Get the access token from Auth0 AI
-      const credentials = getAccessTokenForConnection();
-
       // Google SDK
       try {
+        const accessToken = getAccessTokenForConnection();
+
         const calendar = google.calendar("v3");
         const auth = new google.auth.OAuth2();
 
         auth.setCredentials({
-          access_token: credentials?.accessToken,
+          access_token: accessToken,
         });
 
         const response = await calendar.freebusy.query({

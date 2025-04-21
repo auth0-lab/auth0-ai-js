@@ -1,9 +1,8 @@
-import { Tool, ToolExecutionOptions } from "ai";
-import { Schema, z } from "zod";
+import { ToolExecutionOptions } from "ai";
 
 import { FGAAuthorizerBase } from "@auth0/ai/FGA";
 
-type Parameters = z.ZodTypeAny | Schema<any>;
+import { ToolWrapper } from "../util/ToolWrapper";
 
 /**
  * The FGAAuthorizer class implements the FGA authorization control for a Vercel AI tool.
@@ -21,10 +20,8 @@ export class FGAAuthorizer extends FGAAuthorizerBase<
    *
    * @returns A tool authorizer.
    */
-  authorizer() {
-    return <PARAMETERS extends Parameters = any, RESULT = any>(
-      t: Tool<PARAMETERS, RESULT>
-    ): Tool<PARAMETERS, RESULT> => {
+  authorizer(): ToolWrapper {
+    return (t) => {
       return {
         ...t,
         execute: this.protect(t.execute!),

@@ -5,7 +5,7 @@ import { tool } from "llamaindex";
 import { z } from "zod";
 
 import { withGoogleCalendar } from "@/app/(llamaindex)/lib/auth0-ai";
-import { getAccessTokenForConnection } from "@auth0/ai-llamaindex";
+import { getCredentialsForConnection } from "@auth0/ai-llamaindex";
 import { FederatedConnectionError } from "@auth0/ai/interrupts";
 
 export const checkUsersCalendar = () =>
@@ -13,7 +13,7 @@ export const checkUsersCalendar = () =>
     tool(
       async ({ date }) => {
         // Get the access token from Auth0 AI
-        const credentials = getAccessTokenForConnection();
+        const credentials = getCredentialsForConnection();
 
         // Google SDK
         try {

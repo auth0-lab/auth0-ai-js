@@ -2,7 +2,8 @@ export type { AsyncStorageValue } from "./asyncLocalStorage";
 
 export {
   asyncLocalStorage,
-  getCredentialsForConnection as getAccessTokenForConnection,
+  getCredentialsForConnection,
+  getAccessTokenForConnection,
 } from "./asyncLocalStorage";
 
 export { FederatedConnectionAuthorizerBase } from "./FederatedConnectionAuthorizerBase";

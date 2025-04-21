@@ -9,7 +9,7 @@ import { FederatedConnectionInterrupt } from "@auth0/ai/interrupts";
 import { setAIContext } from "../src/context";
 import {
   FederatedConnectionAuthorizer,
-  getAccessTokenForConnection,
+  getCredentialsForConnection,
 } from "../src/FederatedConnections";
 
 describe("FederatedConnectionAuthorizer", () => {
@@ -108,7 +108,7 @@ describe("FederatedConnectionAuthorizer", () => {
       try {
         setAIContext({ threadID: "123" });
         mockTool.execute.mockImplementation(() => {
-          const credentials = getAccessTokenForConnection();
+          const credentials = getCredentialsForConnection();
           accessToken = credentials?.accessToken;
           return { result: "success" };
         });
