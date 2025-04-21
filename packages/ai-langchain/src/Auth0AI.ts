@@ -1,5 +1,3 @@
-import { DynamicStructuredTool } from "langchain/tools";
-
 import { AuthorizerParams } from "@auth0/ai";
 import { MemoryStore, Store, SubStore } from "@auth0/ai/stores";
 
@@ -7,7 +5,7 @@ import { CIBAAuthorizer } from "./ciba";
 import { DeviceAuthorizer } from "./Device";
 import { FederatedConnectionAuthorizer } from "./FederatedConnections";
 import { FGA_AI } from "./FGA_AI";
-import { ToolWrapper } from "./util/ToolWrapper";
+import { ToolLike, ToolWrapper } from "./util/ToolWrapper";
 
 export type FederatedConnectionAuthorizerParams = Omit<
   ConstructorParameters<typeof FederatedConnectionAuthorizer>[1],
@@ -51,10 +49,10 @@ export class Auth0AI {
    * @param tool - The tool to protect.
    * @returns The protected tool.
    */
-  withAsyncUserConfirmation(
+  withAsyncUserConfirmation<ToolType extends ToolLike>(
     params: CIBAParams,
-    tool: DynamicStructuredTool
-  ): DynamicStructuredTool;
+    tool: ToolType
+  ): ToolType;
 
   /**
    *
@@ -66,7 +64,10 @@ export class Auth0AI {
    * @param [tool] - The tool to protect.
    * @returns The authorizer or the protected tool.
    */
-  withAsyncUserConfirmation(options: CIBAParams, tool?: DynamicStructuredTool) {
+  withAsyncUserConfirmation<ToolType extends ToolLike>(
+    options: CIBAParams,
+    tool?: ToolType
+  ) {
     const cibaStore = this.store.createSubStore("AUTH0_AI_CIBA");
     const authorizer = new CIBAAuthorizer(this.config, {
       store: cibaStore,
@@ -95,10 +96,10 @@ export class Auth0AI {
    * @param tool - The tool to protect.
    * @returns The protected tool.
    */
-  withTokenForConnection(
+  withTokenForConnection<ToolType extends ToolLike>(
     params: FederatedConnectionAuthorizerParams,
-    tool: DynamicStructuredTool
-  ): DynamicStructuredTool;
+    tool: ToolType
+  ): ToolType;
 
   /**
    * Protects a tool execution with the Federated Connection authorizer.
@@ -106,9 +107,9 @@ export class Auth0AI {
    * @param options - The Federated Connections authorizer options.
    * @returns The authorizer.
    */
-  withTokenForConnection(
+  withTokenForConnection<ToolType extends ToolLike>(
     options: FederatedConnectionAuthorizerParams,
-    tool?: DynamicStructuredTool
+    tool?: ToolType
   ) {
     const store = this.store.createSubStore("AUTH0_AI_FEDERATED_CONNECTION");
     const authorizer = new FederatedConnectionAuthorizer(this.config, {
@@ -135,10 +136,10 @@ export class Auth0AI {
    * @param tool - The tool to protect.
    * @returns The protected tool.
    */
-  withDeviceAuthorizationFlow(
+  withDeviceAuthorizationFlow<ToolType extends ToolLike>(
     params: DeviceParams,
-    tool: DynamicStructuredTool
-  ): DynamicStructuredTool;
+    tool: ToolType
+  ): ToolType;
 
   /**
    *
@@ -150,9 +151,9 @@ export class Auth0AI {
    * @param [tool] - The tool to protect.
    * @returns The authorizer or the protected tool.
    */
-  withDeviceAuthorizationFlow(
+  withDeviceAuthorizationFlow<ToolType extends ToolLike>(
     options: DeviceParams,
-    tool?: DynamicStructuredTool
+    tool?: ToolType
   ) {
     const deviceAuthorizerStore = this.store.createSubStore(
       "AUTH0_AI_DEVICE_FLOW"

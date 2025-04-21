@@ -1,6 +1,5 @@
 import { getAccessTokenForConnection } from "@auth0/ai-langchain";
 import { GmailSearch } from "@langchain/community/tools/gmail";
-import { DynamicStructuredTool } from "@langchain/core/tools";
 
 import { withGmailCommunity } from "../../lib/auth0-ai";
 
@@ -9,8 +8,12 @@ export const gmailCommunityTool = withGmailCommunity(
     credentials: {
       accessToken: async () => {
         const credentials = getAccessTokenForConnection();
-        return credentials?.accessToken!;
+        const accessToken = credentials?.accessToken;
+        if (!accessToken) {
+          throw new Error("No access token found");
+        }
+        return accessToken;
       },
     },
-  }) as unknown as DynamicStructuredTool
+  })
 );

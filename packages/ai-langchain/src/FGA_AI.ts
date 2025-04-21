@@ -1,8 +1,7 @@
 import { FGAAuthorizerBase } from "@auth0/ai/FGA";
-import { DynamicStructuredTool } from "@langchain/core/tools";
 
 import { FGAAuthorizer } from "./FGA";
-import { ToolWrapper } from "./util/ToolWrapper";
+import { ToolLike, ToolWrapper } from "./util/ToolWrapper";
 
 type FGAAuthorizerParams = ConstructorParameters<typeof FGAAuthorizerBase>[0];
 type FGAParams = ConstructorParameters<typeof FGAAuthorizer>[1];
@@ -54,10 +53,10 @@ export class FGA_AI {
    * @param tool - The tool to protect.
    * @returns The protected tool.
    */
-  withFGA(
+  withFGA<ToolType extends ToolLike>(
     params: FGAParams,
-    tool: DynamicStructuredTool
-  ): DynamicStructuredTool;
+    tool: ToolType
+  ): ToolType;
 
   /**
    *
@@ -67,7 +66,7 @@ export class FGA_AI {
    * @param tool - The tool to protect.
    * @returns
    */
-  withFGA(params: FGAParams, tool?: DynamicStructuredTool) {
+  withFGA<ToolType extends ToolLike>(params: FGAParams, tool?: ToolType) {
     const fc = new FGAAuthorizer(this.fgaParams, params);
     const authorizer = fc.authorizer();
     if (tool) {
