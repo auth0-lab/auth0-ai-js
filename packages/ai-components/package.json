@@ -18,8 +18,8 @@
   },
   "license": "Apache-2.0",
   "devDependencies": {
-    "@types/node": "^22.10.6",
-    "@types/react": "^19.0.10",
+    "@types/node": "^22.14.1",
+    "@types/react": "^19.1.2",
     "clsx": "^2.1.1",
     "react": "^19.0.0",
     "react-device-detect": "^2.2.3",
