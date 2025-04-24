@@ -4,7 +4,7 @@
   "scripts": {
     "build": "lage build",
     "build:watch": "lage build:watch",
-    "clean": "lage clean",
+    "clean": "lage clean --no-cache",
     "test": "lage test",
     "lint": "lage lint",
     "prepare": "node .husky/install.mjs"
