@@ -7,8 +7,6 @@ import { ContextGetter } from "@auth0/ai/authorizers";
 import { ToolWrapper } from "../types";
 
 type LlamaIndexContext = {
-  toolCallID?: string;
-  toolName?: string;
   threadID: string;
 };
 
@@ -43,23 +41,19 @@ export const createToolWrapper = (protect: TProtectFunc): ToolWrapper => {
   >(
     t: FunctionTool<T, R, AdditionalToolArgument>
   ) => {
-    const context = aiContext.getStore();
-    if (!context) {
-      throw new Error(
-        "AI context not set. Please use setAIContext({ threadID }) to set it."
-      );
-    }
-    if (!context.toolCallID) {
-      context.toolCallID = randomUUID();
-    }
-    const { threadID, toolCallID } = context;
-    const toolName = t.metadata.name;
-
     const execute = protect(() => {
+      const context = aiContext.getStore();
+      if (!context) {
+        throw new Error(
+          "AI context not set. Please use setAIContext({ threadID }) to set it."
+        );
+      }
+      const { threadID } = context;
+      const toolName = t.metadata.name;
       return {
         threadID,
         toolName,
-        toolCallID,
+        toolCallID: randomUUID(),
       };
     }, t.call);
 
