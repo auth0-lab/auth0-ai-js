@@ -15,6 +15,10 @@ export type FederatedConnectionAuthProps = {
     requiredScopes: string[];
     resume?: () => void;
   };
+  auth?: {
+    authorizePath?: string;
+    returnTo?: string;
+  };
   onFinish?: () => void;
   connectWidget: {
     icon?: ReactNode;

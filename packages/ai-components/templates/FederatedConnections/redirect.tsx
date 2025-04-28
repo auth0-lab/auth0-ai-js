@@ -6,6 +6,10 @@ import { FederatedConnectionAuthProps } from "./FederatedConnectionAuthProps";
 export function EnsureAPIAccessRedirect({
   interrupt: { requiredScopes, connection },
   connectWidget: { icon, title, description, action, containerClassName },
+  auth: {
+    authorizePath = "/auth/login",
+    returnTo = window.location.pathname,
+  } = {},
 }: FederatedConnectionAuthProps) {
   return (
     <PromptUserContainer
@@ -16,14 +20,18 @@ export function EnsureAPIAccessRedirect({
       action={{
         label: action?.label ?? "Connect",
         onClick: () => {
-          const params = new URLSearchParams({
+          const search = new URLSearchParams({
+            returnTo,
             connection,
             access_type: "offline",
             connection_scope: requiredScopes.join(),
-            returnTo: window.location.pathname,
           });
-          const url = `/api/auth/login?${params.toString()}`;
-          window.location.href = url;
+
+          const url = new URL(authorizePath, window.location.origin);
+          url.search = search.toString();
+
+          // Redirect to the authorization page
+          window.location.href = url.toString();
         },
       }}
     />
