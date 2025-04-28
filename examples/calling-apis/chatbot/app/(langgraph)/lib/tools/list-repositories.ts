@@ -12,12 +12,12 @@ export const listRepositories = withGitHub(
   tool(
     async () => {
       // Get the access token from Auth0 AI
-      const accessToken = getCredentialsForConnection();
+      const credentials = getCredentialsForConnection();
 
       // GitHub SDK
       try {
         const octokit = new Octokit({
-          auth: accessToken,
+          auth: credentials?.accessToken,
         });
 
         const { data } = await octokit.rest.repos.listForAuthenticatedUser();
