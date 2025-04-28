@@ -1,6 +1,6 @@
 import { BrowserView, MobileView } from "react-device-detect";
 
-import { FederatedConnectionAuthProps } from "./FederatedConnectionAuthProps";
+import type { FederatedConnectionAuthProps } from "./FederatedConnectionAuthProps";
 import { EnsureAPIAccessPopup } from "./popup";
 import { EnsureAPIAccessRedirect } from "./redirect";
 

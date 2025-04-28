@@ -1,7 +1,7 @@
 "use client";
 
 import { PromptUserContainer } from "../util/prompt-user-container";
-import { FederatedConnectionAuthProps } from "./FederatedConnectionAuthProps";
+import type { FederatedConnectionAuthProps } from "./FederatedConnectionAuthProps";
 
 export function EnsureAPIAccessRedirect({
   interrupt: { requiredScopes, connection },
