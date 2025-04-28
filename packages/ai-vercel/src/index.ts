@@ -7,4 +7,4 @@ export {
   getAccessTokenForConnection,
 } from "./FederatedConnections";
 
-export { setAIContext, runWithAIContext } from "./context";
+export { setAIContext, runInAIContext, runWithAIContext } from "./context";
