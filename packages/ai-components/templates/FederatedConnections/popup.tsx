@@ -9,6 +9,7 @@ import type { FederatedConnectionAuthProps } from "./FederatedConnectionAuthProp
 export function EnsureAPIAccessPopup({
   interrupt: { connection, requiredScopes, resume },
   connectWidget: { icon, title, description, action, containerClassName },
+  auth: { authorizePath = "/auth/login", returnTo = "/close" } = {},
   onFinish,
 }: FederatedConnectionAuthProps) {
   const [isLoading, setIsLoading] = useState(false);
@@ -41,17 +42,20 @@ export function EnsureAPIAccessPopup({
 
   //Open the login popup
   const startLoginPopup = useCallback(async () => {
-    const params = new URLSearchParams({
+    const search = new URLSearchParams({
+      returnTo,
       connection,
       access_type: "offline",
       prompt: "consent",
       connection_scope: requiredScopes.join(),
-      returnTo: "/close",
     });
-    const url = `/auth/login?${params.toString()}`;
+
+    const url = new URL(authorizePath, window.location.origin);
+    url.search = search.toString();
+
     const windowFeatures =
       "width=800,height=650,status=no,toolbar=no,menubar=no";
-    const popup = window.open(url, "_blank", windowFeatures);
+    const popup = window.open(url.toString(), "_blank", windowFeatures);
     if (!popup) {
       console.error("Popup blocked by the browser");
       return;
