@@ -23,6 +23,20 @@ export const setAIContext = (params: VercelAIContext) => {
 };
 
 /**
+ * Similar to `setAIContext`. Wraps the function in a context.
+ *
+ * Some environments like Cloudflare Workers don't support `AsyncLocalStorage`.
+ *
+ * @param params - The context parameters to set.
+ * @param params.threadID - The thread ID to set in the context.
+ * @param fn - The function to execute within the context.
+ * @returns The result of the function executed within the context.
+ */
+export const runInAIContext = <T>(params: VercelAIContext, fn: () => T) => {
+  return aiContext.run(params, fn);
+};
+
+/**
  *
  * Run a function with the provided AI context.
  *
