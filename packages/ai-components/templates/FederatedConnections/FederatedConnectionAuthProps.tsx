@@ -1,5 +1,5 @@
 "use client";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 
 /**
  * Defines the mode the EnsureAPIAccess component will use to prompt the user to authorize the API access.
