@@ -78,13 +78,13 @@
     "vitest": "^3.0.9"
   },
   "dependencies": {
-    "@openfga/sdk": "^0.8.0",
+    "@openfga/sdk": "^0.8.1",
     "auth0": "^4.18.0",
     "jose": "^5.9.6",
-    "openid-client": "^6.1.7",
+    "openid-client": "^6.4.2",
     "stable-hash": "^0.0.5",
     "tempbox": "^1.1.1",
-    "zod": "^3.24.2"
+    "zod": "^3.24.4"
   },
   "publishConfig": {
     "access": "public"
