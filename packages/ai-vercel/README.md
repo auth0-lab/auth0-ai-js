@@ -184,6 +184,35 @@ export const purchaseStock = buyStockAuthorizer({
 });
 ```
 
+### CIBA with RAR (Rich Authorization Requests)
+Auth0 supports RAR (Rich Authorization Requests) for CIBA. This allows you to provide additional authorization parameters to be displayed during the user confirmation request.
+
+When defining the tool authorizer, you can specify the `authorizationDetails` parameter to include detailed information about the authorization being requested:
+
+```js
+const buyStockAuthorizer = auth0AI.withAsyncUserConfirmation({
+  // A callback to retrieve the userID from tool context.
+  userID: (params: { userID: string }, ctx) => params.userID,
+
+  // The message the user will see on the notification
+  bindingMessage: async ({ qty , ticker }) => {
+    return `Confirm the purchase of ${qty} ${ticker}`;
+  },
+  authorizationDetails: async ({ qty, ticker }) => {
+    return [{ type: "trade_authorization", qty, ticker, action: "buy" }];
+  },
+  // The scopes and audience to request
+  audience: process.env["AUDIENCE"],
+  scopes: ["stock:trade"]
+});
+```
+
+To use RAR with CIBA, you need to [set up authorization details](https://auth0.com/docs/get-started/apis/configure-rich-authorization-requests) in your Auth0 tenant. This includes defining the authorization request parameters and their types. Additionally, the [Guardian SDK](https://auth0.com/docs/secure/multi-factor-authentication/auth0-guardian) is required to handle these authorization details in your authorizer app.
+
+For more information on setting up RAR with CIBA, refer to:
+- [Configure Rich Authorization Requests (RAR)](https://auth0.com/docs/get-started/apis/configure-rich-authorization-requests)
+- [User Authorization with CIBA](https://auth0.com/docs/get-started/authentication-and-authorization-flow/client-initiated-backchannel-authentication-flow/user-authorization-with-ciba)
+
 ## Device Flow Authorizer
 
 The Device Flow Authorizer enables secure, user-in-the-loop authentication for devices or tools that cannot directly authenticate users. It uses the OAuth 2.0 Device Authorization Grant to request user authorization and resume execution once authorization is granted.

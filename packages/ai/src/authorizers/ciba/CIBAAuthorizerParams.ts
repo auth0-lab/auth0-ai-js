@@ -8,6 +8,11 @@ import { CIBAAuthorizationRequest } from "./CIBAAuthorizationRequest";
 
 export type CIBAAuthorizerParams<ToolExecuteArgs extends any[]> = {
   /**
+   * The scope to request authorization for.
+   */
+  scopes: string[];
+
+  /**
    * The user ID to request authorization for.
    */
   userID: AuthorizerToolParameter<ToolExecuteArgs>;
@@ -18,9 +23,12 @@ export type CIBAAuthorizerParams<ToolExecuteArgs extends any[]> = {
   bindingMessage: AuthorizerToolParameter<ToolExecuteArgs>;
 
   /**
-   * The scope to request authorization for.
+   * The authorization parameters for RAR request.
    */
-  scopes: string[];
+  authorizationDetails?: AuthorizerToolParameter<
+    ToolExecuteArgs,
+    Record<string, any>[]
+  >;
 
   /**
    * The audience to request authorization for.
