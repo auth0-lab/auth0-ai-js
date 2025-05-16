@@ -173,7 +173,7 @@ const buyStockAuthorizer = auth0AI.withAsyncUserConfirmation({
   },
   // The scopes and audience to request
   audience: process.env["AUDIENCE"],
-  scopes: ["stock:trade"]  
+  scopes: ["stock:trade"]
 });
 ```
 
@@ -217,6 +217,36 @@ export const buyTool = buyStockAuthorizer(
   })
 );
 ```
+
+### CIBA with RAR (Rich Authorization Requests)
+Auth0 supports RAR (Rich Authorization Requests) for CIBA. This allows you to provide additional authorization parameters to be displayed during the user confirmation request.
+
+When defining the tool authorizer, you can specify the `authorizationDetails` parameter to include detailed information about the authorization being requested:
+
+```js
+const buyStockAuthorizer = auth0AI.withAsyncUserConfirmation({
+  // A callback to retrieve the userID from tool context.
+  userID: (_params, config) => {
+    return config.configurable?.user_id;
+  },
+  // The message the user will see on the notification
+  bindingMessage: async ({ qty , ticker }) => {
+    return `Confirm the purchase of ${qty} ${ticker}`;
+  },
+  authorizationDetails: async ({ qty, ticker }) => {
+    return [{ type: "trade_authorization", qty, ticker, action: "buy" }];
+  },
+  // The scopes and audience to request
+  audience: process.env["AUDIENCE"],
+  scopes: ["stock:trade"]
+});
+```
+
+To use RAR with CIBA, you need to [set up authorization details](https://auth0.com/docs/get-started/apis/configure-rich-authorization-requests) in your Auth0 tenant. This includes defining the authorization request parameters and their types. Additionally, the [Guardian SDK](https://auth0.com/docs/secure/multi-factor-authentication/auth0-guardian) is required to handle these authorization details in your authorizer app.
+
+For more information on setting up RAR with CIBA, refer to:
+- [Configure Rich Authorization Requests (RAR)](https://auth0.com/docs/get-started/apis/configure-rich-authorization-requests)
+- [User Authorization with CIBA](https://auth0.com/docs/get-started/authentication-and-authorization-flow/client-initiated-backchannel-authentication-flow/user-authorization-with-ciba)
 
 ## Device Flow Authorizer
 
@@ -368,7 +398,7 @@ It is important that you disable error handling in your tools node as follows:
   .addNode(
     "tools",
     new ToolNode(
-      [ 
+      [
         // your authorizer-wrapped tools
       ],
       {
@@ -395,7 +425,7 @@ const interrupts = getAuth0Interrupts(thread.interrupts);
 // Handle an specific interrupt:
 if(interrupts[0] &&
   AuthorizationPendingInterrupt.isInterrupt(interrupts[0].value)) {
-  
+
 }
 ```
 
@@ -407,9 +437,9 @@ client.runs.wait(thread.id, t.assistantID, {})
 
 Since Auth0AI has persistence on the backend you typically don't need to reattach interrupt's information when resuming.
 
-For the specific case of **Client-Initiated Backchannel Authorization** you might attach a `GraphResumer` instance which watch for interrupted threads in the state of `Authorization Pending` and try to resume them automatically respecting Auth0's polling interval. 
+For the specific case of **Client-Initiated Backchannel Authorization** you might attach a `GraphResumer` instance which watch for interrupted threads in the state of `Authorization Pending` and try to resume them automatically respecting Auth0's polling interval.
 
-```js 
+```js
 import { GraphResumer } from "@auth0/ai-langchain";
 import { Client } from "@langchain/langgraph-sdk";
 

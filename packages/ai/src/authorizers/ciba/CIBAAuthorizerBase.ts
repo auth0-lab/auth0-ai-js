@@ -94,7 +94,7 @@ export class CIBAAuthorizerBase<ToolExecuteArgs extends any[]> {
   }
 
   private async getAuthorizeParams(toolContext: ToolExecuteArgs) {
-    return {
+    const authParams: Record<string, any> = {
       scope: ensureOpenIdScope(this.params.scopes).join(" "),
       audience: this.params.audience || "",
       request_expiry: (this.params.requestExpiry ?? 300).toString(),
@@ -102,6 +102,22 @@ export class CIBAAuthorizerBase<ToolExecuteArgs extends any[]> {
         (await resolveParameter(this.params.bindingMessage, toolContext)) ?? "",
       userId: (await resolveParameter(this.params.userID, toolContext)) ?? "",
     };
+
+    const authorizationDetails = await resolveParameter(
+      this.params.authorizationDetails,
+      toolContext
+    );
+
+    // If authorizationDetails is an array, we need to convert it to a string
+    // because the auth0 library expects a valid JSON string.
+    if (authorizationDetails !== undefined) {
+      authParams.authorization_details = JSON.stringify(authorizationDetails);
+    }
+
+    // Remove undefined values from the authParams object
+    return Object.fromEntries(
+      Object.entries(authParams).filter(([, value]) => value !== undefined)
+    );
   }
 
   private async getCredentialsInternal(
