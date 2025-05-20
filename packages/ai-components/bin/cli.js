@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { promises as fs } from "fs";
+import { promises as fs, statSync } from "fs";
 import path from "path";
 import process from "node:process";
 
@@ -11,8 +11,14 @@ const componentLocations = [
 ];
 
 const baseComponentsDir =
-  componentLocations.find((dir) => fs.stat(dir).catch(() => false)) ??
-  componentLocations[0];
+  componentLocations.find((dir) => {
+    try {
+      return statSync(dir).isDirectory();
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_err) {
+      return false;
+    }
+  }) ?? componentLocations[0];
 
 const TARGET_DIR = path.join(baseComponentsDir, "auth0-ai");
 
