@@ -1,4 +1,3 @@
-import { AuthenticationClientOptions } from "auth0";
 import * as jose from "jose";
 import { z } from "zod";
 
@@ -17,7 +16,9 @@ export type ToolWithAuthHandler<I, O, C> = (
 export const Auth0ClientSchema = z.object({
   domain: z.string().default(() => process.env.AUTH0_DOMAIN!),
   clientId: z.string().default(() => process.env.AUTH0_CLIENT_ID!),
-  clientSecret: z.string().default(() => process.env.AUTH0_CLIENT_SECRET!),
+  clientSecret: z
+    .union([z.string(), z.undefined()])
+    .transform((v) => v ?? process.env.AUTH0_CLIENT_SECRET),
   telemetry: z.boolean().optional(),
   clientInfo: z
     .object({
@@ -34,10 +35,5 @@ export const Auth0PublicClientSchema = z.object({
 
 export type Auth0ClientParams = z.infer<typeof Auth0ClientSchema>;
 export type Auth0PublicClientParams = z.infer<typeof Auth0PublicClientSchema>;
-
-export type AuthorizerParams = Pick<
-  AuthenticationClientOptions,
-  "domain" | "clientId" | "clientSecret"
->;
 
 export type OnAuthorizationRequest = "block" | "interrupt";

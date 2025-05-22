@@ -8,7 +8,7 @@ import { FederatedConnectionAuthorizer } from "./FederatedConnections";
 import { FGA_AI } from "./FGA_AI";
 import { ToolWrapper } from "./util/ToolWrapper";
 
-import type { AuthorizerParams } from "@auth0/ai";
+import type { Auth0ClientParams } from "@auth0/ai";
 
 type FederatedConnectionParams = Omit<
   ConstructorParameters<typeof FederatedConnectionAuthorizer>[1],
@@ -26,12 +26,12 @@ export type DeviceParams = Omit<
 >;
 
 type Auth0AIParams = {
-  auth0?: Partial<AuthorizerParams>;
+  auth0?: Partial<Auth0ClientParams>;
   store?: Store;
 };
 
 export class Auth0AI {
-  private config: Partial<AuthorizerParams>;
+  private config: Partial<Auth0ClientParams>;
   private store: SubStore;
 
   constructor({ auth0, store }: Auth0AIParams = {}) {

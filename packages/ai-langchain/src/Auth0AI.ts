@@ -1,4 +1,4 @@
-import { AuthorizerParams } from "@auth0/ai";
+import { Auth0ClientParams } from "@auth0/ai";
 import { MemoryStore, Store, SubStore } from "@auth0/ai/stores";
 
 import { CIBAAuthorizer } from "./ciba";
@@ -23,12 +23,12 @@ export type DeviceParams = Omit<
 >;
 
 type Auth0AIParams = {
-  auth0?: Partial<AuthorizerParams>;
+  auth0?: Partial<Auth0ClientParams>;
   store?: Store;
 };
 
 export class Auth0AI {
-  private config: Partial<AuthorizerParams>;
+  private config: Partial<Auth0ClientParams>;
   private store: SubStore;
 
   constructor({ auth0, store }: Auth0AIParams = {}) {

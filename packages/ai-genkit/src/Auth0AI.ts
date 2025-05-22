@@ -11,7 +11,7 @@ import { FGA_AI } from "./FGA_AI";
 
 import type { ToolWrapper, ToolDefinition } from "./lib";
 
-type AuthorizerParams = Pick<
+type Auth0ClientParams = Pick<
   AuthenticationClientOptions,
   "domain" | "clientId" | "clientSecret"
 >;
@@ -32,13 +32,13 @@ export type FederatedConnectionParams = Omit<
 >;
 
 type Auth0AIParams = {
-  auth0?: Partial<AuthorizerParams>;
+  auth0?: Partial<Auth0ClientParams>;
   store?: Store;
   genkit: GenkitBeta;
 };
 
 export class Auth0AI {
-  private config: Partial<AuthorizerParams>;
+  private config: Partial<Auth0ClientParams>;
   private store: SubStore;
   private genkit: GenkitBeta;
 
