@@ -1,4 +1,4 @@
-export type { AuthParams, AuthorizerParams } from "./authorizers/types";
+export type { AuthParams, Auth0ClientParams } from "./authorizers/types";
 export type * from "./credentials";
 export * from "./errors";
 export * from "./authorizers/fga/fga-filter";
