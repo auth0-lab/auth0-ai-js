@@ -18,6 +18,13 @@ export const Auth0ClientSchema = z.object({
   domain: z.string().default(() => process.env.AUTH0_DOMAIN!),
   clientId: z.string().default(() => process.env.AUTH0_CLIENT_ID!),
   clientSecret: z.string().default(() => process.env.AUTH0_CLIENT_SECRET!),
+  telemetry: z.boolean().optional(),
+  clientInfo: z
+    .object({
+      name: z.string(),
+    })
+    .passthrough()
+    .optional(),
 });
 
 export const Auth0PublicClientSchema = z.object({
