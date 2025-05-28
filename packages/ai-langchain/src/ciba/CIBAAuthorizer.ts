@@ -13,9 +13,9 @@ import { ToolLike, ToolWrapper } from "../util/ToolWrapper";
  * Authorizer for federated connections.
  */
 export class CIBAAuthorizer extends CIBAAuthorizerBase<[any, any]> {
-  protected override handleAuthorizationInterrupts(
+  protected override async handleAuthorizationInterrupts(
     err: AuthorizationPendingInterrupt | AuthorizationPollingInterrupt
-  ): void {
+  ) {
     throw toGraphInterrupt(err);
   }
 

@@ -319,9 +319,17 @@ export class CIBAAuthorizerBase<ToolExecuteArgs extends any[]> {
     };
   }
 
-  protected handleAuthorizationInterrupts(
+  protected async handleAuthorizationInterrupts(
     err: AuthorizationPendingInterrupt | AuthorizationPollingInterrupt
   ) {
+    if (this.params.onAuthorizationInterrupt) {
+      const store = asyncLocalStorage.getStore();
+      if (!store) {
+        throw new Error("This method should be called from within a tool.");
+      }
+      const { context } = store;
+      await this.params.onAuthorizationInterrupt(err, context);
+    }
     throw err;
   }
 }
