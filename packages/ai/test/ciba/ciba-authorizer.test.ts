@@ -515,6 +515,68 @@ describe("CIBAAuthorizerBase", () => {
   });
 
   /**
+   * Test onAuthorizationInterrupt parameter
+   * When set, this callback should be called before throwing an AuthorizationPendingInterrupt
+   */
+  describe("onAuthorizationInterrupt", () => {
+    const storedAuthorizationResponse = {
+      requestedAt: Date.now(),
+      authReqId: "test-id",
+      expiresIn: 3600,
+      interval: 5,
+    };
+    const execute = vi.fn();
+    let err: Error;
+    const onAuthorizationInterrupt = vi.fn();
+
+    beforeEach(async () => {
+      vi.clearAllMocks();
+      const authorizerWithInterruptCallback = new CIBAAuthorizerBase(
+        {
+          domain: "test.auth0.com",
+          clientId: "test-client",
+          clientSecret: "test-secret",
+        },
+        {
+          ...mockParams,
+          onAuthorizationInterrupt
+        }
+      );
+
+      mockParams.store.get.mockImplementation((ns, key) =>
+        key === "authResponse" ? storedAuthorizationResponse : undefined
+      );
+      mockAuth0.backchannel.backchannelGrant.mockImplementation(() => {
+        throw { error: "authorization_pending" };
+      });
+      try {
+        await authorizerWithInterruptCallback.protect(getContext, execute)("test-context");
+      } catch (er) {
+        err = er as Error;
+      }
+    });
+
+    it("should call the onAuthorizationInterrupt callback", async () => {
+      expect(onAuthorizationInterrupt).toHaveBeenCalledOnce();
+    });
+
+    it("should call the callback with the interrupt and context", async () => {
+      expect(onAuthorizationInterrupt).toHaveBeenCalledWith(
+        expect.any(AuthorizationPendingInterrupt),
+        {
+          threadID: "test-thread",
+          toolCallID: "test-tool-call",
+          toolName: "test-tool",
+        }
+      );
+    });
+
+    it("should still throw the AuthorizationPendingInterrupt after the callback", async () => {
+      expect(err).toBeInstanceOf(AuthorizationPendingInterrupt);
+    });
+  });
+
+  /**
    * If credentials are in the store
    * - the backchannel authorization should not be called
    * - the stored credentials should be used

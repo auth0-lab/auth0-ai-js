@@ -25,7 +25,7 @@ export class CIBAAuthorizer extends CIBAAuthorizerBase<
     super(...args);
   }
 
-  protected handleAuthorizationInterrupts(
+  protected async handleAuthorizationInterrupts(
     err: AuthorizationPendingInterrupt | AuthorizationPollingInterrupt
   ) {
     throw toGenKitInterrupt(err);

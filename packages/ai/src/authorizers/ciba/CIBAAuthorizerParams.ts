@@ -1,8 +1,12 @@
 import { TokenSet } from "../../credentials";
-import { CIBAInterrupt } from "../../interrupts";
+import {
+  AuthorizationPendingInterrupt,
+  AuthorizationPollingInterrupt,
+  CIBAInterrupt,
+} from "../../interrupts";
 import { AuthorizerToolParameter } from "../../parameters";
 import { Store } from "../../stores";
-import { AuthContext } from "../context";
+import { AuthContext, ToolCallContext } from "../context";
 import { OnAuthorizationRequest } from "../types";
 import { CIBAAuthorizationRequest } from "./CIBAAuthorizationRequest";
 
@@ -83,6 +87,18 @@ export type CIBAAuthorizerParams<ToolExecuteArgs extends any[]> = {
     err: Error | CIBAInterrupt,
     ...args: ToolExecuteArgs
   ) => any;
+
+  /**
+   * Callback called before the authorization interrupt is thrown.
+   * This callback is useful to setup CIBA pollers.
+   *
+   * @param interrupt - The interrupt that is about to be thrown.
+   * @param args - The tool execution arguments.
+   */
+  onAuthorizationInterrupt?: (
+    interrupt: AuthorizationPendingInterrupt | AuthorizationPollingInterrupt,
+    context: ToolCallContext
+  ) => void | Promise<void>;
 
   /**
    * An store used to temporarly store the authorization response data
