@@ -39,7 +39,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@auth0/ai": "*",
-    "langchain": "^0.3.11"
+    "langchain": "^0.3.27"
   },
   "peerDependencies": {
     "@langchain/core": "^0.3.19",
