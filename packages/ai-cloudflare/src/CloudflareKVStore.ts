@@ -63,10 +63,10 @@ export class CloudflareKVStore<T = any> implements Store<T> {
     if (options?.expiresIn) {
       const expiration =
         Math.floor(Date.now() / 1000) + options.expiresIn / 1000;
-      return this.kv.put(fullKey, value, {
+      return this.kv.put(fullKey, JSON.stringify(value), {
         expiration,
       });
     }
-    return this.kv.put(fullKey, value);
+    return this.kv.put(fullKey, JSON.stringify(value));
   }
 }
