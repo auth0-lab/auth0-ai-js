@@ -13,7 +13,9 @@ We will provide a full sample and template to get started with Cloudflare Agents
 npm i @auth0/ai-cloudflare @auth0/ai-vercel @auth0/ai
 ```
 
-## Usage
+## Interrupt handling in react
+
+This module provides a custom React hook `useAgentChatInterruptions` that extends the functionality of the `useAgentChat` hook from the "agent/ai-react" module. It allows you to handle tool interruptions in your agent chat.
 
 Replace `useAgentChat` with `useAgentChatInterruptions` in your code to get access to `toolInterrupt`.
 
@@ -32,6 +34,44 @@ Replace `useAgentChat` with `useAgentChatInterruptions` in your code to get acce
     id: threadID,
   });
 ```
+
+## Async User Confirmation resumer
+
+This module provides the `AsyncUserConfirmationResumer` mixin that can extend `AIChatAgent` to handle user confirmations asynchronously. 
+
+This work with the `withAsyncUserConfirmation` authorizer and allow the agent to continue processing after the user has confirmed the action.
+
+```js
+import { AsyncUserConfirmationResumer } from '@auth0/ai-cloudflare';
+
+export class Chat extends AsyncUserConfirmationResumer(AIChatAgent) {
+ // Your agent implementation
+}
+```
+
+Then when defining the authorizer:
+
+```js
+export const withAsyncUserConfirmation = auth0AI.withAsyncUserConfirmation({
+  // The authorizer configuration
+  onAuthorizationInterrupt: async (interrupt, context) => {
+    const { agent } = getCurrentAgent<Chat>();
+    agent?.schedulePoller({ interrupt, context });
+  },
+});
+```
+
+## CloudflareKVStore
+
+This module provides `CloudflareKVStore`. An implementation of auth0-ai `Store` interface that uses Cloudflare Workers KV to store and retrieve data.
+
+```js
+import { CloudflareKVStore } from '@auth0/ai-cloudflare';
+const kvStore = new CloudflareKVStore({
+  namespace: env.Auth0AINamespace, // The KV namespace to use
+});
+```
+
 
 ## Feedback
 
