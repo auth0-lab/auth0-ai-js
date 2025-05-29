@@ -27,7 +27,7 @@ export type DeviceParams = Omit<
 
 type Auth0AIParams = {
   auth0?: Partial<Auth0ClientParams>;
-  store?: Store;
+  store?: Store | (() => Store);
 };
 
 export class Auth0AI {

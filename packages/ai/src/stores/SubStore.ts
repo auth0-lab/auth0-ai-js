@@ -1,5 +1,7 @@
 import { Store } from "./Store";
 
+type StoreOrFactory<T> = Store<T> | (() => Store<T>);
+
 /**
  * Parameters for configuring a SubStore.
  * @template T The type of values to be stored in the SubStore.
@@ -19,7 +21,7 @@ type SubStoreParams<T> = {
  */
 export class SubStore<T = any> implements Store<T> {
   constructor(
-    private readonly parent: Store<any>,
+    private readonly parent: StoreOrFactory<any>,
     private readonly options: SubStoreParams<T> = {}
   ) {
     if (typeof parent === "undefined") {
@@ -34,12 +36,16 @@ export class SubStore<T = any> implements Store<T> {
     return namespace;
   }
 
+  private getParentStore() {
+    return typeof this.parent === "function" ? this.parent() : this.parent;
+  }
+
   get(namespace: string[], key: string) {
-    return this.parent.get(this.getFullNamespace(namespace), key);
+    return this.getParentStore().get(this.getFullNamespace(namespace), key);
   }
 
   delete(namespace: string[], key: string) {
-    return this.parent.delete(this.getFullNamespace(namespace), key);
+    return this.getParentStore().delete(this.getFullNamespace(namespace), key);
   }
 
   put(
@@ -56,7 +62,7 @@ export class SubStore<T = any> implements Store<T> {
 
     const fullNS = this.getFullNamespace(namespace);
 
-    return this.parent.put(fullNS, key, value, {
+    return this.getParentStore().put(fullNS, key, value, {
       expiresIn,
     });
   }
