@@ -5,16 +5,24 @@ type VercelAIContext = {
 };
 
 const aiContext = new AsyncLocalStorage<VercelAIContext>();
-let globalContext: VercelAIContext | undefined = undefined;
+let globalContext: VercelAIContext | (() => VercelAIContext) | undefined =
+  undefined;
 
 export const getAIContext = () => {
-  const aictx = aiContext.getStore() ?? globalContext;
-  if (!aictx?.threadID) {
-    throw new Error(
-      "No AI context found. Make sure to call setAIContext({threadID}) from '@auth0/ai-vercel'"
-    );
+  const aictx = aiContext.getStore();
+  if (aictx?.threadID) {
+    return aictx;
   }
-  return aictx;
+
+  if (typeof globalContext === "function") {
+    return globalContext();
+  } else if (globalContext) {
+    return globalContext;
+  }
+
+  throw new Error(
+    "No AI context found. Make sure to call setAIContext({threadID}) from '@auth0/ai-vercel'"
+  );
 };
 
 /**
@@ -64,13 +72,22 @@ export const runWithAIContext = <T>(params: VercelAIContext, fn: () => T) => {
   return aiContext.run(params, fn);
 };
 
-export const setGlobalAIContext = (params: VercelAIContext) => {
-  if (!params || typeof params.threadID !== "string") {
+export const setGlobalAIContext = (
+  params: VercelAIContext | (() => VercelAIContext)
+) => {
+  if (!params) {
+    throw new Error("params must be defined");
+  }
+  if (
+    typeof params === "object" &&
+    params !== null &&
+    typeof params.threadID !== "string"
+  ) {
     throw new Error("threadID must be a string");
   }
-  if (globalContext && globalContext.threadID !== params.threadID) {
+  if (globalContext) {
     throw new Error(
-      "Global AI context is already set. Use global context only in serverless functions like Cloudflare Agents."
+      "Global AI context is already set. Use global context only once in serverless functions like Cloudflare Agents."
     );
   }
   globalContext = params;
