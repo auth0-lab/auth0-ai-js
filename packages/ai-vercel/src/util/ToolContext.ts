@@ -4,7 +4,7 @@ import { stableHash } from "stable-hash";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 
-import { aiContext } from "../context";
+import { getAIContext } from "../context";
 
 type Parameters = z.ZodTypeAny | Schema<any>;
 
@@ -21,13 +21,7 @@ export const ToolContext = <PARAMETERS extends Parameters = any, RESULT = any>(
   tool: Tool<PARAMETERS, RESULT>
 ) => {
   return (_params: any, ctx: ToolExecutionOptions) => {
-    const aictx = aiContext.getStore();
-    if (!aictx?.threadID) {
-      throw new Error(
-        "No AI context found. Make sure to call setAIContext({threadID}) from '@auth0/ai-vercel'"
-      );
-    }
-    const threadID = aictx.threadID;
+    const { threadID } = getAIContext();
     return {
       threadID,
       toolCallID: ctx.toolCallId,

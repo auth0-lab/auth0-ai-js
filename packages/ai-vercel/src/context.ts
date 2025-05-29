@@ -4,7 +4,18 @@ type VercelAIContext = {
   threadID: string;
 };
 
-export const aiContext = new AsyncLocalStorage<VercelAIContext>();
+const aiContext = new AsyncLocalStorage<VercelAIContext>();
+let globalContext: VercelAIContext | undefined = undefined;
+
+export const getAIContext = () => {
+  const aictx = aiContext.getStore() ?? globalContext;
+  if (!aictx?.threadID) {
+    throw new Error(
+      "No AI context found. Make sure to call setAIContext({threadID}) from '@auth0/ai-vercel'"
+    );
+  }
+  return aictx;
+};
 
 /**
  *
@@ -16,7 +27,7 @@ export const aiContext = new AsyncLocalStorage<VercelAIContext>();
  * @param params.threadID - The thread ID to set in the context.
  */
 export const setAIContext = (params: VercelAIContext) => {
-  if (typeof params.threadID !== "string") {
+  if (!params || typeof params.threadID !== "string") {
     throw new Error("threadID must be a string");
   }
   aiContext.enterWith(params);
@@ -26,7 +37,7 @@ export const setAIContext = (params: VercelAIContext) => {
  * Similar to `setAIContext`. Wraps the function in a context.
  *
  * Some environments like Cloudflare Workers don't support `AsyncLocalStorage`.
- *
+ * @deprecated Use `runWithAIContext` instead.
  * @param params - The context parameters to set.
  * @param params.threadID - The thread ID to set in the context.
  * @param fn - The function to execute within the context.
@@ -47,8 +58,20 @@ export const runInAIContext = <T>(params: VercelAIContext, fn: () => T) => {
  * @param fn - The function to execute within the context.
  */
 export const runWithAIContext = <T>(params: VercelAIContext, fn: () => T) => {
-  if (typeof params.threadID !== "string") {
+  if (!params || typeof params.threadID !== "string") {
     throw new Error("threadID must be a string");
   }
   return aiContext.run(params, fn);
+};
+
+export const setGlobalAIContext = (params: VercelAIContext) => {
+  if (!params || typeof params.threadID !== "string") {
+    throw new Error("threadID must be a string");
+  }
+  if (globalContext && globalContext.threadID !== params.threadID) {
+    throw new Error(
+      "Global AI context is already set. Use global context only in serverless functions like Cloudflare Agents."
+    );
+  }
+  globalContext = params;
 };
