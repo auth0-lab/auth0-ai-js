@@ -1,7 +1,6 @@
 import { Schedule } from "agents";
 import { Message } from "ai";
 
-import { runInAIContext } from "@auth0/ai-vercel";
 import {
   AuthorizationPendingInterrupt,
   AuthorizationPollingInterrupt,
@@ -61,15 +60,15 @@ export const AsyncUserConfirmationResumer = <
      * Schedules an asynchronous user confirmation check.
      *
      * @param params - The parameters for the scheduled task, including the interrupt and context.
-     * @param delayInSeconds - The delay in seconds before the check is executed (default is 5 seconds).
+     * @param delayInSeconds - The delay in seconds before the check is executed (default to Auth request polling interval).
      * @returns A promise that resolves to a Schedule object for the scheduled task.
      */
     async scheduleAsyncUserConfirmationCheck(
       params: ScheduledParamsType,
-      delayInSeconds: number = 5
+      delayInSeconds?: number
     ): Promise<Schedule<ScheduledParamsType>> {
       return this.schedule(
-        delayInSeconds,
+        delayInSeconds ?? params.interrupt.request.interval ?? 60,
         "asyncUserConfirmationCheck",
         params
       );
@@ -116,9 +115,7 @@ export const AsyncUserConfirmationResumer = <
         index === this.messages.indexOf(message) ? newMessage : m
       );
 
-      await runInAIContext({ threadID: this.name }, () =>
-        this.saveMessages(newMessages)
-      );
+      await this.saveMessages(newMessages);
     }
   };
 };
