@@ -16,7 +16,7 @@ export type CIBAAuthorizationRequest = {
   expiresIn: number;
 
   /**
-   * The interval to use when polling the status.
+   * The interval in seconds to use when polling the status.
    */
   interval: number;
 };
