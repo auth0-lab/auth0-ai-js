@@ -45,12 +45,12 @@
     "agents": ">=0.0.51 <0.0.91"
   },
   "devDependencies": {
-    "@eslint/compat": "^1.2.7",
-    "@types/node": "^22.10.6",
-    "eslint": "^9.22.0",
-    "typedoc": "^0.27.6",
+    "@eslint/compat": "^1.2.9",
+    "@types/node": "^22.15.29",
+    "eslint": "^9.28.0",
+    "typedoc": "^0.28.5",
     "typescript": "^5.7.3",
-    "vitest": "^3.0.9"
+    "vitest": "^3.1.4"
   },
   "publishConfig": {
     "access": "public"
