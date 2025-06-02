@@ -27,7 +27,7 @@
     "packages/*"
   ],
   "dependencies": {
-    "@openfga/sdk": "^0.8.0",
-    "vite": "^6.2.3"
+    "@openfga/sdk": "^0.8.1",
+    "vite": "^6.3.5"
   }
 }
