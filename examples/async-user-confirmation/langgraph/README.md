@@ -1,4 +1,4 @@
-# Step Up Auth for Tools with LangChain
+# Step Up Auth for Tools with LangGraph
 
 ## Getting Started
 
