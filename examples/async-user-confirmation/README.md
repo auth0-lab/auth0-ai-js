@@ -32,11 +32,11 @@ Below is a high-level workflow:
 
 ### Examples
 
-Explore the following examples demonstrating the integration of **Auth0's Async User confirmation** with **LangChain**, **LlamaIndex**, **Genkit**, and others:
+Explore the following examples demonstrating the integration of **Auth0's Async User confirmation** with **LangGraph**, **LlamaIndex**, **Genkit**, and others:
 
-- **LangChain:**  
+- **LangGraph:**  
   An implementation showcasing how to implement **Human in the Loop** using `@auth0/ai` with LangChain to enforce User Authorization Confirmation on tool executions.  
-  [View Example](/examples/async-user-confirmation/langchain/)
+  [View Example](/examples/async-user-confirmation/langgraph/)
 
 - **LlamaIndex:**  
   An implementation showcasing how to implement **Human in the Loop** using `@auth0/ai` with LlamaIndex to enforce User Authorization Confirmation on tool executions.  
