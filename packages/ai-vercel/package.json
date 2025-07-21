@@ -52,7 +52,7 @@
   "dependencies": {
     "@auth0/ai": "*",
     "auth0": "^4.18.0",
-    "stable-hash": "^0.0.5",
+    "stable-hash": "^0.0.6",
     "zod-to-json-schema": "^3.24.5"
   },
   "peerDependencies": {
