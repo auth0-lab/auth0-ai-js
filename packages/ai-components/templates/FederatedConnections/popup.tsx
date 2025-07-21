@@ -63,7 +63,7 @@ export function EnsureAPIAccessPopup({
       setLoginPopup(popup);
       setIsLoading(true);
     }
-  }, [connection, requiredScopes]);
+  }, [connection, requiredScopes, returnTo, authorizePath]);
 
   if (isLoading) {
     return <WaitingMessage />;
