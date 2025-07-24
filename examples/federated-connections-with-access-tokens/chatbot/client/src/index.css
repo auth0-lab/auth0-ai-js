@@ -118,3 +118,17 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Avatar component styles */
+.avatar {
+  border: 2px solid #e5e7eb;
+}
+
+.avatar[src=""],
+.avatar:not([src]) {
+  display: none;
+}
+
+.avatar-placeholder {
+  border: 2px solid #e5e7eb;
+}

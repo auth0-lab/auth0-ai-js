@@ -9,7 +9,8 @@
   },
   "dependencies": {
     "hono": "^4.7.11",
-    "shared": "workspace:*"
+    "shared": "workspace:*",
+    "jose": "^5.2.0"
   },
   "devDependencies": {
     "@types/bun": "latest"
