@@ -2,9 +2,11 @@
   "name": "chatbot",
   "version": "0.4.0",
   "description": "A monorepo template built with Bun, Hono, Vite, and React",
-  "author": "Steve Simkins",
-  "license": "MIT",
-  "homepage": "https://github.com/stevedylandev/bhvr",
+  "author": {
+    "name": "Auth0 Inc.",
+    "url": "https://auth0.com"
+  },
+  "license": "Apache-2.0",
   "packageManager": "bun@1.2.4",
   "workspaces": [
     "./server",
