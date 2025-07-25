@@ -24,7 +24,9 @@ export const initAuth0 = async (): Promise<Auth0Client> => {
     authorizationParams: {
       redirect_uri: window.location.origin,
       audience: AUTH0_AUDIENCE,
-      scope: "openid profile email",
+      scope:
+        "openid profile email https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.freebusy",
+      prompt: "consent", // Force consent to ensure Google connection is used and token set is issued within Token Vault
     },
   });
 

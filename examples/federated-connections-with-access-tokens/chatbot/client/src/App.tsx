@@ -3,6 +3,7 @@ import { hcWithType } from "server/dist/client";
 
 import beaver from "./assets/beaver.svg";
 import { Avatar } from "./components/Avatar";
+import { Chat } from "./components/Chat";
 import { Button } from "./components/ui/button";
 import { useAuth0 } from "./hooks/useAuth0";
 
@@ -80,6 +81,11 @@ function App() {
       </a>
       <h1 className="text-5xl font-black">bhvr</h1>
       <h2 className="text-2xl font-bold">Bun + Hono + Vite + React + Auth0</h2>
+      <Button variant="secondary" asChild>
+        <a target="_blank" href="https://bhvr.dev">
+          Docs
+        </a>
+      </Button>
 
       {!isAuthenticated ? (
         <div className="flex flex-col items-center gap-4">
@@ -106,22 +112,20 @@ function App() {
               Log Out
             </Button>
           </div>
+
+          {data && (
+            <pre className="bg-gray-100 p-4 rounded-md">
+              <code>
+                Message: {data.message} <br />
+                Success: {data.success.toString()}
+              </code>
+            </pre>
+          )}
+          {/* Chat component for authenticated users */}
+          <div className="w-full mt-8">
+            <Chat />
+          </div>
         </div>
-      )}
-
-      <Button variant="secondary" asChild>
-        <a target="_blank" href="https://bhvr.dev">
-          Docs
-        </a>
-      </Button>
-
-      {data && (
-        <pre className="bg-gray-100 p-4 rounded-md">
-          <code>
-            Message: {data.message} <br />
-            Success: {data.success.toString()}
-          </code>
-        </pre>
       )}
     </div>
   );

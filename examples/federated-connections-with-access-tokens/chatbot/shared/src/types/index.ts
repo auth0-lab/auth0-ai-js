@@ -15,3 +15,19 @@ export type User = {
   email?: string;
   picture?: string;
 };
+
+// Chat-related types
+export type ChatMessage = {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  timestamp: Date;
+};
+
+export type ChatRequest = {
+  message: string;
+};
+
+export type StreamDataRequest = {
+  prompt: string;
+};
