@@ -79,11 +79,11 @@ export function useChat() {
             try {
               // The content after "0:" is either a JSON string or plain text
               const content = line.slice(2);
-              
+
               // Try to parse as JSON first (for structured data)
               try {
                 const parsed = JSON.parse(content);
-                if (typeof parsed === 'string') {
+                if (typeof parsed === "string") {
                   assistantContent += parsed;
                 } else if (parsed.textDelta) {
                   assistantContent += parsed.textDelta;
@@ -93,7 +93,7 @@ export function useChat() {
                 const textContent = JSON.parse(content); // This will parse the quoted string
                 assistantContent += textContent;
               }
-              
+
               setMessages((prev) =>
                 prev.map((msg) =>
                   msg.id === assistantMessage.id

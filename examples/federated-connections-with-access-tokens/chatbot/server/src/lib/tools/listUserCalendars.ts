@@ -2,42 +2,30 @@ import { tool } from "ai";
 import { google } from "googleapis";
 import { z } from "zod";
 
-import { getAccessTokenForConnection } from "../getAccessTokenForConnection";
+import { getAccessTokenForConnection } from "@auth0/ai-vercel";
+import { withGoogleCalendar } from "../auth";
 
-export const listUserCalendars = tool({
-  description: "List all calendars the user has access to",
-  parameters: z.object({}),
-  execute: async () => {
-    if (!global.authContext) {
-      throw new Error("Authentication context not available");
-    }
+export const listUserCalendars = withGoogleCalendar(
+  tool({
+    description: "List all calendars the user has access to",
+    parameters: z.object({}),
+    execute: async () => {
+      // Get the federated access token using the enhanced SDK
+      const token = getAccessTokenForConnection();
 
-    const { userSub, accessToken, domain, clientId, clientSecret } =
-      global.authContext;
+      const calendar = google.calendar("v3");
+      const auth = new google.auth.OAuth2();
+      auth.setCredentials({ access_token: token });
 
-    // Get federated access token for Google Calendar
-    const token = await getAccessTokenForConnection({
-      domain,
-      clientId,
-      clientSecret,
-      connection: "google-oauth2",
-      loginHint: userSub,
-      subjectToken: accessToken,
-    });
+      const res = await calendar.calendarList.list({ auth });
 
-    const calendar = google.calendar("v3");
-    const auth = new google.auth.OAuth2();
-    auth.setCredentials({ access_token: token });
-
-    const res = await calendar.calendarList.list({ auth });
-
-    console.log("Fetched user calendars:", res.data);
-    return (
-      res.data.items?.map((cal) => ({
+      const calendars = res.data.items?.map((cal) => ({
         id: cal.id,
         name: cal.summary,
         accessRole: cal.accessRole,
-      })) ?? []
-    );
-  },
-});
+      })) ?? [];
+      
+      return calendars;
+    },
+  })
+);

@@ -2,9 +2,6 @@
 export interface AuthContext {
   userSub: string;
   accessToken: string;
-  domain: string;
-  clientId: string;
-  clientSecret: string;
 }
 
 // Global declaration

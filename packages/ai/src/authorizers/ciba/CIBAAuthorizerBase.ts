@@ -42,7 +42,14 @@ export class CIBAAuthorizerBase<ToolExecuteArgs extends any[]> {
     auth0: Partial<Auth0ClientParams>,
     params: CIBAAuthorizerParams<ToolExecuteArgs>
   ) {
-    this.auth0 = new AuthenticationClient(Auth0ClientSchema.parse(auth0));
+    const parsedConfig = Auth0ClientSchema.parse(auth0) as Auth0ClientParams;
+    
+    // CIBA requires a SPA client ID
+    if (!parsedConfig.clientId) {
+      throw new Error("CIBA authorizer requires a clientId (SPA client) to be configured");
+    }
+    
+    this.auth0 = new AuthenticationClient(parsedConfig as any);
     this.params = {
       credentialsContext: "tool-call",
       ...params,

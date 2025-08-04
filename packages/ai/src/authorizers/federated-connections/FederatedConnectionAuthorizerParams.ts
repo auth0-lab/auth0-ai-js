@@ -1,4 +1,3 @@
-import { TokenResponse } from "../../credentials";
 import { AuthorizerToolParameter } from "../../parameters";
 import { Store } from "../../stores";
 import { AuthContext } from "../context";
@@ -11,12 +10,15 @@ export type FederatedConnectionAuthorizerParams<ToolExecuteArgs extends any[]> =
     refreshToken?: AuthorizerToolParameter<ToolExecuteArgs, string | undefined>;
 
     /**
-     * The Federated connection access token if available in the tool context.
+     * The access token to exchange for a Federated Connection access token.
+     * This enables federated token exchange using access tokens instead of refresh tokens.
      */
-    accessToken?: AuthorizerToolParameter<
-      ToolExecuteArgs,
-      TokenResponse | undefined
-    >;
+    accessToken?: AuthorizerToolParameter<ToolExecuteArgs, string | undefined>;
+
+    /**
+     * Optional login hint to provide to the federated connection provider.
+     */
+    loginHint?: AuthorizerToolParameter<ToolExecuteArgs, string | undefined>;
 
     /**
      * The scopes required in the access token of the federated connection provider.
