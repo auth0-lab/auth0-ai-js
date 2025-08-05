@@ -1,5 +1,6 @@
 import { Auth0AI } from "@auth0/ai-vercel";
 
+import type { ToolWrapper } from "@auth0/ai-vercel";
 // Create an Auth0AI instance configured with enhanced resource server client support
 // NOTE: This demonstrates the enhanced API approach using resource server client credentials
 const auth0AI = new Auth0AI({
@@ -13,13 +14,13 @@ const auth0AI = new Auth0AI({
 
 // Enhanced federated connection setup with access token support
 // This demonstrates the new API pattern where access tokens can be used directly
-export const withGoogleCalendar = auth0AI.withTokenForConnection({
+export const withGoogleCalendar: ToolWrapper = auth0AI.withTokenForConnection({
   // Use the dedicated accessToken parameter for federated token exchange
   accessToken: async () => {
     if (!global.authContext?.accessToken) {
       throw new Error("Access token not available in auth context");
     }
-    // Return just the access token string - this will be exchanged for a Google Calendar access token
+    // This access token will be exchanged for a Google Calendar access token
     return global.authContext.accessToken;
   },
   // Optional login hint

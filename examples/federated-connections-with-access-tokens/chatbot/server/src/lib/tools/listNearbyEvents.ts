@@ -37,33 +37,27 @@ export const listNearbyEvents = withGoogleCalendar(
       const auth = new google.auth.OAuth2();
       auth.setCredentials({ access_token: token });
 
-      try {
-        const response = await calendar.events.list({
-          auth,
-          calendarId: fullCalendarId,
-          timeMin: start.toISOString(),
-          timeMax: end.toISOString(),
-          singleEvents: true,
-          orderBy: "startTime",
-          maxResults: 10,
-        });
+      const response = await calendar.events.list({
+        auth,
+        calendarId: fullCalendarId,
+        timeMin: start.toISOString(),
+        timeMax: end.toISOString(),
+        singleEvents: true,
+        orderBy: "startTime",
+        maxResults: 10,
+      });
 
-        return {
-          calendarId: fullCalendarId,
-          events:
-            response.data.items?.map((ev) => ({
-              id: ev.id,
-              summary: ev.summary,
-              start: ev.start?.dateTime ?? ev.start?.date,
-              end: ev.end?.dateTime ?? ev.end?.date,
-              location: ev.location ?? "No location",
-            })) ?? [],
-        };
-      } catch (error: any) {
-        throw new Error(
-          `Cannot access calendar ${fullCalendarId}: ${error.message}`
-        );
-      }
+      return {
+        calendarId: fullCalendarId,
+        events:
+          response.data.items?.map((ev) => ({
+            id: ev.id,
+            summary: ev.summary,
+            start: ev.start?.dateTime ?? ev.start?.date,
+            end: ev.end?.dateTime ?? ev.end?.date,
+            location: ev.location ?? "No location",
+          })) ?? [],
+      };
     },
   })
 );

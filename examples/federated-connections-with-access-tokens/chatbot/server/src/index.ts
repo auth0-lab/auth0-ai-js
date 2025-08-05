@@ -5,7 +5,10 @@ import { decodeJwt } from "jose";
 
 import { openai } from "@ai-sdk/openai";
 import { setAIContext } from "@auth0/ai-vercel";
-import { errorSerializer } from "@auth0/ai-vercel/interrupts";
+import {
+  errorSerializer,
+  withInterruptions,
+} from "@auth0/ai-vercel/interrupts";
 
 import { listNearbyEvents } from "./lib/tools/listNearbyEvents";
 import { listUserCalendars } from "./lib/tools/listUserCalendars";
@@ -74,7 +77,7 @@ export const app = new Hono()
       return c.json({ error: "No access token provided" }, 401);
     }
 
-    const { prompt } = await c.req.json();
+    const { messages: requestMessages } = await c.req.json();
 
     // Generate a thread ID for this conversation
     const threadID = generateId();
@@ -88,38 +91,63 @@ export const app = new Hono()
     // Set AI context for the tools to access
     setAIContext({ threadID });
 
-    // Convert single prompt to messages format
-    const messages = [
-      {
-        id: generateId(),
-        role: "user" as const,
-        content: prompt,
-      },
-    ];
-
+    // Use the messages from the request directly
     const tools = { listNearbyEvents, listUserCalendars };
 
     // note: you can see more examples of Hono API consumption with AI SDK here:
     // https://ai-sdk.dev/cookbook/api-servers/hono?utm_source=chatgpt.com#hono
 
     return createDataStreamResponse({
-      execute: async (dataStream) => {
-        const result = streamText({
-          model: openai("gpt-4o-mini"),
-          system:
-            "You are a helpful calendar assistant! You can help users with their calendar events and schedules. Keep your responses concise and helpful.",
-          messages,
-          maxSteps: 5,
-          tools,
-        });
+      execute: withInterruptions(
+        async (dataStream) => {
+          const result = streamText({
+            model: openai("gpt-4o-mini"),
+            system:
+              "You are a helpful calendar assistant! You can help users with their calendar events and schedules. Keep your responses concise and helpful.",
+            messages: requestMessages,
+            maxSteps: 5,
+            tools,
+          });
 
-        result.mergeIntoDataStream(dataStream, {
-          sendReasoning: true,
-        });
-      },
+          result.mergeIntoDataStream(dataStream, {
+            sendReasoning: true,
+          });
+        },
+        { messages: requestMessages, tools }
+      ),
       onError: errorSerializer((err) => {
-        console.log(err);
-        return "Oops, an error occured!";
+        if (err instanceof Error) {
+          // Check if this is a federated connection interrupt
+          if (
+            err.message.includes(
+              "Authorization required to access the Federated Connection"
+            )
+          ) {
+            console.log(
+              "Detected federated connection interrupt - manually formatting"
+            );
+
+            // Manually create the interrupt format expected by the client
+            const interruptData = {
+              behavior: "resume",
+              connection: "google-oauth2",
+              scopes: [
+                "https://www.googleapis.com/auth/calendar",
+                "https://www.googleapis.com/auth/calendar.events.readonly",
+              ],
+              requiredScopes: [
+                "https://www.googleapis.com/auth/calendar",
+                "https://www.googleapis.com/auth/calendar.events.readonly",
+              ],
+              code: "FEDERATED_CONNECTION_ERROR",
+              toolCall: { id: "unknown" }, // We might need to extract this from the tool context
+            };
+
+            return `AUTH0_AI_INTERRUPTION:${JSON.stringify(interruptData)}`;
+          }
+        }
+
+        return "Oops, an error occurred!";
       }),
     });
   });

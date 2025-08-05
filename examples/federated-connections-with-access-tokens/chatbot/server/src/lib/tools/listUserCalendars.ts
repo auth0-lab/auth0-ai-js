@@ -3,8 +3,14 @@ import { google } from "googleapis";
 import { z } from "zod";
 
 import { getAccessTokenForConnection } from "@auth0/ai-vercel";
+
 import { withGoogleCalendar } from "../auth";
 
+/**
+ * Tool: listUserCalendars
+ * Lists all calendars the user has access to.
+ * Uses the enhanced @auth0/ai SDK for federated connection token management.
+ */
 export const listUserCalendars = withGoogleCalendar(
   tool({
     description: "List all calendars the user has access to",
@@ -19,12 +25,13 @@ export const listUserCalendars = withGoogleCalendar(
 
       const res = await calendar.calendarList.list({ auth });
 
-      const calendars = res.data.items?.map((cal) => ({
-        id: cal.id,
-        name: cal.summary,
-        accessRole: cal.accessRole,
-      })) ?? [];
-      
+      const calendars =
+        res.data.items?.map((cal) => ({
+          id: cal.id,
+          name: cal.summary,
+          accessRole: cal.accessRole,
+        })) ?? [];
+
       return calendars;
     },
   })
