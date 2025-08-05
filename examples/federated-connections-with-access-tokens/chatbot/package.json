@@ -11,7 +11,9 @@
   "workspaces": [
     "./server",
     "./client",
-    "./shared"
+    "./shared",
+    "../../../packages/ai",
+    "../../../packages/ai-vercel"
   ],
   "scripts": {
     "dev": "turbo dev",
