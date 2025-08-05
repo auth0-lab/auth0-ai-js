@@ -16,11 +16,20 @@ import { jwtAuthMiddleware } from "./middleware/auth";
 
 import type { ApiResponse } from "shared/dist";
 
+const getAllowedOrigins = (): string[] => {
+  const allowedOrigins = process.env.ALLOWED_ORIGINS;
+  if (!allowedOrigins) {
+    // Fallback to default origins if not set
+    return ["http://localhost:5173", "http://localhost:3000"];
+  }
+  return allowedOrigins.split(",").map((origin) => origin.trim());
+};
+
 export const app = new Hono()
 
   .use(
     cors({
-      origin: ["http://localhost:5173", "http://localhost:3000"],
+      origin: getAllowedOrigins(),
       allowHeaders: ["Content-Type", "Authorization"],
       allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     })
