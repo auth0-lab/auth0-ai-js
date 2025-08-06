@@ -7,8 +7,8 @@ const auth0AI = new Auth0AI({
   auth0: {
     domain: process.env.AUTH0_DOMAIN!,
     // For federated token exchange, we only need the resource server credentials
-    resourceServerClientId: process.env.LINKED_CLIENT_ID!, // Resource server client ID for token exchange
-    resourceServerClientSecret: process.env.LINKED_CLIENT_SECRET!, // Resource server client secret
+    clientId: process.env.LINKED_CLIENT_ID!, // Resource server client ID for token exchange
+    clientSecret: process.env.LINKED_CLIENT_SECRET!, // Resource server client secret
   },
 });
 

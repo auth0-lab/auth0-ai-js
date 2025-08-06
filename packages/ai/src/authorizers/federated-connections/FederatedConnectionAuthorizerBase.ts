@@ -35,7 +35,7 @@ export class FederatedConnectionAuthorizerBase<ToolExecuteArgs extends any[]> {
     auth0: Partial<Auth0ClientParams>,
     params: FederatedConnectionAuthorizerParams<ToolExecuteArgs>
   ) {
-    this.auth0 = Auth0ClientSchema.parse(auth0) as Auth0ClientParams;
+    this.auth0 = Auth0ClientSchema.parse(auth0);
     this.params = {
       credentialsContext: "thread",
       ...params,
@@ -67,12 +67,9 @@ export class FederatedConnectionAuthorizerBase<ToolExecuteArgs extends any[]> {
 
     // Validate resource server client credentials when using access tokens
     if (hasAccessToken) {
-      if (
-        !this.auth0.resourceServerClientId ||
-        !this.auth0.resourceServerClientSecret
-      ) {
+      if (!this.auth0.clientId || !this.auth0.clientSecret) {
         throw new Error(
-          "resourceServerClientId and resourceServerClientSecret must be provided when using accessToken for federated token exchange."
+          "clientId and clientSecret must be provided when using accessToken for federated token exchange."
         );
       }
     }
@@ -148,10 +145,6 @@ export class FederatedConnectionAuthorizerBase<ToolExecuteArgs extends any[]> {
     // Determine which token type to use and get the appropriate subject token
     let subjectToken: string | undefined;
     let subjectTokenType: string;
-    const clientId: string =
-      this.auth0.clientId || this.auth0.resourceServerClientId!;
-    const clientSecret: string =
-      this.auth0.clientSecret || this.auth0.resourceServerClientSecret!;
 
     if (typeof this.params.refreshToken === "function") {
       subjectToken = await this.getRefreshToken(...toolContext);
@@ -177,21 +170,17 @@ export class FederatedConnectionAuthorizerBase<ToolExecuteArgs extends any[]> {
         ? await resolveParameter(this.params.loginHint, toolContext)
         : undefined;
 
-    const exchangeParams: Record<string, string> = {
+    const exchangeParams: Record<string, string | undefined> = {
       grant_type:
         "urn:auth0:params:oauth:grant-type:token-exchange:federated-connection-access-token",
-      client_id: clientId,
+      client_id: this.auth0.clientId,
+      client_secret: this.auth0.clientSecret,
       subject_token_type: subjectTokenType,
       subject_token: subjectToken,
       connection: connection,
       requested_token_type:
         "http://auth0.com/oauth/token-type/federated-connection-access-token",
     };
-
-    // Add client secret if available
-    if (clientSecret) {
-      exchangeParams.client_secret = clientSecret;
-    }
 
     // Add login hint if provided
     if (loginHint) {
