@@ -23,15 +23,6 @@ export const withGoogleCalendar: ToolWrapper = auth0AI.withTokenForConnection({
     // This access token will be exchanged for a Google Calendar access token
     return global.authContext.accessToken;
   },
-  // Optional login hint
-  // is currently causing `401 Unauthorized { "error": "user_not_found", "description": "Identity User not found." }` errors, so removing for now...
-  // loginHint: async () => {
-  //   if (!global.authContext?.userSub) {
-  //     return undefined;
-  //   }
-  //   // The user sub can be used as a login hint for federated token exchange
-  //   return global.authContext.userSub;
-  // },
   connection: "google-oauth2",
   scopes: [
     "https://www.googleapis.com/auth/calendar", // Full calendar access (includes read/write)
