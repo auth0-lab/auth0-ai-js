@@ -2,7 +2,7 @@ import { getAccessTokenForConnection } from "@auth0/ai-langchain";
 import { GoogleCalendarViewTool } from "@langchain/community/tools/google_calendar";
 import { ChatOpenAI } from "@langchain/openai";
 
-import { withGoogleCalendarCommunity } from "../../lib/auth0-ai";
+import { withGoogleCalendarCommunity } from "../auth0-ai";
 
 const model = new ChatOpenAI({
   model: "gpt-4o-mini",
