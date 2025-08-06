@@ -18,9 +18,9 @@ The example now uses the enhanced SDK pattern with dedicated access token suppor
 const auth0AI = new Auth0AI({
   auth0: {
     domain: process.env.AUTH0_DOMAIN!,
-    // For federated token exchange, we now only need the resource server credentials
-    resourceServerClientId: process.env.LINKED_CLIENT_ID!, // Resource server client
-    resourceServerClientSecret: process.env.LINKED_CLIENT_SECRET!, // Resource server secret
+    // For federated token exchange, we want to provide the resource server client (linked client's) credentials
+    clientId: process.env.LINKED_CLIENT_ID!, // Resource server client
+    clientSecret: process.env.LINKED_CLIENT_SECRET!, // Resource server secret
   }
 });
 
@@ -95,7 +95,7 @@ This demonstrates the enhanced API design that will be fully available once the 
 
 ✅ **COMPLETED**: Enhanced federated connections with dedicated access token support has been successfully implemented and integrated:
 
-- **SDK Enhancement**: Added `resourceServerClientId`, `resourceServerClientSecret`, and dedicated `accessToken` parameter to the core Auth0 AI SDK
+- **SDK Enhancement**: Added dedicated `accessToken` parameter to the core Auth0 AI SDK
 - **API Implementation**: Updated `withTokenForConnection` to properly handle access token-based federated exchanges
 - **Example Migration**: Successfully migrated the federated-connections-with-access-tokens example to use the new API
 - **Tool Integration**: Updated all tools to use the simplified `getAccessTokenForConnection()` method
