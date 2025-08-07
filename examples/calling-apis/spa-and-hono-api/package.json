@@ -1,13 +1,13 @@
 {
   "name": "chatbot",
   "version": "0.4.0",
-  "description": "A monorepo template built with Bun, Hono, Vite, and React",
+  "description": "A monorepo template built with npm, Hono, Vite, and React",
   "author": {
     "name": "Auth0 Inc.",
     "url": "https://auth0.com"
   },
   "license": "Apache-2.0",
-  "packageManager": "bun@1.2.4",
+  "packageManager": "npm@10.9.2",
   "workspaces": [
     "./server",
     "./client",
@@ -28,7 +28,7 @@
     "postinstall": "turbo build --filter=shared --filter=server"
   },
   "keywords": [
-    "bun",
+    "npm",
     "hono",
     "react",
     "vite",
@@ -36,7 +36,7 @@
     "turbo"
   ],
   "devDependencies": {
-    "bun-types": "latest",
+    "@types/node": "^22.15.31",
     "turbo": "^2.5.5"
   },
   "peerDependencies": {

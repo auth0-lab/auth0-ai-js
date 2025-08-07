@@ -37,6 +37,6 @@ pnpm-debug.log*
 *.sln
 *.sw?
 
-# Bun
-bun.lockb
+# npm
+package-lock.json
 .turbo

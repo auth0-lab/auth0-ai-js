@@ -1,3 +1,5 @@
+import "dotenv/config";
+
 import { createDataStreamResponse, generateId, streamText } from "ai";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
@@ -9,6 +11,7 @@ import {
   errorSerializer,
   withInterruptions,
 } from "@auth0/ai-vercel/interrupts";
+import { serve } from "@hono/node-server";
 
 import { listNearbyEvents } from "./lib/tools/listNearbyEvents";
 import { listUserCalendars } from "./lib/tools/listUserCalendars";
@@ -160,4 +163,14 @@ export const app = new Hono()
       }),
     });
   });
-export default app;
+
+// Start the server for Node.js
+const port = Number(process.env.PORT) || 3000;
+
+console.log(`🚀 Server starting on port ${port}`);
+serve({
+  fetch: app.fetch,
+  port,
+});
+
+console.log(`✅ Server running on http://localhost:${port}`);

@@ -1,11 +1,11 @@
 To install dependencies:
 ```sh
-bun install
+npm install
 ```
 
 To run:
 ```sh
-bun run dev
+npm run dev
 ```
 
 open http://localhost:3000

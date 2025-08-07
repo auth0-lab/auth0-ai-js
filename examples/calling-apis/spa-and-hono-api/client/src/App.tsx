@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { hcWithType } from "server/dist/client";
 
-import beaver from "./assets/beaver.svg";
 import { Avatar } from "./components/Avatar";
 import { Chat } from "./components/Chat";
 import { Button } from "./components/ui/button";
@@ -72,15 +71,30 @@ function App() {
 
   return (
     <div className="max-w-xl mx-auto flex flex-col gap-6 items-center justify-center min-h-screen">
-      <a href="https://github.com/stevedylandev/bhvr" target="_blank">
-        <img
-          src={beaver}
-          className="w-16 h-16 cursor-pointer"
-          alt="beaver logo"
-        />
-      </a>
-      <h1 className="text-5xl font-black">bhvr</h1>
-      <h2 className="text-2xl font-bold">Bun + Hono + Vite + React + Auth0</h2>
+      <div className="flex items-center justify-center gap-8 mb-4">
+        <a href="https://hono.dev" target="_blank" rel="noopener noreferrer">
+          <img
+            src="https://raw.githubusercontent.com/honojs/hono/main/docs/images/hono-logo.png"
+            className="w-16 h-20 cursor-pointer object-contain"
+            alt="Hono logo"
+          />
+        </a>
+        <a href="https://react.dev" target="_blank" rel="noopener noreferrer">
+          <img
+            src="https://upload.wikimedia.org/wikipedia/commons/a/a7/React-icon.svg"
+            className="w-16 h-16 cursor-pointer"
+            alt="React logo"
+          />
+        </a>
+        <a href="https://auth0.com" target="_blank" rel="noopener noreferrer">
+          <img
+            src="https://avatars.githubusercontent.com/u/2824157?s=200&v=4"
+            className="w-16 h-16 cursor-pointer object-contain"
+            alt="Auth0 logo"
+          />
+        </a>
+      </div>
+      <h2 className="text-2xl font-bold">Hono + React + Auth0</h2>
       <Button variant="secondary" asChild>
         <a target="_blank" href="https://bhvr.dev">
           Docs

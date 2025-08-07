@@ -22,8 +22,8 @@
     "lucide-react": "^0.507.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "server": "workspace:*",
-    "shared": "workspace:*",
+    "server": "*",
+    "shared": "*",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^4.1.10"
   },

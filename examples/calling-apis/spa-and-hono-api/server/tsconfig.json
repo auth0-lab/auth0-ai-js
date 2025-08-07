@@ -9,7 +9,7 @@
     "jsxImportSource": "hono/jsx",
 
     // Types
-    "types": ["bun-types"],
+    "types": ["node"],
 
     // Output settings
     "declaration": true,

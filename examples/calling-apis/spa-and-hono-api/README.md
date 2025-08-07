@@ -5,13 +5,14 @@ connection to a third party API.
 
 ## Features
 
-This template leverages [bhvr](https://github.com/stevedylandev/bhvr) template for building a React SPA application with a Hono API.
+This template leverages a modern stack for building a React SPA application with a Hono API.
 
 - **Full-Stack TypeScript**: End-to-end type safety between client and server
 - **Shared Types**: Common type definitions shared between client and server
 - **Monorepo Structure**: Organized as a workspaces-based monorepo with Turbo for build orchestration
 - **Modern Stack**:
-  - [Bun](https://bun.sh) as the JavaScript runtime and package manager
+  - [Node.js](https://nodejs.org) as the JavaScript runtime
+  - [npm](https://npmjs.com) as the package manager with workspace support
   - [Hono](https://hono.dev) as the backend framework
   - [Vite](https://vitejs.dev) for frontend bundling
   - [React](https://react.dev) for the frontend UI
@@ -34,6 +35,8 @@ This template leverages [bhvr](https://github.com/stevedylandev/bhvr) template f
 ### Prerequisites
 
 You will need the following prerequisites to run this app:
+- Node.js 18 or later
+- npm 7 or later (for workspace support)
 - An [OpenAI key](https://platform.openai.com/docs/libraries#create-and-export-an-api-key) for accessing OpenAI
 - Setup and configure a Google Cloud Project for use with the Google Connection
    - Enable the [Google Calendar API](https://console.cloud.google.com/apis/library/calendar-json.googleapis.com).
@@ -125,20 +128,20 @@ PORT=3000
 
 ```bash
 # Install all dependencies from the project root
-bun install
+npm install
 ```
 
 ### 4. Run the Application
 
 #### Start server and client in development mode with Turbo:
 ```bash
-bun run dev
+npm run dev
 ```
 
 or run them individually with:
 ```bash
-bun run dev:client    # Run the Vite dev server for React
-bun run dev:server    # Run the Hono backend
+npm run dev:client    # Run the Vite dev server for React
+npm run dev:server    # Run the Hono backend
 ```
 
 The client will be available at `http://localhost:5173` and will communicate with the server at `http://localhost:3000`.
@@ -167,7 +170,7 @@ The client will be available at `http://localhost:5173` and will communicate wit
 - Custom hook (`useAuth0`) for accessing auth state
 - JWT tokens are automatically included in API calls
 
-### Server (Hono + Bun)
+### Server (Hono + Node.js)
 - Custom JWT middleware using `jose` library
 - Validates tokens against Auth0's JWKS endpoint
 - Type-safe API endpoints with shared types
@@ -188,25 +191,25 @@ This setup provides a solid foundation for building Auth0-protected Single Page 
 
 ```bash
 # Build all workspaces with Turbo
-bun run build
+npm run build
 
 # Or build individual workspaces directly
-bun run build:client  # Build the React frontend
-bun run build:server  # Build the Hono backend
+npm run build:client  # Build the React frontend
+npm run build:server  # Build the Hono backend
 
 # Lint all workspaces
-bun run lint
+npm run lint
 
 # Type check all workspaces
-bun run type-check
+npm run type-check
 
 # Run tests across all workspaces
-bun run test
+npm run test
 ```
 
 ### Deployment
 
-Deplying each piece is very versatile and can be done numerous ways, and exploration into automating these will happen at a later date. Here are some references in the meantime.
+Deploying each piece is very versatile and can be done numerous ways, and exploration into automating these will happen at a later date. Here are some references in the meantime.
 
 **Client**
 - [Orbiter](https://orbiter.host)
@@ -216,7 +219,6 @@ Deplying each piece is very versatile and can be done numerous ways, and explora
 
 **Server**
 - [Cloudflare Worker](https://gist.github.com/stevedylandev/4aa1fc569bcba46b7169193c0498d0b3)
-- [Bun](https://hono.dev/docs/getting-started/bun)
 - [Node.js](https://hono.dev/docs/getting-started/nodejs)
 
 ## Type Sharing
