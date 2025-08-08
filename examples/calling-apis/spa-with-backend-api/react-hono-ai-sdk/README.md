@@ -1,9 +1,14 @@
-# Chat SPA Application with Auth0 AI and AI SDK and Federated Connection Access Tokens
+# Chat SPA Application with Auth0 AI, AI SDK, and Federated Connection with Access Tokens
 
-The following app demonstrates using a SPA chatbot application, a backend API (and a linked API client), and a federated
-connection to a third party API.
+Federated Connections with Access Tokens enable an API to exchange a client's access token from Token Vault for a Third-Party API access token. The API acts as both an API and a "client" in this case, exchanging the First Party client's access token for a federated Third Party access token.
+
+One use case this may help in particular is the case the agent is a Single Page Application (or chatbot), and you would like the backend API to access a Third Party API (such as Google) on the user's behalf. This approach addresses a key security challenge for applications that cannot securely store refresh tokens, such as Single Page Applications. By supporting access tokens as subject tokens, these applications can delegate the token exchange to a trusted backend service that manages the credentials securely.
+
+The flow works by having the client send its access token to a First Party API, which then performs the token exchange using its own client credentials (i.e. client_id and client_secret). This is particularly valuable for Token Vault scenarios where applications need to access external APIs like Google Calendar or Salesforce without directly managing sensitive refresh tokens.
 
 ## Features
+
+The following example app demonstrates using a SPA chatbot application, a backend API (and a linked Resource Server Client), and a federated connection to a Third Party API (Google Calendar API).
 
 This template leverages a modern stack for building a React SPA application with a Hono API.
 
@@ -70,7 +75,7 @@ You will need the following prerequisites to run this app:
    }
    ```
 
-   A sample curl to create this Resource Server client (linked client):
+   A sample curl to create this Resource Server Client:
   ```bash
     curl -L 'https://login0.local.dev.auth0.com/api/v2/clients' \
       -H 'Content-Type: application/json' \
@@ -89,7 +94,7 @@ You will need the following prerequisites to run this app:
 4. Configure a Social Connection for Google in Auth0
    - Make sure to enable all `Calendar` scopes from the Permissions options
    - Make sure to enable Token Vault for the Connection under the Advanced Settings
-   - Make sure to enable the connection for your SPA Application created in Step 1
+   - Make sure to enable the connection for your SPA Application created in Step 1 and the Resource Server Client created in Step 3
    - Test the connection in Auth0 "Try Connection" screen and make sure connection is working & configured correctly
 
 ### 2. Environment Variables
@@ -114,8 +119,8 @@ AUTH0_AUDIENCE=your-api-identifier
 
 # Resource Server Client Configuration (for federated token exchange)
 # These credentials belong to a special "resource_server" client that can perform token exchanges
-LINKED_CLIENT_ID=your-resource-server-client-id
-LINKED_CLIENT_SECRET=your-resource-server-client-secret
+RESOURCE_SERVER_CLIENT_ID=your-resource-server-client-id
+RESOURCE_SERVER_CLIENT_SECRET=your-resource-server-client-secret
 
 # OpenAI Configuration  
 OPENAI_API_KEY=your-openai-api-key
@@ -175,6 +180,47 @@ The client will be available at `http://localhost:5173` and will communicate wit
 - Validates tokens against Auth0's JWKS endpoint
 - Type-safe API endpoints with shared types
 - CORS configured for client-server communication
+
+## SDK Notes
+
+The core `@auth0/ai` package now supports:
+- **Resource Server Client Credentials**: Separate client credentials for token exchange operations
+- **Access Token Support**: Direct access token exchange instead of requiring refresh tokens
+- **Backward Compatibility**: Existing refresh token implementations continue to work
+
+The example uses the enhanced SDK pattern with dedicated access token support:
+```typescript
+// lib/auth.ts - Enhanced federated connection setup
+const auth0AI = new Auth0AI({
+  auth0: {
+    domain: process.env.AUTH0_DOMAIN!,
+    // For federated token exchange, we want to provide the resource server client (linked client's) credentials
+    clientId: process.env.RESOURCE_SERVER_CLIENT_ID!, // Resource server client
+    clientSecret: process.env.RESOURCE_SERVER_CLIENT_SECRET!, // Resource server secret
+  }
+});
+
+export const withGoogleCalendar = auth0AI.withTokenForConnection({
+  accessToken: async () => global.authContext?.accessToken, // Access token for federated exchange
+  connection: "google-oauth2",
+  scopes: ["https://www.googleapis.com/auth/calendar"]
+});
+```
+
+Tools can also now use the SDK's built-in token management when using access tokens with federated token exchange:
+```typescript
+// tools/listNearbyEvents.ts
+import { getAccessTokenForConnection } from "@auth0/ai-vercel";
+
+export const listNearbyEvents = withGoogleCalendar(
+  tool({
+    execute: async ({ start, end, calendarId }) => {
+      const token = getAccessTokenForConnection(); // Automatic token retrieval
+      // Use token with Google Calendar API...
+    }
+  })
+);
+```
 
 ## Key Files
 
