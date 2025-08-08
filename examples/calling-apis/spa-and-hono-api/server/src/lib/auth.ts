@@ -1,3 +1,4 @@
+import { SUBJECT_TOKEN_TYPES } from "@auth0/ai";
 import { Auth0AI } from "@auth0/ai-vercel";
 
 import type { ToolWrapper } from "@auth0/ai-vercel";
@@ -15,7 +16,7 @@ const auth0AI = new Auth0AI({
 // Enhanced federated connection setup with access token support
 // This demonstrates the new API pattern where access tokens can be used directly
 export const withGoogleCalendar: ToolWrapper = auth0AI.withTokenForConnection({
-  // Use the dedicated accessToken parameter for federated token exchange
+  // Use the dedicated accessToken parameter & subjectTokenType for federated token exchange
   accessToken: async () => {
     if (!global.authContext?.accessToken) {
       throw new Error("Access token not available in auth context");
@@ -23,6 +24,7 @@ export const withGoogleCalendar: ToolWrapper = auth0AI.withTokenForConnection({
     // This access token will be exchanged for a Google Calendar access token
     return global.authContext.accessToken;
   },
+  subjectTokenType: SUBJECT_TOKEN_TYPES.SUBJECT_TYPE_ACCESS_TOKEN,
   connection: "google-oauth2",
   scopes: [
     "https://www.googleapis.com/auth/calendar", // Full calendar access (includes read/write)

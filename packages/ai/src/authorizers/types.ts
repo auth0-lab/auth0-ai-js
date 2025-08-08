@@ -33,16 +33,6 @@ export const Auth0PublicClientSchema = z.object({
   clientId: z.string().default(() => process.env.AUTH0_CLIENT_ID!),
 });
 
-// Base parameters shared by both configurations
-export type Auth0ClientBaseParams = {
-  domain: string;
-  telemetry?: boolean;
-  clientInfo?: {
-    name: string;
-    [key: string]: any;
-  };
-};
-
 export type Auth0ClientParams = z.infer<typeof Auth0ClientSchema>;
 
 export type Auth0PublicClientParams = z.infer<typeof Auth0PublicClientSchema>;

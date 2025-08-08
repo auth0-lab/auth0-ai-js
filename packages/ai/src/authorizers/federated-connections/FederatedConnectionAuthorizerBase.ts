@@ -17,7 +17,10 @@ import { omit, RequireFields } from "../../util";
 import { ContextGetter, nsFromContext } from "../context";
 import { Auth0ClientParams, Auth0ClientSchema } from "../types";
 import { asyncLocalStorage, AsyncStorageValue } from "./asyncLocalStorage";
-import { FederatedConnectionAuthorizerParams } from "./FederatedConnectionAuthorizerParams";
+import {
+  FederatedConnectionAuthorizerParams,
+  SUBJECT_TOKEN_TYPES,
+} from "./FederatedConnectionAuthorizerParams";
 
 /**
  * Requests authorization to a third party service via Federated Connection.
@@ -52,6 +55,7 @@ export class FederatedConnectionAuthorizerBase<ToolExecuteArgs extends any[]> {
     // Validate that exactly one token source is provided
     const hasRefreshToken = typeof params.refreshToken !== "undefined";
     const hasAccessToken = typeof params.accessToken !== "undefined";
+    const hasSubjectTokenType = typeof params.subjectTokenType !== "undefined";
 
     if (!hasRefreshToken && !hasAccessToken) {
       throw new Error(
@@ -65,11 +69,15 @@ export class FederatedConnectionAuthorizerBase<ToolExecuteArgs extends any[]> {
       );
     }
 
-    // Validate resource server client credentials when using access tokens
-    if (hasAccessToken) {
+    // Validate resource server client credentials when using access tokens for federated connections
+    if (
+      hasAccessToken &&
+      hasSubjectTokenType &&
+      params.subjectTokenType === SUBJECT_TOKEN_TYPES.SUBJECT_TYPE_ACCESS_TOKEN
+    ) {
       if (!this.auth0.clientId || !this.auth0.clientSecret) {
         throw new Error(
-          "clientId and clientSecret must be provided when using accessToken for federated token exchange."
+          "clientId and clientSecret must currently be provided when using accessToken for federated token exchange."
         );
       }
     }
@@ -150,10 +158,12 @@ export class FederatedConnectionAuthorizerBase<ToolExecuteArgs extends any[]> {
       subjectToken = await this.getRefreshToken(...toolContext);
       subjectTokenType = "urn:ietf:params:oauth:token-type:refresh_token";
     } else if (typeof this.params.accessToken === "function") {
-      subjectToken = await resolveParameter(
-        this.params.accessToken,
-        toolContext
-      );
+      subjectToken = (await this.getAccessTokenWithArgs(
+        ...toolContext
+      )) as string;
+      subjectTokenType = "urn:ietf:params:oauth:token-type:access_token";
+    } else if (typeof this.params.accessToken === "string") {
+      subjectToken = this.params.accessToken;
       subjectTokenType = "urn:ietf:params:oauth:token-type:access_token";
     } else {
       // This should never happen due to constructor validation, but TypeScript needs this
@@ -193,6 +203,7 @@ export class FederatedConnectionAuthorizerBase<ToolExecuteArgs extends any[]> {
       body: JSON.stringify(exchangeParams),
     });
 
+    console.log("Exchange response:", res.status, res.statusText);
     if (!res.ok) {
       //TODO: handle all type of response errors.
       return;
@@ -210,9 +221,16 @@ export class FederatedConnectionAuthorizerBase<ToolExecuteArgs extends any[]> {
     // Use token exchange for both refresh tokens and access tokens
     if (
       typeof this.params.refreshToken === "function" ||
-      typeof this.params.accessToken === "function"
+      (typeof this.params.accessToken !== "undefined" &&
+        this.params.subjectTokenType ===
+          SUBJECT_TOKEN_TYPES.SUBJECT_TYPE_ACCESS_TOKEN)
     ) {
       tokenResponse = await this.getAccessTokenImpl(...toolContext);
+    } else {
+      tokenResponse = (await resolveParameter(
+        this.params.accessToken!,
+        toolContext
+      )) as TokenResponse;
     }
 
     this.validateToken(tokenResponse);
@@ -221,6 +239,10 @@ export class FederatedConnectionAuthorizerBase<ToolExecuteArgs extends any[]> {
 
   protected async getRefreshToken(...toolContext: ToolExecuteArgs) {
     return await resolveParameter(this.params.refreshToken, toolContext);
+  }
+
+  protected async getAccessTokenWithArgs(...toolContext: ToolExecuteArgs) {
+    return await resolveParameter(this.params.accessToken, toolContext);
   }
 
   /**
