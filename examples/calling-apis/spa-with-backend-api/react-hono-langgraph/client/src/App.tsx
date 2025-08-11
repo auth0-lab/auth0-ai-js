@@ -80,7 +80,7 @@ function App() {
         </a>
         <a href="https://langchain-ai.github.io/langgraphjs/" target="_blank" rel="noopener noreferrer">
           <img
-            src="https://python.langchain.com/img/brand/wordmark.png"
+            src="https://cdn.prod.website-files.com/6645c0129428882861d078b8/66603a39194163a0afacec77_65d663e4f1e9fdefc56f1b95_langchain-removebg-preview.png"
             className="w-16 h-16 cursor-pointer object-contain"
             alt="LangGraph logo"
           />

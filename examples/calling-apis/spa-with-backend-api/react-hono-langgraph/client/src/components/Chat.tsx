@@ -1,25 +1,22 @@
 // Simple icon components to replace lucide-react
-const Loader2 = ({ className }: { className?: string }) => (
-  <div className={`animate-spin rounded-full border-2 border-gray-300 border-t-blue-600 ${className}`} />
-);
-
-const Send = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-  </svg>
-);
-
-const Trash2 = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-  </svg>
-);
+import { Loader2, Send, Trash2 } from "lucide-react";
 import { useState, useRef } from "react";
 
 import { useAuth0 } from "../hooks/useAuth0";
+import { FederatedConnectionPopup } from "./FederatedConnectionPopup";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
+
+interface Auth0InterruptionUI {
+  behavior: string;
+  connection: string;
+  scopes: string[];
+  requiredScopes: string[];
+  code: string;
+  toolCall: { id: string };
+  resume: () => void;
+}
 
 interface ChatMessage {
   id: string;
@@ -28,6 +25,7 @@ interface ChatMessage {
   timestamp: Date;
 }
 
+const InterruptionPrefix = "AUTH0_AI_INTERRUPTION:";
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:3000";
 
 export function Chat() {
@@ -36,21 +34,12 @@ export function Chat() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [toolInterrupt, setToolInterrupt] = useState<Auth0InterruptionUI | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || isLoading) return;
-
-    const userMessage: ChatMessage = {
-      id: `user-${Date.now()}`,
-      role: "user",
-      content: input.trim(),
-      timestamp: new Date(),
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-    setInput("");
+  const performChatRequest = async (messagesToSend: ChatMessage[]) => {
+    if (isLoading) return;
+    
     setIsLoading(true);
     setError(null);
 
@@ -66,7 +55,7 @@ export function Chat() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          messages: [...messages, userMessage].map(msg => ({
+          messages: messagesToSend.map(msg => ({
             role: msg.role,
             content: msg.content,
           })),
@@ -112,6 +101,37 @@ export function Chat() {
               return;
             }
 
+            // Check for Auth0 AI interruption
+            if (data.startsWith(InterruptionPrefix)) {
+              const interruptData = data.slice(InterruptionPrefix.length);
+              try {
+                const parsedInterrupt = JSON.parse(interruptData);
+                
+                // Set tool interrupt state to show the popup
+                setToolInterrupt({
+                  ...parsedInterrupt,
+                  resume: async () => {
+                    setToolInterrupt(null);
+                    setError(null);
+                    
+                    // After federated connection is established, we need to retry the request with fresh tokens
+                    console.log("Resuming after federated connection - retrying with fresh tokens");
+                    
+                    // Remove incomplete assistant message
+                    setMessages(prev => prev.filter(msg => msg.role !== "assistant" || msg.content !== ""));
+                    
+                    // Retry the chat request with the same messages but fresh token
+                    await performChatRequest(messagesToSend);
+                  },
+                });
+                
+                setIsLoading(false);
+                return;
+              } catch (parseError) {
+                console.error("Error parsing interrupt data:", parseError);
+              }
+            }
+
             try {
               const parsed = JSON.parse(data);
               
@@ -150,10 +170,29 @@ export function Chat() {
     }
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || isLoading) return;
+
+    const userMessage: ChatMessage = {
+      id: `user-${Date.now()}`,
+      role: "user",
+      content: input.trim(),
+      timestamp: new Date(),
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInput("");
+    
+    // Use the shared chat request function
+    await performChatRequest([...messages, userMessage]);
+  };
+
   const clearMessages = () => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
+    setToolInterrupt(null);
     setMessages([]);
     setError(null);
   };
@@ -179,7 +218,7 @@ export function Chat() {
         {/* Messages */}
         <div className="space-y-4 max-h-96 overflow-y-auto">
           {messages.length === 0 ? (
-            <div className="text-center text-gray-600 py-8">
+            <div className="text-center text-muted-foreground py-8">
               <p className="text-sm">Ask me about your calendar events!</p>
               <p className="text-xs mt-1">
                 Try: "What meetings do I have today?" or "Show me my calendars"
@@ -192,9 +231,9 @@ export function Chat() {
           )}
           {isLoading && (
             <div className="flex justify-start">
-              <div className="bg-gray-100 rounded-lg px-3 py-2 max-w-[80%] flex items-center gap-2">
+              <div className="bg-muted rounded-lg px-3 py-2 max-w-[80%] flex items-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-muted-foreground">
                   Thinking...
                 </span>
               </div>
@@ -202,11 +241,16 @@ export function Chat() {
           )}
         </div>
 
-        {/* Error message */}
-        {error && (
+        {/* Error message - hide if it's an Auth0 interrupt (we show the popup instead) */}
+        {error && !error.startsWith?.(InterruptionPrefix) && (
           <div className="bg-red-50 text-red-700 text-sm p-3 rounded-lg">
             Error: {error}
           </div>
+        )}
+
+        {/* Federated Connection Interrupt Handling */}
+        {toolInterrupt && (
+          <FederatedConnectionPopup interrupt={toolInterrupt} />
         )}
 
         {/* Input form */}

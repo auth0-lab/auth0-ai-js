@@ -6,6 +6,7 @@ import { decodeJwt } from "jose";
 import { serve } from "@hono/node-server";
 
 import { HumanMessage } from "@langchain/core/messages";
+import { FederatedConnectionInterrupt } from "@auth0/ai/interrupts";
 
 import { graph } from "./lib/agent";
 import { jwtAuthMiddleware } from "./middleware/auth";
@@ -124,7 +125,7 @@ export const app = new Hono()
       // Stream the response using LangGraph
       const stream = await graph.stream(
         { messages: langchainMessages },
-        { ...config, streamMode: "values" }
+        { ...config, streamMode: "updates" }
       );
 
       // Set up SSE headers
@@ -136,8 +137,63 @@ export const app = new Hono()
       const readable = new ReadableStream({
         async start(controller) {
           try {
+            let hasInterrupt = false;
+            
             for await (const chunk of stream) {
-              const lastMessage = chunk.messages[chunk.messages.length - 1];
+              console.log("📦 Stream chunk received:", {
+                chunkKeys: Object.keys(chunk),
+                chunkType: typeof chunk,
+                hasInterrupts: !!chunk.interrupts || (chunk.interrupts && chunk.interrupts.length > 0)
+              });
+              
+              // Check for interrupts in __interrupt__ key (LangGraph format)
+              if (chunk.__interrupt__ && Array.isArray(chunk.__interrupt__)) {
+                console.log("🚨 Found interrupts:", chunk.__interrupt__);
+                
+                // Look for Auth0 interrupts
+                for (const interrupt of chunk.__interrupt__) {
+                  if (interrupt.value && FederatedConnectionInterrupt.isInterrupt(interrupt.value)) {
+                    console.log("🔗 Found FederatedConnectionInterrupt:", interrupt.value);
+                    
+                    const interruptData = {
+                      behavior: "resume",
+                      connection: "google-oauth2",
+                      scopes: [
+                        "https://www.googleapis.com/auth/calendar",
+                        "https://www.googleapis.com/auth/calendar.events.readonly",
+                      ],
+                      requiredScopes: [
+                        "https://www.googleapis.com/auth/calendar",
+                        "https://www.googleapis.com/auth/calendar.events.readonly",
+                      ],
+                      code: "FEDERATED_CONNECTION_ERROR",
+                      toolCall: { id: "unknown" },
+                    };
+
+                    const errorData = `AUTH0_AI_INTERRUPTION:${JSON.stringify(interruptData)}`;
+                    controller.enqueue(`data: ${errorData}\n\n`);
+                    controller.close();
+                    return;
+                  }
+                }
+              }
+              
+              // Handle different chunk formats based on stream mode
+              let lastMessage = null;
+              
+              if (chunk.messages) {
+                // "values" mode - chunk has messages directly
+                lastMessage = chunk.messages[chunk.messages.length - 1];
+              } else {
+                // "updates" mode - check for callLLM updates
+                for (const [nodeName, update] of Object.entries(chunk)) {
+                  console.log(`📝 Node update: ${nodeName}`, update);
+                  if (nodeName === 'callLLM' && update && typeof update === 'object' && 'messages' in update) {
+                    const updateWithMessages = update as { messages: any[] };
+                    lastMessage = updateWithMessages.messages[updateWithMessages.messages.length - 1];
+                  }
+                }
+              }
               
               if (lastMessage && lastMessage.content) {
                 const data = JSON.stringify({
@@ -155,6 +211,8 @@ export const app = new Hono()
             controller.close();
           } catch (error) {
             console.error("❌ Error in LangGraph stream:", error);
+            
+            // Default error handling
             const errorData = JSON.stringify({
               type: "error",
               error: "An error occurred processing your request",

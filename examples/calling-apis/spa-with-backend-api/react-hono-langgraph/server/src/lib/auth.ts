@@ -25,7 +25,6 @@ export const withGoogleCalendar: ToolWrapper = auth0AI.withTokenForConnection({
     // This access token will be exchanged for a Google Calendar access token
     return global.authContext.accessToken;
   },
-  refreshToken: undefined, // Explicitly override LangGraph's default refreshToken to avoid conflict
   subjectTokenType: SUBJECT_TOKEN_TYPES.SUBJECT_TYPE_ACCESS_TOKEN,
   connection: process.env.GOOGLE_CONNECTION_NAME || "google-oauth2",
   scopes: [
