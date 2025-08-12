@@ -1,8 +1,8 @@
-import { DynamicStructuredTool } from "@langchain/core/tools";
 import { google } from "googleapis";
 import { z } from "zod";
 
 import { getAccessTokenForConnection } from "@auth0/ai-langchain";
+import { DynamicStructuredTool } from "@langchain/core/tools";
 
 import { withGoogleCalendar } from "../auth";
 

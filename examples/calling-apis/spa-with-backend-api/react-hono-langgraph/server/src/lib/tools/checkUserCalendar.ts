@@ -49,7 +49,9 @@ export const checkUserCalendar = withGoogleCalendar(
       description:
         "Check if a user is free during a specific date and time (1 hour window).",
       schema: z.object({
-        date: z.coerce.date().describe("The date and time to check availability for"),
+        date: z.coerce
+          .date()
+          .describe("The date and time to check availability for"),
       }),
     }
   )

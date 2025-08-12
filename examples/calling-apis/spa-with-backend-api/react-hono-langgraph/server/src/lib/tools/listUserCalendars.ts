@@ -26,12 +26,13 @@ export const listUserCalendars = withGoogleCalendar(
           maxResults: 10,
         });
 
-        const calendars = response.data.items?.map((cal) => ({
-          id: cal.id,
-          summary: cal.summary,
-          description: cal.description,
-          primary: cal.primary,
-        })) || [];
+        const calendars =
+          response.data.items?.map((cal) => ({
+            id: cal.id,
+            summary: cal.summary,
+            description: cal.description,
+            primary: cal.primary,
+          })) || [];
 
         return {
           calendars,

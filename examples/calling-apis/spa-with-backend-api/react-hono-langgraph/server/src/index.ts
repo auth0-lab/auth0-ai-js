@@ -3,10 +3,10 @@ import "dotenv/config";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { decodeJwt } from "jose";
-import { serve } from "@hono/node-server";
 
-import { HumanMessage } from "@langchain/core/messages";
 import { FederatedConnectionInterrupt } from "@auth0/ai/interrupts";
+import { serve } from "@hono/node-server";
+import { HumanMessage } from "@langchain/core/messages";
 
 import { graph } from "./lib/agent";
 import { jwtAuthMiddleware } from "./middleware/auth";
@@ -15,10 +15,12 @@ import type { ApiResponse } from "../../shared/src";
 
 // Global auth context for tools
 declare global {
-  var authContext: {
-    userSub: string;
-    accessToken: string;
-  } | undefined;
+  var authContext:
+    | {
+        userSub: string;
+        accessToken: string;
+      }
+    | undefined;
 }
 
 const getAllowedOrigins = (): string[] => {
@@ -115,7 +117,7 @@ export const app = new Hono()
 
       // Generate a unique thread/config ID
       const threadId = `thread_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
+
       const config = {
         configurable: {
           thread_id: threadId,
@@ -138,23 +140,31 @@ export const app = new Hono()
         async start(controller) {
           try {
             let hasInterrupt = false;
-            
+
             for await (const chunk of stream) {
               console.log("📦 Stream chunk received:", {
                 chunkKeys: Object.keys(chunk),
                 chunkType: typeof chunk,
-                hasInterrupts: !!chunk.interrupts || (chunk.interrupts && chunk.interrupts.length > 0)
+                hasInterrupts:
+                  !!chunk.interrupts ||
+                  (chunk.interrupts && chunk.interrupts.length > 0),
               });
-              
+
               // Check for interrupts in __interrupt__ key (LangGraph format)
               if (chunk.__interrupt__ && Array.isArray(chunk.__interrupt__)) {
                 console.log("🚨 Found interrupts:", chunk.__interrupt__);
-                
+
                 // Look for Auth0 interrupts
                 for (const interrupt of chunk.__interrupt__) {
-                  if (interrupt.value && FederatedConnectionInterrupt.isInterrupt(interrupt.value)) {
-                    console.log("🔗 Found FederatedConnectionInterrupt:", interrupt.value);
-                    
+                  if (
+                    interrupt.value &&
+                    FederatedConnectionInterrupt.isInterrupt(interrupt.value)
+                  ) {
+                    console.log(
+                      "🔗 Found FederatedConnectionInterrupt:",
+                      interrupt.value
+                    );
+
                     const interruptData = {
                       behavior: "resume",
                       connection: "google-oauth2",
@@ -177,10 +187,10 @@ export const app = new Hono()
                   }
                 }
               }
-              
+
               // Handle different chunk formats based on stream mode
               let lastMessage = null;
-              
+
               if (chunk.messages) {
                 // "values" mode - chunk has messages directly
                 lastMessage = chunk.messages[chunk.messages.length - 1];
@@ -188,20 +198,28 @@ export const app = new Hono()
                 // "updates" mode - check for callLLM updates
                 for (const [nodeName, update] of Object.entries(chunk)) {
                   console.log(`📝 Node update: ${nodeName}`, update);
-                  if (nodeName === 'callLLM' && update && typeof update === 'object' && 'messages' in update) {
+                  if (
+                    nodeName === "callLLM" &&
+                    update &&
+                    typeof update === "object" &&
+                    "messages" in update
+                  ) {
                     const updateWithMessages = update as { messages: any[] };
-                    lastMessage = updateWithMessages.messages[updateWithMessages.messages.length - 1];
+                    lastMessage =
+                      updateWithMessages.messages[
+                        updateWithMessages.messages.length - 1
+                      ];
                   }
                 }
               }
-              
+
               if (lastMessage && lastMessage.content) {
                 const data = JSON.stringify({
                   type: "content",
                   content: lastMessage.content,
                   role: "assistant",
                 });
-                
+
                 controller.enqueue(`data: ${data}\n\n`);
               }
             }
@@ -211,7 +229,7 @@ export const app = new Hono()
             controller.close();
           } catch (error) {
             console.error("❌ Error in LangGraph stream:", error);
-            
+
             // Default error handling
             const errorData = JSON.stringify({
               type: "error",
@@ -226,7 +244,10 @@ export const app = new Hono()
       return new Response(readable);
     } catch (error) {
       console.error("❌ Error in chat endpoint:", error);
-      return c.json({ error: "An error occurred processing your request" }, 500);
+      return c.json(
+        { error: "An error occurred processing your request" },
+        500
+      );
     }
   });
 

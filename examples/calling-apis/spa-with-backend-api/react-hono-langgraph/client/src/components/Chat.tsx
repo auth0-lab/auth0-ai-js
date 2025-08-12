@@ -1,6 +1,6 @@
 // Simple icon components to replace lucide-react
 import { Loader2, Send, Trash2 } from "lucide-react";
-import { useState, useRef } from "react";
+import { useRef, useState } from "react";
 
 import { useAuth0 } from "../hooks/useAuth0";
 import { FederatedConnectionPopup } from "./FederatedConnectionPopup";
@@ -34,12 +34,13 @@ export function Chat() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [toolInterrupt, setToolInterrupt] = useState<Auth0InterruptionUI | null>(null);
+  const [toolInterrupt, setToolInterrupt] =
+    useState<Auth0InterruptionUI | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const performChatRequest = async (messagesToSend: ChatMessage[]) => {
     if (isLoading) return;
-    
+
     setIsLoading(true);
     setError(null);
 
@@ -55,7 +56,7 @@ export function Chat() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          messages: messagesToSend.map(msg => ({
+          messages: messagesToSend.map((msg) => ({
             role: msg.role,
             content: msg.content,
           })),
@@ -83,20 +84,20 @@ export function Chat() {
         timestamp: new Date(),
       };
 
-      setMessages(prev => [...prev, assistantMessage]);
+      setMessages((prev) => [...prev, assistantMessage]);
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
         const chunk = decoder.decode(value);
-        const lines = chunk.split('\n');
+        const lines = chunk.split("\n");
 
         for (const line of lines) {
-          if (line.startsWith('data: ')) {
+          if (line.startsWith("data: ")) {
             const data = line.slice(6);
-            
-            if (data === '[DONE]') {
+
+            if (data === "[DONE]") {
               setIsLoading(false);
               return;
             }
@@ -106,25 +107,31 @@ export function Chat() {
               const interruptData = data.slice(InterruptionPrefix.length);
               try {
                 const parsedInterrupt = JSON.parse(interruptData);
-                
+
                 // Set tool interrupt state to show the popup
                 setToolInterrupt({
                   ...parsedInterrupt,
                   resume: async () => {
                     setToolInterrupt(null);
                     setError(null);
-                    
+
                     // After federated connection is established, we need to retry the request with fresh tokens
-                    console.log("Resuming after federated connection - retrying with fresh tokens");
-                    
+                    console.log(
+                      "Resuming after federated connection - retrying with fresh tokens"
+                    );
+
                     // Remove incomplete assistant message
-                    setMessages(prev => prev.filter(msg => msg.role !== "assistant" || msg.content !== ""));
-                    
+                    setMessages((prev) =>
+                      prev.filter(
+                        (msg) => msg.role !== "assistant" || msg.content !== ""
+                      )
+                    );
+
                     // Retry the chat request with the same messages but fresh token
                     await performChatRequest(messagesToSend);
                   },
                 });
-                
+
                 setIsLoading(false);
                 return;
               } catch (parseError) {
@@ -134,12 +141,12 @@ export function Chat() {
 
             try {
               const parsed = JSON.parse(data);
-              
+
               if (parsed.type === "content" && parsed.content) {
                 assistantContent = parsed.content;
-                setMessages(prev => 
-                  prev.map(msg => 
-                    msg.id === assistantMessage.id 
+                setMessages((prev) =>
+                  prev.map((msg) =>
+                    msg.id === assistantMessage.id
                       ? { ...msg, content: assistantContent }
                       : msg
                   )
@@ -154,16 +161,18 @@ export function Chat() {
         }
       }
     } catch (err) {
-      if (err instanceof Error && err.name === 'AbortError') {
-        console.log('Request aborted');
+      if (err instanceof Error && err.name === "AbortError") {
+        console.log("Request aborted");
         return;
       }
-      
+
       console.error("Chat error:", err);
       setError(err instanceof Error ? err.message : "An error occurred");
-      
+
       // Remove the incomplete assistant message
-      setMessages(prev => prev.filter(msg => msg.role !== "assistant" || msg.content !== ""));
+      setMessages((prev) =>
+        prev.filter((msg) => msg.role !== "assistant" || msg.content !== "")
+      );
     } finally {
       setIsLoading(false);
       abortControllerRef.current = null;
@@ -181,9 +190,9 @@ export function Chat() {
       timestamp: new Date(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     setInput("");
-    
+
     // Use the shared chat request function
     await performChatRequest([...messages, userMessage]);
   };
