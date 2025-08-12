@@ -28,7 +28,6 @@
   ],
   "dependencies": {
     "@openfga/sdk": "^0.8.0",
-    "server": "file:examples/calling-apis/spa-with-backend-api/react-hono-ai-sdk/server",
     "vite": "^6.2.3"
   }
 }
