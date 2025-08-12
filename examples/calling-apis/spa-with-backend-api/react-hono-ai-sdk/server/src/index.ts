@@ -1,6 +1,11 @@
 import "dotenv/config";
 
-import { createDataStreamResponse, generateId, streamText } from "ai";
+import {
+  createDataStreamResponse,
+  generateId,
+  streamText,
+  ToolExecutionError,
+} from "ai";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { decodeJwt } from "jose";
@@ -8,9 +13,10 @@ import { decodeJwt } from "jose";
 import { openai } from "@ai-sdk/openai";
 import { setAIContext } from "@auth0/ai-vercel";
 import {
-  errorSerializer,
+  InterruptionPrefix,
   withInterruptions,
 } from "@auth0/ai-vercel/interrupts";
+import { Auth0Interrupt } from "@auth0/ai/interrupts";
 import { serve } from "@hono/node-server";
 
 import { listNearbyEvents } from "./lib/tools/listNearbyEvents";
@@ -127,40 +133,26 @@ export const app = new Hono()
         },
         { messages: requestMessages, tools }
       ),
-      onError: errorSerializer((err) => {
-        if (err instanceof Error) {
-          // Check if this is a federated connection interrupt
-          if (
-            err.message.includes(
-              "Authorization required to access the Federated Connection"
-            )
-          ) {
-            console.log(
-              "Detected federated connection interrupt - manually formatting"
-            );
+      onError: (error: any) => {
+        // Handle Auth0 AI interrupts
+        if (
+          error instanceof ToolExecutionError &&
+          error.cause instanceof Auth0Interrupt
+        ) {
+          const serializableError = {
+            ...error.cause.toJSON(),
+            toolCall: {
+              id: error.toolCallId,
+              args: error.toolArgs,
+              name: error.toolName,
+            },
+          };
 
-            // Manually create the interrupt format expected by the client
-            const interruptData = {
-              behavior: "resume",
-              connection: process.env.GOOGLE_CONNECTION_NAME || "google-oauth2",
-              scopes: [
-                "https://www.googleapis.com/auth/calendar",
-                "https://www.googleapis.com/auth/calendar.events.readonly",
-              ],
-              requiredScopes: [
-                "https://www.googleapis.com/auth/calendar",
-                "https://www.googleapis.com/auth/calendar.events.readonly",
-              ],
-              code: "FEDERATED_CONNECTION_ERROR",
-              toolCall: { id: "unknown" }, // We might need to extract this from the tool context
-            };
-
-            return `AUTH0_AI_INTERRUPTION:${JSON.stringify(interruptData)}`;
-          }
+          return `${InterruptionPrefix}${JSON.stringify(serializableError)}`;
         }
 
-        return "Oops, an error occurred!";
-      }),
+        return "Oops! An error occurred.";
+      },
     });
   });
 
