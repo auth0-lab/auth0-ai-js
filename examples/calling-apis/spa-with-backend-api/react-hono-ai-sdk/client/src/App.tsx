@@ -86,6 +86,13 @@ function App() {
             alt="React logo"
           />
         </a>
+        <a href="https://sdk.vercel.ai" target="_blank" rel="noopener noreferrer">
+          <img
+            src="https://sdk.vercel.ai/icons/vercel.svg"
+            className="w-16 h-16 cursor-pointer"
+            alt="Vercel AI SDK logo"
+          />
+        </a>
         <a href="https://auth0.com" target="_blank" rel="noopener noreferrer">
           <img
             src="https://avatars.githubusercontent.com/u/2824157?s=200&v=4"
@@ -94,7 +101,7 @@ function App() {
           />
         </a>
       </div>
-      <h2 className="text-2xl font-bold">Hono + React + Auth0</h2>
+      <h2 className="text-2xl font-bold">Hono + React + AI SDK + Auth0</h2>
       <Button variant="secondary" asChild>
         <a target="_blank" href="https://bhvr.dev">
           Docs
