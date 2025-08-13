@@ -4,15 +4,7 @@ import { getAuth0Client } from "../lib/auth0";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 
-interface Auth0InterruptionUI {
-  behavior: string;
-  connection: string;
-  scopes: string[];
-  requiredScopes: string[];
-  code: string;
-  toolCall: { id: string };
-  resume: () => void;
-}
+import type { Auth0InterruptionUI } from "shared";
 
 interface FederatedConnectionPopupProps {
   interrupt: Auth0InterruptionUI;

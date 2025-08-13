@@ -8,10 +8,16 @@ import { FederatedConnectionInterrupt } from "@auth0/ai/interrupts";
 import { serve } from "@hono/node-server";
 import { HumanMessage } from "@langchain/core/messages";
 
+import { INTERRUPTION_PREFIX, isChatRequest } from "../../shared/src";
 import { graph } from "./lib/agent";
 import { jwtAuthMiddleware } from "./middleware/auth";
 
-import type { ApiResponse } from "../../shared/src";
+import type {
+  ApiResponse,
+  StreamChunk,
+  SSEData,
+  Auth0InterruptData,
+} from "../../shared/src";
 
 // Global auth context for tools
 declare global {
@@ -93,11 +99,19 @@ export const app = new Hono()
       return c.json({ error: "No access token provided" }, 401);
     }
 
-    const { messages } = await c.req.json();
+    let requestBody: unknown;
+    try {
+      requestBody = await c.req.json();
+    } catch (error) {
+      return c.json({ error: "Invalid JSON in request body" }, 400);
+    }
 
-    if (!messages || !Array.isArray(messages)) {
+    // Type guard for chat request using shared utility
+    if (!isChatRequest(requestBody)) {
       return c.json({ error: "Invalid messages format" }, 400);
     }
+
+    const { messages } = requestBody;
 
     // Set global auth context for tools to access
     global.authContext = {
@@ -107,13 +121,9 @@ export const app = new Hono()
 
     try {
       // Convert messages to LangChain format
-      const langchainMessages = messages.map((msg: any) => {
-        if (msg.role === "user") {
-          return new HumanMessage(msg.content);
-        }
-        // Add other message types as needed
-        return new HumanMessage(msg.content);
-      });
+      const langchainMessages = messages.map(
+        (msg) => new HumanMessage(msg.content)
+      );
 
       // Generate a unique thread/config ID
       const threadId = `thread_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -135,108 +145,84 @@ export const app = new Hono()
       c.header("Cache-Control", "no-cache");
       c.header("Connection", "keep-alive");
 
-      // Create a readable stream
+      // Create a readable stream with proper error handling
       const readable = new ReadableStream({
         async start(controller) {
+          const encodeSSE = (data: string): Uint8Array => {
+            return new TextEncoder().encode(`data: ${data}\n\n`);
+          };
+
+          const sendInterrupt = (interruptData: Auth0InterruptData): void => {
+            const errorData = `${INTERRUPTION_PREFIX}${JSON.stringify(interruptData)}`;
+            controller.enqueue(encodeSSE(errorData));
+            controller.close();
+          };
+
+          const sendError = (error: string): void => {
+            const errorData: SSEData = {
+              type: "error",
+              error,
+            };
+            controller.enqueue(encodeSSE(JSON.stringify(errorData)));
+            controller.close();
+          };
+
+          const sendContent = (content: string): void => {
+            const data: SSEData = {
+              type: "content",
+              content,
+              role: "assistant",
+            };
+            controller.enqueue(encodeSSE(JSON.stringify(data)));
+          };
+
           try {
-            let hasInterrupt = false;
-
             for await (const chunk of stream) {
-              console.log("📦 Stream chunk received:", {
-                chunkKeys: Object.keys(chunk),
-                chunkType: typeof chunk,
-                hasInterrupts:
-                  !!chunk.interrupts ||
-                  (chunk.interrupts && chunk.interrupts.length > 0),
-              });
+              const typedChunk = chunk as StreamChunk;
 
-              // Check for interrupts in __interrupt__ key (LangGraph format)
-              if (chunk.__interrupt__ && Array.isArray(chunk.__interrupt__)) {
-                console.log("🚨 Found interrupts:", chunk.__interrupt__);
+              if (
+                typedChunk.__interrupt__ &&
+                Array.isArray(typedChunk.__interrupt__)
+              ) {
+                for (const interrupt of typedChunk.__interrupt__) {
+                  let interruptValue: unknown;
+                  interruptValue = (interrupt as any).value;
 
-                // Look for Auth0 interrupts
-                for (const interrupt of chunk.__interrupt__) {
                   if (
-                    interrupt.value &&
-                    FederatedConnectionInterrupt.isInterrupt(interrupt.value)
+                    interruptValue &&
+                    FederatedConnectionInterrupt.isInterrupt(interruptValue)
                   ) {
-                    console.log(
-                      "🔗 Found FederatedConnectionInterrupt:",
-                      interrupt.value
-                    );
+                    // Cast to FederatedConnectionInterrupt since isInterrupt() confirms it's the correct type
+                    const federatedInterrupt =
+                      interruptValue as FederatedConnectionInterrupt;
 
-                    const interruptData = {
-                      behavior: "resume",
-                      connection: "google-oauth2",
-                      scopes: [
-                        "https://www.googleapis.com/auth/calendar",
-                        "https://www.googleapis.com/auth/calendar.events.readonly",
-                      ],
-                      requiredScopes: [
-                        "https://www.googleapis.com/auth/calendar",
-                        "https://www.googleapis.com/auth/calendar.events.readonly",
-                      ],
-                      code: "FEDERATED_CONNECTION_ERROR",
-                      toolCall: { id: "unknown" },
-                    };
+                    const interruptData: Auth0InterruptData =
+                      federatedInterrupt.toJSON();
 
-                    const errorData = `AUTH0_AI_INTERRUPTION:${JSON.stringify(interruptData)}`;
-                    controller.enqueue(`data: ${errorData}\n\n`);
-                    controller.close();
+                    sendInterrupt(interruptData);
                     return;
                   }
                 }
               }
 
-              // Handle different chunk formats based on stream mode
-              let lastMessage = null;
-
-              if (chunk.messages) {
-                // "values" mode - chunk has messages directly
-                lastMessage = chunk.messages[chunk.messages.length - 1];
-              } else {
-                // "updates" mode - check for callLLM updates
-                for (const [nodeName, update] of Object.entries(chunk)) {
-                  console.log(`📝 Node update: ${nodeName}`, update);
-                  if (
-                    nodeName === "callLLM" &&
-                    update &&
-                    typeof update === "object" &&
-                    "messages" in update
-                  ) {
-                    const updateWithMessages = update as { messages: any[] };
-                    lastMessage =
-                      updateWithMessages.messages[
-                        updateWithMessages.messages.length - 1
-                      ];
-                  }
-                }
+              // Handle "updates" mode - check for callLLM updates
+              let lastMessage: any = null;
+              if (typedChunk.callLLM?.messages) {
+                const messages = typedChunk.callLLM.messages;
+                lastMessage = messages[messages.length - 1];
               }
 
               if (lastMessage && lastMessage.content) {
-                const data = JSON.stringify({
-                  type: "content",
-                  content: lastMessage.content,
-                  role: "assistant",
-                });
-
-                controller.enqueue(`data: ${data}\n\n`);
+                sendContent(lastMessage.content);
               }
             }
 
             // Send final message
-            controller.enqueue("data: [DONE]\n\n");
+            controller.enqueue(encodeSSE("[DONE]"));
             controller.close();
           } catch (error) {
             console.error("❌ Error in LangGraph stream:", error);
-
-            // Default error handling
-            const errorData = JSON.stringify({
-              type: "error",
-              error: "An error occurred processing your request",
-            });
-            controller.enqueue(`data: ${errorData}\n\n`);
-            controller.close();
+            sendError("An error occurred processing your request");
           }
         },
       });

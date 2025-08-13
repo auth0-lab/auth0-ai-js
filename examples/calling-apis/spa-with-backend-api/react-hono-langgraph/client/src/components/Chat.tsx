@@ -1,6 +1,12 @@
 // Simple icon components to replace lucide-react
 import { Loader2, Send, Trash2 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
+import {
+  INTERRUPTION_PREFIX,
+  isSSEContentData,
+  isSSEData,
+  isSSEErrorData,
+} from "shared";
 
 import { useAuth0 } from "../hooks/useAuth0";
 import { FederatedConnectionPopup } from "./FederatedConnectionPopup";
@@ -8,24 +14,9 @@ import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
 
-interface Auth0InterruptionUI {
-  behavior: string;
-  connection: string;
-  scopes: string[];
-  requiredScopes: string[];
-  code: string;
-  toolCall: { id: string };
-  resume: () => void;
-}
-
-interface ChatMessage {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  timestamp: Date;
-}
-
-const InterruptionPrefix = "AUTH0_AI_INTERRUPTION:";
+import type { ChatMessage, Auth0InterruptionUI, ChatRequest } from "shared";
+// Use shared constant and type guards
+const InterruptionPrefix = INTERRUPTION_PREFIX;
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:3000";
 
 export function Chat() {
@@ -38,174 +29,198 @@ export function Chat() {
     useState<Auth0InterruptionUI | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const performChatRequest = async (messagesToSend: ChatMessage[]) => {
-    if (isLoading) return;
+  const createChatRequest = useCallback(
+    (messagesToSend: ChatMessage[]): ChatRequest => {
+      return {
+        messages: messagesToSend.map((msg) => ({
+          role: msg.role,
+          content: msg.content,
+        })),
+      };
+    },
+    []
+  );
 
-    setIsLoading(true);
-    setError(null);
+  const performChatRequest = useCallback(
+    async (messagesToSend: ChatMessage[]): Promise<void> => {
+      if (isLoading) return;
 
-    // Create abort controller for this request
-    abortControllerRef.current = new AbortController();
+      setIsLoading(true);
+      setError(null);
 
-    try {
-      const token = await getToken();
-      const response = await fetch(`${SERVER_URL}/chat`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          messages: messagesToSend.map((msg) => ({
-            role: msg.role,
-            content: msg.content,
-          })),
-        }),
-        signal: abortControllerRef.current.signal,
-      });
+      // Create abort controller for this request
+      abortControllerRef.current = new AbortController();
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      try {
+        const token = await getToken();
+        const chatRequest = createChatRequest(messagesToSend);
+
+        const response = await fetch(`${SERVER_URL}/chat`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(chatRequest),
+          signal: abortControllerRef.current.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        if (!response.body) {
+          throw new Error("Response body is null");
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let assistantContent = "";
+
+        // Create assistant message placeholder
+        const assistantMessage: ChatMessage = {
+          id: `assistant-${Date.now()}`,
+          role: "assistant",
+          content: "",
+          timestamp: new Date(),
+        };
+
+        setMessages((prev) => [...prev, assistantMessage]);
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value);
+            const lines = chunk.split("\n");
+
+            for (const line of lines) {
+              if (line.startsWith("data: ")) {
+                const data = line.slice(6);
+
+                if (data === "[DONE]") {
+                  setIsLoading(false);
+                  return;
+                }
+
+                // Check for Auth0 AI interruption
+                if (data.startsWith(InterruptionPrefix)) {
+                  const interruptData = data.slice(InterruptionPrefix.length);
+                  try {
+                    const parsedInterrupt = JSON.parse(interruptData) as Omit<
+                      Auth0InterruptionUI,
+                      "resume"
+                    >;
+
+                    // Set tool interrupt state to show the popup
+                    setToolInterrupt({
+                      ...parsedInterrupt,
+                      resume: async () => {
+                        setToolInterrupt(null);
+                        setError(null);
+
+                        // Remove incomplete assistant message
+                        setMessages((prev) =>
+                          prev.filter(
+                            (msg) =>
+                              msg.role !== "assistant" || msg.content !== ""
+                          )
+                        );
+
+                        // Retry the chat request with the same messages but fresh token
+                        await performChatRequest(messagesToSend);
+                      },
+                    });
+
+                    setIsLoading(false);
+                    return;
+                  } catch (parseError) {
+                    console.error("Error parsing interrupt data:", parseError);
+                    setError("Failed to parse interrupt data");
+                    return;
+                  }
+                }
+
+                try {
+                  const parsed: unknown = JSON.parse(data);
+
+                  if (isSSEData(parsed)) {
+                    if (isSSEContentData(parsed) && parsed.content) {
+                      assistantContent = parsed.content;
+                      setMessages((prev) =>
+                        prev.map((msg) =>
+                          msg.id === assistantMessage.id
+                            ? { ...msg, content: assistantContent }
+                            : msg
+                        )
+                      );
+                    } else if (isSSEErrorData(parsed)) {
+                      throw new Error(parsed.error || "Unknown error occurred");
+                    }
+                  }
+                } catch (parseError) {
+                  console.error("Error parsing SSE data:", parseError);
+                  // Continue processing other lines instead of failing completely
+                }
+              }
+            }
+          }
+        } finally {
+          reader.releaseLock();
+        }
+      } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") {
+          console.log("Request aborted");
+          return;
+        }
+
+        console.error("Chat error:", err);
+        const errorMessage =
+          err instanceof Error ? err.message : "An error occurred";
+        setError(errorMessage);
+
+        // Remove the incomplete assistant message
+        setMessages((prev) =>
+          prev.filter((msg) => msg.role !== "assistant" || msg.content !== "")
+        );
+      } finally {
+        setIsLoading(false);
+        abortControllerRef.current = null;
       }
+    },
+    [isLoading, getToken, createChatRequest]
+  );
 
-      if (!response.body) {
-        throw new Error("Response body is null");
-      }
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!input.trim() || isLoading) return;
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let assistantContent = "";
-
-      // Create assistant message placeholder
-      const assistantMessage: ChatMessage = {
-        id: `assistant-${Date.now()}`,
-        role: "assistant",
-        content: "",
+      const userMessage: ChatMessage = {
+        id: `user-${Date.now()}`,
+        role: "user",
+        content: input.trim(),
         timestamp: new Date(),
       };
 
-      setMessages((prev) => [...prev, assistantMessage]);
+      setMessages((prev) => [...prev, userMessage]);
+      setInput("");
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+      // Use the shared chat request function
+      await performChatRequest([...messages, userMessage]);
+    },
+    [input, isLoading, messages, performChatRequest]
+  );
 
-        const chunk = decoder.decode(value);
-        const lines = chunk.split("\n");
-
-        for (const line of lines) {
-          if (line.startsWith("data: ")) {
-            const data = line.slice(6);
-
-            if (data === "[DONE]") {
-              setIsLoading(false);
-              return;
-            }
-
-            // Check for Auth0 AI interruption
-            if (data.startsWith(InterruptionPrefix)) {
-              const interruptData = data.slice(InterruptionPrefix.length);
-              try {
-                const parsedInterrupt = JSON.parse(interruptData);
-
-                // Set tool interrupt state to show the popup
-                setToolInterrupt({
-                  ...parsedInterrupt,
-                  resume: async () => {
-                    setToolInterrupt(null);
-                    setError(null);
-
-                    // After federated connection is established, we need to retry the request with fresh tokens
-                    console.log(
-                      "Resuming after federated connection - retrying with fresh tokens"
-                    );
-
-                    // Remove incomplete assistant message
-                    setMessages((prev) =>
-                      prev.filter(
-                        (msg) => msg.role !== "assistant" || msg.content !== ""
-                      )
-                    );
-
-                    // Retry the chat request with the same messages but fresh token
-                    await performChatRequest(messagesToSend);
-                  },
-                });
-
-                setIsLoading(false);
-                return;
-              } catch (parseError) {
-                console.error("Error parsing interrupt data:", parseError);
-              }
-            }
-
-            try {
-              const parsed = JSON.parse(data);
-
-              if (parsed.type === "content" && parsed.content) {
-                assistantContent = parsed.content;
-                setMessages((prev) =>
-                  prev.map((msg) =>
-                    msg.id === assistantMessage.id
-                      ? { ...msg, content: assistantContent }
-                      : msg
-                  )
-                );
-              } else if (parsed.type === "error") {
-                throw new Error(parsed.error || "Unknown error occurred");
-              }
-            } catch (parseError) {
-              console.error("Error parsing SSE data:", parseError);
-            }
-          }
-        }
-      }
-    } catch (err) {
-      if (err instanceof Error && err.name === "AbortError") {
-        console.log("Request aborted");
-        return;
-      }
-
-      console.error("Chat error:", err);
-      setError(err instanceof Error ? err.message : "An error occurred");
-
-      // Remove the incomplete assistant message
-      setMessages((prev) =>
-        prev.filter((msg) => msg.role !== "assistant" || msg.content !== "")
-      );
-    } finally {
-      setIsLoading(false);
-      abortControllerRef.current = null;
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || isLoading) return;
-
-    const userMessage: ChatMessage = {
-      id: `user-${Date.now()}`,
-      role: "user",
-      content: input.trim(),
-      timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
-
-    // Use the shared chat request function
-    await performChatRequest([...messages, userMessage]);
-  };
-
-  const clearMessages = () => {
+  const clearMessages = useCallback(() => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
     setToolInterrupt(null);
     setMessages([]);
     setError(null);
-  };
-
+  }, []);
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -284,7 +299,11 @@ export function Chat() {
   );
 }
 
-function MessageBubble({ message }: { message: ChatMessage }) {
+interface MessageBubbleProps {
+  message: ChatMessage;
+}
+
+function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.role === "user";
 
   return (
