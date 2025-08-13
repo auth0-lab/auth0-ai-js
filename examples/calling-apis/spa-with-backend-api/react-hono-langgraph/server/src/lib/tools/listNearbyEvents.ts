@@ -19,16 +19,25 @@ export const listNearbyEvents = withGoogleCalendar(
     schema: z.object({
       start: z.coerce.date(),
       end: z.coerce.date(),
-      calendarId: z.string().optional().default("primary"),
+      calendarId: z.string().optional().nullable().default("primary"),
     }),
     func: async ({ start, end, calendarId }) => {
+      // Handle null/undefined calendarId with default
+      const actualCalendarId = calendarId || "primary";
+
       // Fix truncated calendar IDs by appending the correct suffix
-      let fullCalendarId = calendarId;
-      if (!calendarId.includes("@") && calendarId.startsWith("c_")) {
-        fullCalendarId = `${calendarId}@group.calendar.google.com`;
-      } else if (!calendarId.includes("@") && !calendarId.startsWith("c_")) {
+      let fullCalendarId = actualCalendarId;
+      if (
+        !actualCalendarId.includes("@") &&
+        actualCalendarId.startsWith("c_")
+      ) {
+        fullCalendarId = `${actualCalendarId}@group.calendar.google.com`;
+      } else if (
+        !actualCalendarId.includes("@") &&
+        !actualCalendarId.startsWith("c_")
+      ) {
         // For primary calendar (email format)
-        fullCalendarId = calendarId; // Keep as is, it should be an email
+        fullCalendarId = actualCalendarId; // Keep as is, it should be an email
       }
 
       // Get the federated access token using the enhanced SDK
