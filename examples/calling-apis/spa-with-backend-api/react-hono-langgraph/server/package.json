@@ -1,0 +1,33 @@
+{
+  "name": "server",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@auth0/ai": "*",
+    "@auth0/ai-langchain": "*",
+    "@hono/node-server": "^1.13.7",
+    "@langchain/core": "^0.3.30",
+    "@langchain/langgraph": "^0.2.37",
+    "@langchain/openai": "^0.3.17",
+    "date-fns": "^3.6.0",
+    "dotenv": "^16.4.7",
+    "gaxios": "^6.7.1",
+    "googleapis": "^144.0.0",
+    "hono": "^4.8.5",
+    "jose": "^5.9.6",
+    "shared": "*",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.31",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}

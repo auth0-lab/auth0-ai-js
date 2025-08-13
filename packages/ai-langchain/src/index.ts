@@ -6,5 +6,5 @@ export {
   getAccessTokenForConnection,
 } from "./FederatedConnections";
 export { GraphResumer } from "./ciba/GraphResumer";
-
+export type { ToolWrapper, ToolLike } from "./util/ToolWrapper";
 export { Auth0AI } from "./Auth0AI";
