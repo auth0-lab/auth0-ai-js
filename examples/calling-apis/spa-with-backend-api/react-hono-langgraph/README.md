@@ -1,14 +1,13 @@
 # Chat SPA Application with Auth0 AI, LangGraph, and Federated Connection with Access Tokens
 
-This example demonstrates a Single Page Application (SPA) chatbot with LangGraph backend using Federated Connections with Access Tokens for secure third-party API access. Unlike the AI SDK example, this implementation uses LangGraph's state graph approach with custom authentication for enhanced security and flexibility.
+This example demonstrates a Single Page Application (SPA) chatbot with Hono + LangGraph backend using Federated Connections with Access Tokens for secure third-party API access. Unlike the AI SDK example, this implementation uses LangGraph's state graph approach with custom authentication for enhanced security and flexibility.
 
 ## Features
 
 - **LangGraph State Graph**: Uses LangGraph's state management for complex conversation flows
-- **Custom Authentication**: Implements LangGraph's new custom auth approach (not the deprecated passthrough library)
 - **Federated Token Exchange**: Secure access to Google Calendar API through Auth0's token vault
 - **Real-time Streaming**: Server-sent events for responsive chat experience
-- **Full-Stack TypeScript**: End-to-end type safety
+- **Full-Stack TypeScript**: End-to-end type safety, with shared typings between client and server. Uses standard LangGraph and Auth0 typings for implementing interrupts and step-up auth pattern.
 - **Modern Stack**:
   - [Node.js](https://nodejs.org) runtime
   - [Hono](https://hono.dev) backend framework
