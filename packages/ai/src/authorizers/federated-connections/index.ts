@@ -9,3 +9,5 @@ export {
 export { FederatedConnectionAuthorizerBase } from "./FederatedConnectionAuthorizerBase";
 
 export type { FederatedConnectionAuthorizerParams } from "./FederatedConnectionAuthorizerParams";
+
+export { SUBJECT_TOKEN_TYPES } from "./FederatedConnectionAuthorizerParams";

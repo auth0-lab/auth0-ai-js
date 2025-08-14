@@ -1,0 +1,74 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "ui": "tui",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "src/**/*.js",
+        "src/**/*.jsx",
+        "src/**/*.json",
+        "tsconfig.json",
+        "tsconfig.*.json",
+        "vite.config.ts",
+        "package.json",
+        "package-lock.json",
+        "eslint.config.js",
+        "index.html"
+      ],
+      "outputs": ["dist/**", "build/**", ".turbo/**"],
+      "env": ["NODE_ENV", "VITE_*"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true,
+      "inputs": [
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "src/**/*.js",
+        "src/**/*.jsx",
+        "src/**/*.json",
+        "tsconfig.json",
+        "tsconfig.*.json",
+        "vite.config.ts",
+        "package.json",
+        "package-lock.json",
+        "eslint.config.js",
+        "index.html"
+      ],
+      "env": ["NODE_ENV", "VITE_*"]
+    },
+    "lint": {
+      "inputs": [
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "src/**/*.js",
+        "src/**/*.jsx",
+        "eslint.config.js",
+        "tsconfig.json"
+      ]
+    },
+    "type-check": {
+      "inputs": [
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "tsconfig.json",
+        "tsconfig.*.json"
+      ]
+    },
+    "test": {
+      "inputs": [
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "src/**/*.js",
+        "src/**/*.jsx",
+        "test/**/*.ts",
+        "test/**/*.tsx",
+        "vitest.config.ts",
+        "tsconfig.json"
+      ]
+    }
+  }
+}

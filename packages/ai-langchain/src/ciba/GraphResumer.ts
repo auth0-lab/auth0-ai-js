@@ -1,4 +1,4 @@
-import { EventEmitter } from "node:stream";
+import { EventEmitter } from "node:events";
 
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { CIBAAuthorizationRequest } from "@auth0/ai/CIBA";

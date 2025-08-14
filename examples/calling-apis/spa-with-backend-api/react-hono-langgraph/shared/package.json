@@ -1,0 +1,28 @@
+{
+  "name": "shared",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./dist": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "@auth0/ai": "^0.0.0",
+    "@langchain/langgraph": "^0.4.4",
+    "@langchain/langgraph-sdk": "^0.0.107"
+  }
+}
