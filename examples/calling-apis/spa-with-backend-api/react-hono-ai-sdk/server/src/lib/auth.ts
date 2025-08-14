@@ -7,16 +7,16 @@ import type { ToolWrapper } from "@auth0/ai-vercel";
 const auth0AI = new Auth0AI({
   auth0: {
     domain: process.env.AUTH0_DOMAIN!,
-    // For federated token exchange, we only need the resource server credentials
+    // For token exchange with Token Vault, we only need the resource server credentials
     clientId: process.env.RESOURCE_SERVER_CLIENT_ID!, // Resource server client ID for token exchange
     clientSecret: process.env.RESOURCE_SERVER_CLIENT_SECRET!, // Resource server client secret
   },
 });
 
-// Enhanced federated connection setup with access token support
+// Enhanced token exchange with Token Vault, setup with access token support
 // This demonstrates the new API pattern where access tokens can be used directly
 export const withGoogleCalendar: ToolWrapper = auth0AI.withTokenForConnection({
-  // Use the dedicated accessToken parameter & subjectTokenType for federated token exchange
+  // Use the dedicated accessToken parameter & subjectTokenType for Token Vault token exchange
   accessToken: async () => {
     if (!global.authContext?.accessToken) {
       throw new Error("Access token not available in auth context");

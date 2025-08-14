@@ -69,7 +69,7 @@ export class FederatedConnectionAuthorizerBase<ToolExecuteArgs extends any[]> {
       );
     }
 
-    // Validate resource server client credentials when using access tokens for federated connections
+    // Validate resource server client credentials when using access tokens for token exchange w/ Token Vault
     if (
       hasAccessToken &&
       hasSubjectTokenType &&
@@ -77,7 +77,7 @@ export class FederatedConnectionAuthorizerBase<ToolExecuteArgs extends any[]> {
     ) {
       if (!this.auth0.clientId || !this.auth0.clientSecret) {
         throw new Error(
-          "clientId and clientSecret must currently be provided when using accessToken for federated token exchange."
+          "clientId and clientSecret must currently be provided when using accessToken for token exchange with Token Vault."
         );
       }
     }

@@ -126,7 +126,7 @@ export function Chat() {
           </div>
         )}
 
-        {/* Federated Connection Interrupt Handling */}
+        {/* Step-Up Auth Interrupt Handling */}
         {toolInterrupt && (
           <FederatedConnectionPopup interrupt={toolInterrupt} />
         )}

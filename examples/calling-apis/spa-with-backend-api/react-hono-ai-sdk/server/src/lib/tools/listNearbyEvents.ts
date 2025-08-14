@@ -9,7 +9,7 @@ import { withGoogleCalendar } from "../auth";
 /**
  * Tool: listNearbyEvents
  * Lists calendar events between a start and end time from a specified calendar.
- * Uses the enhanced @auth0/ai SDK for federated connection token management.
+ * Uses the enhanced @auth0/ai SDK for token exchange with Token Vault.
  */
 export const listNearbyEvents = withGoogleCalendar(
   tool({
@@ -30,7 +30,7 @@ export const listNearbyEvents = withGoogleCalendar(
         fullCalendarId = calendarId; // Keep as is, it should be an email
       }
 
-      // Get the federated access token using the enhanced SDK
+      // Get the access token from Token Vault using the enhanced SDK
       const token = getAccessTokenForConnection();
 
       const calendar = google.calendar("v3");

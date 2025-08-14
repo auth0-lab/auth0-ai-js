@@ -4,6 +4,12 @@ import { getAuth0Client } from "../lib/auth0";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 
+/**
+ * Component for handling connection authorization popups.
+ * This component manages the authorization flow for token exchange with Token Vault,
+ * allowing the application to exchange access tokens for third-party API tokens.
+ */
+
 import type { Auth0InterruptionUI } from "@auth0/ai-vercel/react";
 interface FederatedConnectionPopupProps {
   interrupt: Auth0InterruptionUI;

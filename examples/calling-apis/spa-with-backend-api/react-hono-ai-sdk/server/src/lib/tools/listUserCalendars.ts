@@ -9,14 +9,14 @@ import { withGoogleCalendar } from "../auth";
 /**
  * Tool: listUserCalendars
  * Lists all calendars the user has access to.
- * Uses the enhanced @auth0/ai SDK for federated connection token management.
+ * Uses the enhanced @auth0/ai SDK for token exchange with Token Vault.
  */
 export const listUserCalendars = withGoogleCalendar(
   tool({
     description: "List all calendars the user has access to",
     parameters: z.object({}),
     execute: async () => {
-      // Get the federated access token using the enhanced SDK
+      // Get the access token from Token Vault using the enhanced SDK
       const token = getAccessTokenForConnection();
 
       const calendar = google.calendar("v3");
