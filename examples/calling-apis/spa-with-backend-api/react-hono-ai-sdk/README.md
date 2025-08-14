@@ -1,4 +1,4 @@
-# Chat SPA Application with Hono API, Auth0 AI, AI SDK, and Token Vault
+# React.js Single Page Application with Hono API, Auth0 AI, AI SDK, and Token Vault
 
 This is a [React.js](https://react.dev) Single Page Application that implements [Auth0 AI](https://auth0.ai) along with the [AI SDK](https://sdk.vercel.ai/) to create a chat bot with [OpenAI](https://platform.openai.com) as the LLM provider. The application demonstrates how to integrate the AI SDK with Auth0 AI to implement: Authentication & Authorization of apps & APIs with Auth0.
 
