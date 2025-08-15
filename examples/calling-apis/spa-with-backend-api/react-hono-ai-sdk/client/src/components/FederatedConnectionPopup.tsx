@@ -32,17 +32,23 @@ export function FederatedConnectionPopup({
         (scope: string) => scope && scope.trim() !== ""
       );
 
-      // Get the Auth0 client and use loginWithPopup for federated connection
+      // Get the Auth0 client and use loginWithPopup for the Google connection
       const auth0Client = getAuth0Client();
 
-      await auth0Client.loginWithPopup({
+      // Use getTokenWithPopup for step-up authorization to request additional scopes
+      await auth0Client.getTokenWithPopup({
         authorizationParams: {
-          connection: connection,
-          connection_scope: validScopes.join(" "),
-          prompt: "consent", // Force consent to ensure we get the federated connection
-          access_type: "offline", // Request refresh tokens if needed
+          prompt: "consent", // Required for Google Calendar scopes
+          connection: connection, // e.g., "google-oauth2"
+          connection_scope: validScopes.join(" "), // Google-specific scopes
+          access_type: "offline",
         },
       });
+
+      // IMPORTANT: After getting new scopes via popup, we need to ensure
+      // subsequent API calls use the updated token. The Auth0 client should automatically
+      // use the new token, but we should trigger a refresh to ensure the latest token is cached.
+      await auth0Client.getTokenSilently();
 
       setIsLoading(false);
 

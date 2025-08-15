@@ -1,11 +1,6 @@
 import "dotenv/config";
 
-import {
-  createDataStreamResponse,
-  generateId,
-  streamText,
-  ToolExecutionError,
-} from "ai";
+import { createDataStreamResponse, generateId, streamText } from "ai";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { decodeJwt } from "jose";
@@ -16,7 +11,10 @@ import {
   InterruptionPrefix,
   withInterruptions,
 } from "@auth0/ai-vercel/interrupts";
-import { Auth0Interrupt } from "@auth0/ai/interrupts";
+import {
+  Auth0Interrupt,
+  FederatedConnectionInterrupt,
+} from "@auth0/ai/interrupts";
 import { serve } from "@hono/node-server";
 
 import { listNearbyEvents } from "./lib/tools/listNearbyEvents";
@@ -136,8 +134,8 @@ export const app = new Hono()
       onError: (error: any) => {
         // Handle Auth0 AI interrupts
         if (
-          error instanceof ToolExecutionError &&
-          error.cause instanceof Auth0Interrupt
+          error.cause instanceof Auth0Interrupt ||
+          error.cause instanceof FederatedConnectionInterrupt
         ) {
           const serializableError = {
             ...error.cause.toJSON(),
