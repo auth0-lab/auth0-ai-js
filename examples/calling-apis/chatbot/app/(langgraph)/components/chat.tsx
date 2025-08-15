@@ -22,7 +22,7 @@ export default function Chat() {
   const [threadId, setThreadId] = useQueryState("threadId");
   const [input, setInput] = useState("");
   const thread = useStream({
-    apiUrl: `${process.env.NEXT_PUBLIC_URL}/api/langgraph`, // Update this with your domain URL (e.g process.env.NEXT_PUBLIC_API_URL)
+    apiUrl: `${process.env.NEXT_PUBLIC_URL}/api/langgraph-custom-auth`, // Updated to use custom authentication endpoint
     assistantId: "agent",
     threadId,
 
