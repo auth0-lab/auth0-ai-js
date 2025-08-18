@@ -3,6 +3,22 @@ import { AuthorizerToolParameter } from "../../parameters";
 import { Store } from "../../stores";
 import { AuthContext } from "../context";
 
+export enum SUBJECT_TOKEN_TYPES {
+  /**
+   * Indicates that the token is an OAuth 2.0 refresh token issued by the given authorization server.
+   *
+   * @see {@link https://datatracker.ietf.org/doc/html/rfc8693#section-3-3.4 RFC 8693 Section 3-3.4}
+   */
+  SUBJECT_TYPE_REFRESH_TOKEN = "urn:ietf:params:oauth:token-type:refresh_token",
+
+  /**
+   * Indicates that the token is an OAuth 2.0 access token issued by the given authorization server.
+   *
+   * @see {@link https://datatracker.ietf.org/doc/html/rfc8693#section-3-3.2 RFC 8693 Section 3-3.2}
+   */
+  SUBJECT_TYPE_ACCESS_TOKEN = "urn:ietf:params:oauth:token-type:access_token",
+}
+
 export type FederatedConnectionAuthorizerParams<ToolExecuteArgs extends any[]> =
   {
     /**
@@ -12,11 +28,25 @@ export type FederatedConnectionAuthorizerParams<ToolExecuteArgs extends any[]> =
 
     /**
      * The Federated connection access token if available in the tool context.
+     * This can also be provided as a string exchange when exchanging an access token for a Federated Connection access token.
      */
-    accessToken?: AuthorizerToolParameter<
-      ToolExecuteArgs,
-      TokenResponse | undefined
-    >;
+    accessToken?:
+      | AuthorizerToolParameter<
+          ToolExecuteArgs,
+          TokenResponse | string | undefined
+        >
+      | string
+      | undefined;
+
+    /**
+     * This is used to specify the type of token being requested from Auth0 during the OAuth 2.0 token exchange request.
+     */
+    subjectTokenType?: SUBJECT_TOKEN_TYPES | undefined;
+
+    /**
+     * Optional login hint to provide when exchanging an access or refresh token for a Federated Connection access token.
+     */
+    loginHint?: AuthorizerToolParameter<ToolExecuteArgs, string | undefined>;
 
     /**
      * The scopes required in the access token of the federated connection provider.

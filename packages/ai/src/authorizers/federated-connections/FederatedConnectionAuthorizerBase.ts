@@ -17,7 +17,10 @@ import { omit, RequireFields } from "../../util";
 import { ContextGetter, nsFromContext } from "../context";
 import { Auth0ClientParams, Auth0ClientSchema } from "../types";
 import { asyncLocalStorage, AsyncStorageValue } from "./asyncLocalStorage";
-import { FederatedConnectionAuthorizerParams } from "./FederatedConnectionAuthorizerParams";
+import {
+  FederatedConnectionAuthorizerParams,
+  SUBJECT_TOKEN_TYPES,
+} from "./FederatedConnectionAuthorizerParams";
 
 /**
  * Requests authorization to a third party service via Federated Connection.
@@ -49,29 +52,46 @@ export class FederatedConnectionAuthorizerBase<ToolExecuteArgs extends any[]> {
         credentials.expiresIn ? credentials.expiresIn * 1000 : undefined,
     });
 
-    if (
-      typeof params.refreshToken === "undefined" &&
-      typeof params.accessToken === "undefined"
-    ) {
+    // Validate that exactly one token source is provided
+    const hasRefreshToken = typeof params.refreshToken !== "undefined";
+    const hasAccessToken = typeof params.accessToken !== "undefined";
+    const hasSubjectTokenType = typeof params.subjectTokenType !== "undefined";
+
+    if (!hasRefreshToken && !hasAccessToken) {
       throw new Error(
         "Either refreshToken or accessToken must be provided to initialize the Authorizer."
       );
     }
 
-    if (
-      typeof params.accessToken !== "undefined" &&
-      typeof params.refreshToken !== "undefined"
-    ) {
+    if (hasRefreshToken && hasAccessToken) {
       throw new Error(
         "Only one of refreshToken or accessToken can be provided to initialize the Authorizer."
       );
+    }
+
+    // Validate resource server client credentials when using access tokens for token exchange w/ Token Vault
+    if (
+      hasAccessToken &&
+      hasSubjectTokenType &&
+      params.subjectTokenType === SUBJECT_TOKEN_TYPES.SUBJECT_TYPE_ACCESS_TOKEN
+    ) {
+      if (!this.auth0.clientId || !this.auth0.clientSecret) {
+        throw new Error(
+          "clientId and clientSecret must currently be provided when using accessToken for token exchange with Token Vault."
+        );
+      }
     }
   }
 
   private getInstanceID(): string {
     const props = {
       auth0: this.auth0,
-      params: omit(this.params, ["store", "refreshToken", "accessToken"]),
+      params: omit(this.params, [
+        "store",
+        "refreshToken",
+        "accessToken",
+        "loginHint",
+      ]),
     };
     const sh = stableHash(props);
     return crypto.createHash("MD5").update(sh).digest("hex");
@@ -128,19 +148,44 @@ export class FederatedConnectionAuthorizerBase<ToolExecuteArgs extends any[]> {
 
     const { connection } = store;
 
-    const subjectToken = await this.getRefreshToken(...toolContext);
+    // Determine which token type to use and get the appropriate subject token
+    let subjectToken: string | undefined;
+    let subjectTokenType: string;
+
+    if (typeof this.params.refreshToken === "function") {
+      subjectToken = await this.getRefreshToken(...toolContext);
+      subjectTokenType = "urn:ietf:params:oauth:token-type:refresh_token";
+    } else if (typeof this.params.accessToken === "function") {
+      subjectToken = (await this.getAccessTokenWithToolContext(
+        ...toolContext
+      )) as string;
+      subjectTokenType = "urn:ietf:params:oauth:token-type:access_token";
+    } else if (typeof this.params.accessToken === "string") {
+      subjectToken = this.params.accessToken;
+      subjectTokenType = "urn:ietf:params:oauth:token-type:access_token";
+    } else {
+      // This should never happen due to constructor validation, but TypeScript needs this
+      throw new Error("Either refreshToken or accessToken must be configured");
+    }
 
     if (!subjectToken) {
       return;
     }
+
+    // Get optional login hint if provided
+    const loginHint =
+      typeof this.params.loginHint === "function"
+        ? await resolveParameter(this.params.loginHint, toolContext)
+        : undefined;
 
     const exchangeParams = {
       grant_type:
         "urn:auth0:params:oauth:grant-type:token-exchange:federated-connection-access-token",
       client_id: this.auth0.clientId,
       client_secret: this.auth0.clientSecret,
-      subject_token_type: "urn:ietf:params:oauth:token-type:refresh_token",
+      subject_token_type: subjectTokenType,
       subject_token: subjectToken,
+      login_hint: loginHint,
       connection: connection,
       requested_token_type:
         "http://auth0.com/oauth/token-type/federated-connection-access-token",
@@ -165,13 +210,20 @@ export class FederatedConnectionAuthorizerBase<ToolExecuteArgs extends any[]> {
     ...toolContext: ToolExecuteArgs
   ): Promise<TokenSet> {
     let tokenResponse: TokenResponse | undefined;
-    if (typeof this.params.refreshToken === "function") {
+    // Use token exchange for both refresh tokens and access tokens when subjectTokenType is provided
+    if (
+      typeof this.params.refreshToken === "function" ||
+      (typeof this.params.accessToken !== "undefined" &&
+        this.params.subjectTokenType ===
+          SUBJECT_TOKEN_TYPES.SUBJECT_TYPE_ACCESS_TOKEN)
+    ) {
       tokenResponse = await this.getAccessTokenImpl(...toolContext);
     } else {
-      tokenResponse = await resolveParameter(
+      // fallback to existing behavior, where third party accessToken can be provided directly
+      tokenResponse = (await resolveParameter(
         this.params.accessToken!,
         toolContext
-      );
+      )) as TokenResponse;
     }
     this.validateToken(tokenResponse);
     return tokenSetFromTokenResponse(tokenResponse!);
@@ -179,6 +231,12 @@ export class FederatedConnectionAuthorizerBase<ToolExecuteArgs extends any[]> {
 
   protected async getRefreshToken(...toolContext: ToolExecuteArgs) {
     return await resolveParameter(this.params.refreshToken, toolContext);
+  }
+
+  protected async getAccessTokenWithToolContext(
+    ...toolContext: ToolExecuteArgs
+  ) {
+    return await resolveParameter(this.params.accessToken, toolContext);
   }
 
   /**
