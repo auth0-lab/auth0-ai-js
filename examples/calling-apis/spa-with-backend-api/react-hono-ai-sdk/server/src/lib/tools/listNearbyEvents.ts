@@ -24,43 +24,56 @@ export const createListNearbyEventsTool = (
         calendarId: z.string().optional().default("primary"),
       }),
       execute: async ({ start, end, calendarId }) => {
-        // Fix truncated calendar IDs by appending the correct suffix
-        let fullCalendarId = calendarId;
-        if (!calendarId.includes("@") && calendarId.startsWith("c_")) {
-          fullCalendarId = `${calendarId}@group.calendar.google.com`;
-        } else if (!calendarId.includes("@") && !calendarId.startsWith("c_")) {
-          // For primary calendar (email format)
-          fullCalendarId = calendarId; // Keep as is, it should be an email
+        try {
+          // Fix truncated calendar IDs by appending the correct suffix
+          let fullCalendarId = calendarId;
+          if (!calendarId.includes("@") && calendarId.startsWith("c_")) {
+            fullCalendarId = `${calendarId}@group.calendar.google.com`;
+          } else if (
+            !calendarId.includes("@") &&
+            !calendarId.startsWith("c_")
+          ) {
+            // For primary calendar (email format)
+            fullCalendarId = calendarId; // Keep as is, it should be an email
+          }
+
+          // Get the access token from Token Vault using the enhanced SDK
+          const token = getAccessTokenForConnection();
+
+          const calendar = google.calendar("v3");
+          const auth = new google.auth.OAuth2();
+          auth.setCredentials({ access_token: token });
+
+          const response = await calendar.events.list({
+            auth,
+            calendarId: fullCalendarId,
+            timeMin: start.toISOString(),
+            timeMax: end.toISOString(),
+            singleEvents: true,
+            orderBy: "startTime",
+            maxResults: 10,
+          });
+
+          return {
+            calendarId: fullCalendarId,
+            events:
+              response.data.items?.map((ev) => ({
+                id: ev.id,
+                summary: ev.summary,
+                start: ev.start?.dateTime ?? ev.start?.date,
+                end: ev.end?.dateTime ?? ev.end?.date,
+                location: ev.location ?? "No location",
+              })) ?? [],
+          };
+        } catch (error) {
+          console.error("Error listing calendar events:", error);
+          // Return a proper error result instead of throwing
+          return {
+            calendarId: calendarId,
+            events: [],
+            error: `Failed to list events: ${error instanceof Error ? error.message : "Unknown error"}`,
+          };
         }
-
-        // Get the access token from Token Vault using the enhanced SDK
-        const token = getAccessTokenForConnection();
-
-        const calendar = google.calendar("v3");
-        const auth = new google.auth.OAuth2();
-        auth.setCredentials({ access_token: token });
-
-        const response = await calendar.events.list({
-          auth,
-          calendarId: fullCalendarId,
-          timeMin: start.toISOString(),
-          timeMax: end.toISOString(),
-          singleEvents: true,
-          orderBy: "startTime",
-          maxResults: 10,
-        });
-
-        return {
-          calendarId: fullCalendarId,
-          events:
-            response.data.items?.map((ev) => ({
-              id: ev.id,
-              summary: ev.summary,
-              start: ev.start?.dateTime ?? ev.start?.date,
-              end: ev.end?.dateTime ?? ev.end?.date,
-              location: ev.location ?? "No location",
-            })) ?? [],
-        };
       },
     })
   );

@@ -29,8 +29,8 @@ export const createGoogleCalendarTool = (c: Context): ToolWrapper => {
     subjectTokenType: SUBJECT_TOKEN_TYPES.SUBJECT_TYPE_ACCESS_TOKEN,
     connection: process.env.GOOGLE_CONNECTION_NAME || "google-oauth2",
     scopes: [
-      "https://www.googleapis.com/auth/calendar", // Full calendar access (includes read/write)
-      "https://www.googleapis.com/auth/calendar.events.readonly", // Explicit events read access
+      "https://www.googleapis.com/auth/calendar.calendarlist.readonly", // Read-only access to calendar list
+      "https://www.googleapis.com/auth/calendar.events.readonly", // Read-only access to events
     ],
   });
 };
