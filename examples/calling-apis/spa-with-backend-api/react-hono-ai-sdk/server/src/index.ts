@@ -3,7 +3,6 @@ import "dotenv/config";
 import { createDataStreamResponse, generateId, streamText } from "ai";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { decodeJwt } from "jose";
 
 import { openai } from "@ai-sdk/openai";
 import { setAIContext } from "@auth0/ai-vercel";
@@ -17,8 +16,9 @@ import {
 } from "@auth0/ai/interrupts";
 import { serve } from "@hono/node-server";
 
-import { listNearbyEvents } from "./lib/tools/listNearbyEvents";
-import { listUserCalendars } from "./lib/tools/listUserCalendars";
+import { createGoogleCalendarTool } from "./lib/auth";
+import { createListNearbyEventsTool } from "./lib/tools/listNearbyEvents";
+import { createListUserCalendarsTool } from "./lib/tools/listUserCalendars";
 import { jwtAuthMiddleware } from "./middleware/auth";
 
 import type { ApiResponse } from "shared/dist";
@@ -57,24 +57,10 @@ export const app = new Hono()
 
   // Protected API route
   .get("/api/external", jwtAuthMiddleware(), async (c) => {
-    const user = c.get("user");
-
-    // Extract and log the access token
-    const authHeader = c.req.header("authorization");
-    const accessToken = authHeader?.replace("Bearer ", "");
-
-    // Decode and log the JWT payload
-    if (accessToken) {
-      try {
-        const decodedJwt = decodeJwt(accessToken);
-        console.log("🔓 Decoded JWT:", JSON.stringify(decodedJwt, null, 2));
-      } catch (error) {
-        console.error("❌ Error decoding JWT:", error);
-      }
-    }
+    const auth = c.get("auth");
 
     const data: ApiResponse = {
-      message: `Your access token was successfully validated! Welcome ${user.sub}`,
+      message: `Your access token was successfully validated! Welcome ${auth?.jwtPayload.sub}`,
       success: true,
     };
 
@@ -82,30 +68,26 @@ export const app = new Hono()
   })
 
   .post("/chat", jwtAuthMiddleware(), async (c) => {
-    const user = c.get("user");
-    console.log("🔐 Authenticated user:", user.sub);
+    const auth = c.get("auth");
 
-    // Extract the access token
-    const authHeader = c.req.header("authorization");
-    const accessToken = authHeader?.replace("Bearer ", "");
-
-    if (!accessToken) {
-      return c.json({ error: "No access token provided" }, 401);
-    }
+    console.log("🔐 Authenticated user:", auth?.jwtPayload.sub);
 
     const { messages: requestMessages } = await c.req.json();
 
     // Generate a thread ID for this conversation
     const threadID = generateId();
 
-    // Set global auth context for tools to access
-    global.authContext = {
-      userSub: user.sub,
-      accessToken,
-    };
-
     // Set AI context for the tools to access
     setAIContext({ threadID });
+
+    // Create the Google Calendar wrapper with auth context
+    const googleCalendarWrapper = createGoogleCalendarTool(c);
+
+    // Create tools with the auth context
+    const listNearbyEvents = createListNearbyEventsTool(googleCalendarWrapper);
+    const listUserCalendars = createListUserCalendarsTool(
+      googleCalendarWrapper
+    );
 
     // Use the messages from the request directly
     const tools = { listNearbyEvents, listUserCalendars };

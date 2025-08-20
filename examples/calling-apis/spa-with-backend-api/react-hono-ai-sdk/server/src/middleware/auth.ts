@@ -16,7 +16,7 @@ const JWKS = createRemoteJWKSet(
   new URL(`https://${AUTH0_DOMAIN}/.well-known/jwks.json`)
 );
 
-export interface AuthUser {
+export interface JwtPayload {
   sub: string;
   aud: string[];
   iss: string;
@@ -29,7 +29,10 @@ export interface AuthUser {
 
 declare module "hono" {
   interface ContextVariableMap {
-    user: AuthUser;
+    auth: {
+      token: string;
+      jwtPayload: JwtPayload;
+    };
   }
 }
 
@@ -54,8 +57,8 @@ export const jwtAuthMiddleware = () => {
         audience: AUTH0_AUDIENCE,
       });
 
-      // Store user info in context
-      c.set("user", payload as AuthUser);
+      // Store access token in context
+      c.set("auth", { token, jwtPayload: payload as JwtPayload });
 
       await next();
     } catch (error) {
