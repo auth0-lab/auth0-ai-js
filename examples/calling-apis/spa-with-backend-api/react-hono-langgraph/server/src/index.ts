@@ -2,32 +2,21 @@ import "dotenv/config";
 
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { decodeJwt } from "jose";
 
 import { FederatedConnectionInterrupt } from "@auth0/ai/interrupts";
 import { serve } from "@hono/node-server";
 import { HumanMessage } from "@langchain/core/messages";
 
 import { INTERRUPTION_PREFIX, isChatRequest } from "../../shared/src";
-import { graph } from "./lib/agent";
+import { createGraph } from "./lib/agent";
 import { jwtAuthMiddleware } from "./middleware/auth";
 
 import type {
   ApiResponse,
   StreamChunk,
-  SSEData,
   Auth0InterruptData,
+  SSEData,
 } from "../../shared/src";
-
-// Global auth context for tools
-declare global {
-  var authContext:
-    | {
-        userSub: string;
-        accessToken: string;
-      }
-    | undefined;
-}
 
 const getAllowedOrigins = (): string[] => {
   const allowedOrigins = process.env.ALLOWED_ORIGINS;
@@ -63,24 +52,10 @@ export const app = new Hono()
 
   // Protected API route
   .get("/api/external", jwtAuthMiddleware(), async (c) => {
-    const user = c.get("user");
-
-    // Extract and log the access token
-    const authHeader = c.req.header("authorization");
-    const accessToken = authHeader?.replace("Bearer ", "");
-
-    // Decode and log the JWT payload
-    if (accessToken) {
-      try {
-        const decodedJwt = decodeJwt(accessToken);
-        console.log("🔓 Decoded JWT:", JSON.stringify(decodedJwt, null, 2));
-      } catch (error) {
-        console.error("❌ Error decoding JWT:", error);
-      }
-    }
+    const auth = c.get("auth");
 
     const data: ApiResponse = {
-      message: `Your access token was successfully validated! Welcome ${user.sub}`,
+      message: `Your access token was successfully validated! Welcome ${auth?.jwtPayload.sub}`,
       success: true,
     };
 
@@ -88,16 +63,17 @@ export const app = new Hono()
   })
 
   .post("/chat", jwtAuthMiddleware(), async (c) => {
-    const user = c.get("user");
-    console.log("🔐 Authenticated user:", user.sub);
+    const auth = c.get("auth");
+    const accessToken = c.get("auth")?.token;
 
-    // Extract the access token
-    const authHeader = c.req.header("authorization");
-    const accessToken = authHeader?.replace("Bearer ", "");
+    console.log("🔐 Authenticated user:", auth?.jwtPayload.sub);
 
     if (!accessToken) {
-      return c.json({ error: "No access token provided" }, 401);
+      return c.json({ error: "Access token not available" }, 401);
     }
+
+    // Create graph with auth context
+    const graph = createGraph(c);
 
     let requestBody: unknown;
     try {
@@ -112,12 +88,6 @@ export const app = new Hono()
     }
 
     const { messages } = requestBody;
-
-    // Set global auth context for tools to access
-    global.authContext = {
-      userSub: user.sub,
-      accessToken,
-    };
 
     try {
       // Convert messages to LangChain format

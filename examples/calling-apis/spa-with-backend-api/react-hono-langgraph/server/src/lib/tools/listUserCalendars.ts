@@ -6,51 +6,58 @@ import { getAccessTokenForConnection } from "@auth0/ai-langchain";
 import { FederatedConnectionError } from "@auth0/ai/interrupts";
 import { tool } from "@langchain/core/tools";
 
-import { withGoogleCalendar } from "../auth";
+import type { ToolWrapper } from "@auth0/ai-langchain";
 
-export const listUserCalendars = withGoogleCalendar(
-  tool(
-    async () => {
-      try {
-        const accessToken = getAccessTokenForConnection();
+/**
+ * Factory function to create listUserCalendars tool with auth context
+ */
+export const createListUserCalendarsTool = (
+  withGoogleCalendar: ToolWrapper
+) => {
+  return withGoogleCalendar(
+    tool(
+      async () => {
+        try {
+          const accessToken = getAccessTokenForConnection();
 
-        const calendar = google.calendar("v3");
-        const auth = new google.auth.OAuth2();
+          const calendar = google.calendar("v3");
+          const auth = new google.auth.OAuth2();
 
-        auth.setCredentials({
-          access_token: accessToken,
-        });
+          auth.setCredentials({
+            access_token: accessToken,
+          });
 
-        const response = await calendar.calendarList.list({
-          auth,
-          maxResults: 10,
-        });
+          const response = await calendar.calendarList.list({
+            auth,
+            maxResults: 10,
+          });
 
-        const calendars =
-          response.data.items?.map((cal) => ({
-            id: cal.id,
-            summary: cal.summary,
-            description: cal.description,
-            primary: cal.primary,
-          })) || [];
+          const calendars =
+            response.data.items?.map((cal) => ({
+              id: cal.id,
+              summary: cal.summary,
+              description: cal.description,
+              primary: cal.primary,
+            })) || [];
 
-        return {
-          calendars,
-        };
-      } catch (err) {
-        if (err instanceof GaxiosError && err.status === 401) {
-          throw new FederatedConnectionError(
-            `Authorization required to access Google Calendar`
-          );
+          return {
+            calendars,
+          };
+        } catch (err) {
+          if (err instanceof GaxiosError && err.status === 401) {
+            throw new FederatedConnectionError(
+              `Authorization required to access Google Calendar`
+            );
+          }
+          throw err;
         }
-        throw err;
+      },
+      {
+        name: "list_user_calendars",
+        description:
+          "List all calendars that the user has access to, including their primary calendar and any shared calendars.",
+        schema: z.object({}),
       }
-    },
-    {
-      name: "list_user_calendars",
-      description:
-        "List all calendars that the user has access to, including their primary calendar and any shared calendars.",
-      schema: z.object({}),
-    }
-  )
-);
+    )
+  );
+};

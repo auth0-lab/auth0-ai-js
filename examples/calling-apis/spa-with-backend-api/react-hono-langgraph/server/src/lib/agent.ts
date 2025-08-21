@@ -10,44 +10,57 @@ import {
 import { ToolNode } from "@langchain/langgraph/prebuilt";
 import { ChatOpenAI } from "@langchain/openai";
 
-import { listNearbyEvents, listUserCalendars } from "./tools/index";
+import { createGoogleCalendarTool } from "./auth";
+import { createListNearbyEventsTool } from "./tools/listNearbyEvents";
+import { createListUserCalendarsTool } from "./tools/listUserCalendars";
 
 import type { RunnableLike } from "@langchain/core/runnables";
-const model = new ChatOpenAI({
-  model: "gpt-4o-mini",
-}).bindTools([listNearbyEvents, listUserCalendars]);
+import type { Context } from "hono";
 
-const callLLM = async (state: typeof MessagesAnnotation.State) => {
-  const response = await model.invoke(state.messages);
-  return { messages: [response] };
+export const createGraph = (c: Context) => {
+  // Create the Google Calendar tool wrapper with auth context
+  const withGoogleCalendar = createGoogleCalendarTool(c);
+
+  // Create tools with the auth wrapper
+  const listNearbyEvents = createListNearbyEventsTool(withGoogleCalendar);
+  const listUserCalendars = createListUserCalendarsTool(withGoogleCalendar);
+
+  const model = new ChatOpenAI({
+    model: "gpt-4o-mini",
+  }).bindTools([listNearbyEvents, listUserCalendars]);
+
+  const callLLM = async (state: typeof MessagesAnnotation.State) => {
+    const response = await model.invoke(state.messages);
+    return { messages: [response] };
+  };
+
+  const routeAfterLLM: RunnableLike = function (state) {
+    const lastMessage = state.messages[state.messages.length - 1] as AIMessage;
+    if (!lastMessage.tool_calls?.length) {
+      return END;
+    }
+    return "tools";
+  };
+
+  const stateGraph = new StateGraph(MessagesAnnotation)
+    .addNode("callLLM", callLLM)
+    .addNode(
+      "tools",
+      new ToolNode([listNearbyEvents, listUserCalendars], {
+        // Error handler should be disabled in order to
+        // trigger interruptions from within tools.
+        handleToolErrors: false,
+      })
+    )
+    .addEdge(START, "callLLM")
+    .addConditionalEdges("callLLM", routeAfterLLM, [END, "tools"])
+    .addEdge("tools", "callLLM");
+
+  const checkpointer = new MemorySaver();
+  const store = new InMemoryStore();
+
+  return stateGraph.compile({
+    checkpointer,
+    store,
+  });
 };
-
-const routeAfterLLM: RunnableLike = function (state) {
-  const lastMessage = state.messages[state.messages.length - 1] as AIMessage;
-  if (!lastMessage.tool_calls?.length) {
-    return END;
-  }
-  return "tools";
-};
-
-const stateGraph = new StateGraph(MessagesAnnotation)
-  .addNode("callLLM", callLLM)
-  .addNode(
-    "tools",
-    new ToolNode([listNearbyEvents, listUserCalendars], {
-      // Error handler should be disabled in order to
-      // trigger interruptions from within tools.
-      handleToolErrors: false,
-    })
-  )
-  .addEdge(START, "callLLM")
-  .addConditionalEdges("callLLM", routeAfterLLM, [END, "tools"])
-  .addEdge("tools", "callLLM");
-
-const checkpointer = new MemorySaver();
-const store = new InMemoryStore();
-
-export const graph = stateGraph.compile({
-  checkpointer,
-  store,
-});

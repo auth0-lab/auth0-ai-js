@@ -1,2 +1,3 @@
-export { listNearbyEvents } from "./listNearbyEvents";
-export { listUserCalendars } from "./listUserCalendars";
+export { createListNearbyEventsTool } from "./listNearbyEvents";
+export { createListUserCalendarsTool } from "./listUserCalendars";
+export { createCheckUserCalendarTool } from "./checkUserCalendar";

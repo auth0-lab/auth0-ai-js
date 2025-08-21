@@ -21,7 +21,7 @@ import { listNearbyEvents } from "./lib/tools/listNearbyEvents";
 import { listUserCalendars } from "./lib/tools/listUserCalendars";
 import { jwtAuthMiddleware } from "./middleware/auth";
 
-import type { ApiResponse } from "shared/dist";
+import type { ApiResponse } from "shared";
 
 const getAllowedOrigins = (): string[] => {
   const allowedOrigins = process.env.ALLOWED_ORIGINS;
@@ -48,7 +48,7 @@ export const app = new Hono()
 
   .get("/hello", async (c) => {
     const data: ApiResponse = {
-      message: "Hello BHVR!",
+      message: "Hi there! You've reached the public Hono /hello endpoint!",
       success: true,
     };
     console.log("✅ Success! Public /hello route called!");

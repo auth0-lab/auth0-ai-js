@@ -15,27 +15,6 @@ export interface ChatMessage {
   timestamp: Date;
 }
 
-export interface CalendarEvent {
-  id: string;
-  summary: string;
-  start: {
-    dateTime?: string;
-    date?: string;
-  };
-  end: {
-    dateTime?: string;
-    date?: string;
-  };
-  description?: string;
-}
-
-export interface Calendar {
-  id: string;
-  summary: string;
-  description?: string;
-  primary?: boolean;
-}
-
 // Auth0 Interrupt types for better TypeScript support
 // This interface extends FederatedConnectionInterrupt with client-side specific functionality
 export interface Auth0InterruptionUI extends FederatedConnectionInterrupt {
