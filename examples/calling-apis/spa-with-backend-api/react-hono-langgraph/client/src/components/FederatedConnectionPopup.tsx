@@ -4,18 +4,20 @@ import { getAuth0Client } from "../lib/auth0";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 
-import type { Auth0InterruptionUI } from "shared";
+import type { FederatedConnectionInterrupt } from "@auth0/ai/interrupts";
 
 interface FederatedConnectionPopupProps {
-  interrupt: Auth0InterruptionUI;
+  interrupt: FederatedConnectionInterrupt;
+  onAuthComplete: () => void;
 }
 
 export function FederatedConnectionPopup({
   interrupt,
+  onAuthComplete,
 }: FederatedConnectionPopupProps) {
   const [isLoading, setIsLoading] = useState(false);
 
-  const { connection, requiredScopes, resume } = interrupt;
+  const { connection, requiredScopes } = interrupt;
 
   // Use Auth0 SPA SDK to request additional connection/scopes
   const startFederatedLogin = useCallback(async () => {
@@ -27,34 +29,36 @@ export function FederatedConnectionPopup({
         (scope: string) => scope && scope.trim() !== ""
       );
 
-      // Get the Auth0 client and use loginWithPopup for federated connection
+      // Get the Auth0 client and use getTokenWithPopup for step-up authorization
       const auth0Client = getAuth0Client();
 
-      await auth0Client.loginWithPopup({
+      // Use getTokenWithPopup for step-up authorization to request additional scopes
+      await auth0Client.getTokenWithPopup({
         authorizationParams: {
-          connection: connection,
-          connection_scope: validScopes.join(" "),
-          prompt: "consent", // Force consent to ensure we get the federated connection
-          access_type: "offline", // Request refresh tokens if needed
+          prompt: "consent", // Required for Google Calendar scopes
+          connection: connection, // e.g., "google-oauth2"
+          connection_scope: validScopes.join(" "), // Google-specific scopes
+          access_type: "offline",
         },
       });
 
+      // IMPORTANT: After getting new scopes via popup, we need to ensure
+      // subsequent API calls use the updated token. The Auth0 client should automatically
+      // use the new token, but we should trigger a refresh to ensure the latest token is cached.
+      await auth0Client.getTokenSilently();
+
       setIsLoading(false);
 
-      // Resume the interrupted tool after successful authorization
-      if (typeof resume === "function") {
-        resume();
-      }
+      // Call the callback to resume after successful authorization
+      onAuthComplete();
     } catch (error) {
       console.error("Federated login failed:", error);
       setIsLoading(false);
 
       // Even if login fails, we should clear the interrupt
-      if (typeof resume === "function") {
-        resume();
-      }
+      onAuthComplete();
     }
-  }, [connection, requiredScopes, resume]);
+  }, [connection, requiredScopes, onAuthComplete]);
 
   if (isLoading) {
     return (

@@ -1,249 +1,373 @@
+// server/index.ts
 import "dotenv/config";
 
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { streamSSE } from "hono/streaming";
 import { decodeJwt } from "jose";
 
-import { FederatedConnectionInterrupt } from "@auth0/ai/interrupts";
 import { serve } from "@hono/node-server";
-import { HumanMessage } from "@langchain/core/messages";
+import { BaseMessage } from "@langchain/core/messages";
 
-import { INTERRUPTION_PREFIX, isChatRequest } from "../../shared/src";
 import { graph } from "./lib/agent";
 import { jwtAuthMiddleware } from "./middleware/auth";
 
-import type {
-  ApiResponse,
-  StreamChunk,
-  SSEData,
-  Auth0InterruptData,
-} from "../../shared/src";
-
-// Global auth context for tools
-declare global {
-  var authContext:
-    | {
-        userSub: string;
-        accessToken: string;
-      }
-    | undefined;
+import type { ApiResponse, StreamChunk } from "shared";
+// Local types for the server
+interface StreamRequest {
+  input?: {
+    messages?: any[];
+  };
 }
 
-const getAllowedOrigins = (): string[] => {
-  const allowedOrigins = process.env.ALLOWED_ORIGINS;
-  if (!allowedOrigins) {
-    // Fallback to default origins if not set
-    return ["http://localhost:5173", "http://localhost:3000"];
-  }
-  return allowedOrigins.split(",").map((origin) => origin.trim());
-};
+// Simple in-memory storage for demo purposes
+const threadStore = new Map<string, BaseMessage[]>();
+const interruptStore = new Map<string, any>(); // Store interrupted thread states
 
-export const app = new Hono()
+const getAllowedOrigins = (): string[] =>
+  process.env.ALLOWED_ORIGINS?.split(",").map((o) => o.trim()) ?? [
+    "http://localhost:3000",
+    "http://localhost:5173",
+  ];
 
-  .use(
-    cors({
-      origin: getAllowedOrigins(),
-      allowHeaders: ["Content-Type", "Authorization"],
-      allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    })
-  )
+declare global {
+  var authContext: { userSub: string; accessToken: string } | undefined;
+}
 
-  .get("/", (c) => {
-    return c.text("Hello Hono with LangGraph!");
+const app = new Hono();
+
+app.use(
+  cors({
+    origin: getAllowedOrigins(),
+    allowHeaders: ["Content-Type", "Authorization"],
   })
+);
 
-  .get("/hello", async (c) => {
-    const data: ApiResponse = {
-      message: "Hello from LangGraph SPA!",
-      success: true,
-    };
-    console.log("✅ Success! Public /hello route called!");
-    return c.json(data, { status: 200 });
-  })
-
-  // Protected API route
-  .get("/api/external", jwtAuthMiddleware(), async (c) => {
-    const user = c.get("user");
-
-    // Extract and log the access token
-    const authHeader = c.req.header("authorization");
-    const accessToken = authHeader?.replace("Bearer ", "");
-
-    // Decode and log the JWT payload
-    if (accessToken) {
-      try {
-        const decodedJwt = decodeJwt(accessToken);
-        console.log("🔓 Decoded JWT:", JSON.stringify(decodedJwt, null, 2));
-      } catch (error) {
-        console.error("❌ Error decoding JWT:", error);
-      }
-    }
-
-    const data: ApiResponse = {
-      message: `Your access token was successfully validated! Welcome ${user.sub}`,
-      success: true,
-    };
-
-    return c.json(data, { status: 200 });
-  })
-
-  .post("/chat", jwtAuthMiddleware(), async (c) => {
-    const user = c.get("user");
-    console.log("🔐 Authenticated user:", user.sub);
-
-    // Extract the access token
-    const authHeader = c.req.header("authorization");
-    const accessToken = authHeader?.replace("Bearer ", "");
-
-    if (!accessToken) {
-      return c.json({ error: "No access token provided" }, 401);
-    }
-
-    let requestBody: unknown;
-    try {
-      requestBody = await c.req.json();
-    } catch (error) {
-      return c.json({ error: "Invalid JSON in request body" }, 400);
-    }
-
-    // Type guard for chat request using shared utility
-    if (!isChatRequest(requestBody)) {
-      return c.json({ error: "Invalid messages format" }, 400);
-    }
-
-    const { messages } = requestBody;
-
-    // Set global auth context for tools to access
-    global.authContext = {
-      userSub: user.sub,
-      accessToken,
-    };
-
-    try {
-      // Convert messages to LangChain format
-      const langchainMessages = messages.map(
-        (msg) => new HumanMessage(msg.content)
-      );
-
-      // Generate a unique thread/config ID
-      const threadId = `thread_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-      const config = {
-        configurable: {
-          thread_id: threadId,
-        },
-      };
-
-      // Stream the response using LangGraph
-      const stream = await graph.stream(
-        { messages: langchainMessages },
-        { ...config, streamMode: "updates" }
-      );
-
-      // Set up SSE headers
-      c.header("Content-Type", "text/event-stream");
-      c.header("Cache-Control", "no-cache");
-      c.header("Connection", "keep-alive");
-
-      // Create a readable stream with proper error handling
-      const readable = new ReadableStream({
-        async start(controller) {
-          const encodeSSE = (data: string): Uint8Array => {
-            return new TextEncoder().encode(`data: ${data}\n\n`);
-          };
-
-          const sendInterrupt = (interruptData: Auth0InterruptData): void => {
-            const errorData = `${INTERRUPTION_PREFIX}${JSON.stringify(interruptData)}`;
-            controller.enqueue(encodeSSE(errorData));
-            controller.close();
-          };
-
-          const sendError = (error: string): void => {
-            const errorData: SSEData = {
-              type: "error",
-              error,
-            };
-            controller.enqueue(encodeSSE(JSON.stringify(errorData)));
-            controller.close();
-          };
-
-          const sendContent = (content: string): void => {
-            const data: SSEData = {
-              type: "content",
-              content,
-              role: "assistant",
-            };
-            controller.enqueue(encodeSSE(JSON.stringify(data)));
-          };
-
-          try {
-            for await (const chunk of stream) {
-              const typedChunk = chunk as StreamChunk;
-
-              if (
-                typedChunk.__interrupt__ &&
-                Array.isArray(typedChunk.__interrupt__)
-              ) {
-                for (const interrupt of typedChunk.__interrupt__) {
-                  let interruptValue: unknown;
-                  interruptValue = (interrupt as any).value;
-
-                  if (
-                    interruptValue &&
-                    FederatedConnectionInterrupt.isInterrupt(interruptValue)
-                  ) {
-                    // Cast to FederatedConnectionInterrupt since isInterrupt() confirms it's the correct type
-                    const federatedInterrupt =
-                      interruptValue as FederatedConnectionInterrupt;
-
-                    const interruptData: Auth0InterruptData =
-                      federatedInterrupt.toJSON();
-
-                    sendInterrupt(interruptData);
-                    return;
-                  }
-                }
-              }
-
-              // Handle "updates" mode - check for callLLM updates
-              let lastMessage: any = null;
-              if (typedChunk.callLLM?.messages) {
-                const messages = typedChunk.callLLM.messages;
-                lastMessage = messages[messages.length - 1];
-              }
-
-              if (lastMessage && lastMessage.content) {
-                sendContent(lastMessage.content);
-              }
-            }
-
-            // Send final message
-            controller.enqueue(encodeSSE("[DONE]"));
-            controller.close();
-          } catch (error) {
-            console.error("❌ Error in LangGraph stream:", error);
-            sendError("An error occurred processing your request");
-          }
-        },
-      });
-
-      return new Response(readable);
-    } catch (error) {
-      console.error("❌ Error in chat endpoint:", error);
-      return c.json(
-        { error: "An error occurred processing your request" },
-        500
-      );
-    }
-  });
-
-// Start the server for Node.js
-const port = Number(process.env.PORT) || 3000;
-
-console.log(`🚀 Server starting on port ${port}`);
-serve({
-  fetch: app.fetch,
-  port,
+app.get("/hello", async (c) => {
+  const data: ApiResponse = {
+    message: "Hi there! You've reached the public Hono /hello endpoint!",
+    success: true,
+  };
+  console.log("✅ Success! Public /hello route called!");
+  return c.json(data, { status: 200 });
 });
 
-console.log(`✅ Server running on http://localhost:${port}`);
+app.get("/api/external", jwtAuthMiddleware(), async (c) => {
+  const user = c.get("user");
+  const token = c.req.header("authorization")?.replace("Bearer ", "");
+  if (token) decodeJwt(token);
+  return c.json({ message: `Authenticated as ${user.sub}`, success: true });
+});
+
+app.post("/api/langgraph/threads", jwtAuthMiddleware(), async (c) => {
+  const threadId = `thread_${Date.now()}`;
+  return c.json({
+    thread_id: threadId,
+    created_at: new Date().toISOString(),
+    metadata: {},
+    // Add status and interrupts for LangGraph SDK compatibility
+    status: "idle",
+    interrupts: {},
+  });
+});
+
+// Add endpoint to get thread details (including interrupts)
+app.get("/api/langgraph/threads/:threadId", jwtAuthMiddleware(), async (c) => {
+  const threadId = c.req.param("threadId");
+  console.log(`🔍 GET /api/langgraph/threads/${threadId}`);
+
+  // Check if thread has interrupts
+  const interruptData = interruptStore.get(threadId);
+  const messages = threadStore.get(threadId) ?? [];
+
+  console.log(`📝 Thread ${threadId} - interruptData:`, interruptData);
+
+  // Format interrupts as expected by LangGraph SDK: dict[task_id, list[Interrupt]]
+  const interrupts: Record<string, any[]> = {};
+  let currentInterrupt = null;
+
+  if (interruptData && interruptData.interrupts.length > 0) {
+    const taskId = interruptData.run_id || "default_task";
+    const formattedInterrupts = interruptData.interrupts.map(
+      (interrupt: any) => ({
+        value: interrupt.value,
+        id: `interrupt_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+      })
+    );
+    interrupts[taskId] = formattedInterrupts;
+
+    // Also set the current interrupt for the SDK
+    currentInterrupt = formattedInterrupts[0];
+    console.log(`🚨 Including interrupt in response:`, currentInterrupt);
+  }
+
+  const response: any = {
+    thread_id: threadId,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    metadata: {},
+    status: interruptData ? "interrupted" : "idle",
+    values: { messages },
+    interrupts,
+  };
+
+  // Include the current interrupt at the root level if present
+  if (currentInterrupt) {
+    response.interrupt = currentInterrupt;
+  }
+
+  console.log(`📤 Sending thread response:`, {
+    ...response,
+    messages: `[${messages.length} messages]`,
+  });
+
+  return c.json(response);
+});
+
+// Add endpoint to get current thread state (required by useStream hook)
+app.get(
+  "/api/langgraph/threads/:threadId/state",
+  jwtAuthMiddleware(),
+  async (c) => {
+    const threadId = c.req.param("threadId");
+
+    // Check if thread has interrupts
+    const interruptData = interruptStore.get(threadId);
+    const messages = threadStore.get(threadId) ?? [];
+
+    // Return current state with interrupt information in LangGraph format
+    const response = {
+      values: { messages },
+      checkpoint: {
+        checkpoint_id: `checkpoint_${Date.now()}`,
+        thread_id: threadId,
+        thread_ts: new Date().toISOString(),
+      },
+      metadata: {},
+      created_at: new Date().toISOString(),
+      parent_checkpoint: null,
+      tasks: [],
+      // Include interrupt information if present in the format the SDK expects
+      ...(interruptData && {
+        interrupts: interruptData.interrupts.map((interrupt: any) => ({
+          value: interrupt.value,
+          id: `interrupt_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+        })),
+        status: "interrupted",
+      }),
+    };
+
+    return c.json(response);
+  }
+);
+
+app.post(
+  "/api/langgraph/threads/:threadId/history",
+  jwtAuthMiddleware(),
+  async (c) => {
+    const threadId = c.req.param("threadId");
+    const { limit = 1000 } = await c.req.json();
+    const messages = threadStore.get(threadId) ?? [];
+
+    // Return in the format expected by LangGraph SDK (thread states, not just messages)
+    const threadStates =
+      messages.length > 0
+        ? [
+            {
+              values: { messages },
+              checkpoint: {
+                checkpoint_id: `checkpoint_${Date.now()}`,
+                thread_id: threadId,
+                thread_ts: new Date().toISOString(),
+              },
+              metadata: {},
+              created_at: new Date().toISOString(),
+              parent_checkpoint: null,
+              tasks: [],
+            },
+          ]
+        : [];
+
+    return c.json(threadStates.slice(-limit));
+  }
+);
+
+app.post(
+  "/api/langgraph/threads/:threadId/runs/stream",
+  jwtAuthMiddleware(),
+  async (c) => {
+    const user = c.get("user");
+    const token = c.req.header("authorization")?.replace("Bearer ", "");
+    const threadId = c.req.param("threadId");
+    const body = await c.req.json<StreamRequest>();
+
+    const inputMessages = Array.isArray(body.input?.messages)
+      ? body.input.messages
+      : [];
+
+    global.authContext = { userSub: user.sub, accessToken: token! };
+
+    // Check if this is a resume scenario (null input or empty messages with existing interrupt)
+    const hasInterrupt = interruptStore.has(threadId);
+    const isResume =
+      (body.input === null || inputMessages.length === 0) && hasInterrupt;
+
+    return streamSSE(c, async (stream) => {
+      const runId = `run_${Date.now()}`;
+      await stream.writeSSE({
+        event: "metadata",
+        data: JSON.stringify({ run_id: runId }),
+      });
+
+      try {
+        // Check if this is a resume scenario before we delete the interrupt
+        const hasInterruptBeforeDelete = interruptStore.has(threadId);
+        const isResume = inputMessages.length === 0 && hasInterruptBeforeDelete;
+
+        // If this is a resume (no new messages), clear any existing interrupts
+        if (isResume) {
+          console.log(`🔄 Resuming interrupted thread ${threadId}`);
+          interruptStore.delete(threadId);
+        }
+
+        // For resume scenarios, use null input to continue from where we left off
+        const streamInput = isResume
+          ? null // Resume: continue from interrupted state
+          : { messages: inputMessages as any }; // New messages: start new conversation or add to existing
+
+        console.log(`🚀 Starting graph stream with input:`, streamInput);
+
+        const streamIterator = await graph.stream(streamInput, {
+          configurable: {
+            access_token: token,
+            user_id: user.sub,
+            thread_id: threadId,
+          },
+          streamMode: "values",
+        });
+
+        for await (const chunk of streamIterator) {
+          const typedChunk = chunk as StreamChunk;
+
+          // Check for interrupts and handle them in the proper LangGraph protocol
+          if (
+            typedChunk.__interrupt__ &&
+            Array.isArray(typedChunk.__interrupt__)
+          ) {
+            console.log(
+              "🛑 Interrupt detected in stream chunk:",
+              typedChunk.__interrupt__
+            );
+
+            // Store the interrupt state for the thread (for state API)
+            interruptStore.set(threadId, {
+              run_id: runId,
+              interrupts: typedChunk.__interrupt__,
+            });
+
+            // Send interrupt in the exact format that LangGraph SDK expects
+            // typedChunk.__interrupt__ is a GraphInterrupt object containing interrupts array
+            // We need to extract the first interrupt and format it for the SDK
+            const interrupts =
+              (typedChunk.__interrupt__ as any).interrupts ||
+              (typedChunk.__interrupt__ as any);
+            const firstInterrupt = Array.isArray(interrupts)
+              ? interrupts[0]
+              : interrupts;
+
+            if (firstInterrupt) {
+              const langgraphInterrupt = {
+                value: firstInterrupt.value, // The Auth0Interrupt object
+                id: `interrupt_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+              };
+
+              await stream.writeSSE({
+                event: "updates",
+                data: JSON.stringify({
+                  __interrupt__: langgraphInterrupt, // Send as single object, not array
+                }),
+              });
+            }
+
+            // End the stream
+            await stream.writeSSE({
+              event: "end",
+              data: JSON.stringify({}),
+            });
+            return;
+          }
+
+          // Handle regular message chunks
+          const messages: BaseMessage[] = (typedChunk.messages ??
+            Object.values(typedChunk).flatMap(
+              (n: any) => n.messages || []
+            )) as BaseMessage[];
+
+          if (messages.length > 0) {
+            const existing = threadStore.get(threadId) ?? [];
+            const newMessages = messages.filter(
+              (msg: BaseMessage) =>
+                !existing.some((m: BaseMessage) => m.id === msg.id)
+            );
+
+            if (newMessages.length > 0) {
+              threadStore.set(threadId, [...existing, ...newMessages]);
+
+              await stream.writeSSE({
+                event: "messages",
+                data: JSON.stringify(newMessages),
+              });
+            }
+          }
+        }
+
+        await stream.writeSSE({
+          event: "end",
+          data: JSON.stringify({}),
+        });
+      } catch (error) {
+        console.error("Stream error:", error);
+
+        // For errors, send an error event
+        await stream.writeSSE({
+          event: "error",
+          data: JSON.stringify({
+            error: error instanceof Error ? error.message : "An error occurred",
+          }),
+        });
+
+        await stream.writeSSE({
+          event: "end",
+          data: JSON.stringify({}),
+        });
+      }
+    });
+  }
+);
+
+// Add endpoint to resume interrupted threads
+app.post(
+  "/api/langgraph/threads/:threadId/runs/:runId/resume",
+  jwtAuthMiddleware(),
+  async (c) => {
+    const threadId = c.req.param("threadId");
+    const runId = c.req.param("runId");
+
+    console.log(`🔄 Resuming thread ${threadId} from run ${runId}`);
+
+    // Clear interrupts for this thread
+    interruptStore.delete(threadId);
+
+    // The actual resumption will happen when the next message is sent
+    // This endpoint just clears the interrupt state
+    return c.json({
+      run_id: runId,
+      thread_id: threadId,
+      status: "completed",
+    });
+  }
+);
+
+const port = Number(process.env.PORT) || 3000;
+console.log(`🚀 Server running on http://localhost:${port}`);
+serve({ fetch: app.fetch, port });

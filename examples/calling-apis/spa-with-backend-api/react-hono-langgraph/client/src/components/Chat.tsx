@@ -1,12 +1,10 @@
-// Simple icon components to replace lucide-react
 import { Loader2, Send, Trash2 } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
-import {
-  INTERRUPTION_PREFIX,
-  isSSEContentData,
-  isSSEData,
-  isSSEErrorData,
-} from "shared";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Message, toUIMessage } from "shared";
+
+import { FederatedConnectionInterrupt } from "@auth0/ai/interrupts";
+import { HumanMessage } from "@langchain/core/messages";
+import { useStream } from "@langchain/langgraph-sdk/react";
 
 import { useAuth0 } from "../hooks/useAuth0";
 import { FederatedConnectionPopup } from "./FederatedConnectionPopup";
@@ -14,220 +12,125 @@ import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
 
-import type { ChatMessage, Auth0InterruptionUI, ChatRequest } from "shared";
-// Use shared constant and type guards
-const InterruptionPrefix = INTERRUPTION_PREFIX;
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:3000";
+const ASSISTANT_ID = "default";
+
+const useFocus = () => {
+  const htmlElRef = useRef<HTMLInputElement>(null);
+  const setFocus = () => {
+    if (!htmlElRef.current) {
+      return;
+    }
+    htmlElRef.current.focus();
+  };
+  return [htmlElRef, setFocus] as const;
+};
 
 export function Chat() {
   const { getToken } = useAuth0();
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [toolInterrupt, setToolInterrupt] =
-    useState<Auth0InterruptionUI | null>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
+  const [threadId, setThreadId] = useState<string | null>(null);
+  const [input, setInput] = useState("");
+  const [currentInterrupt, setCurrentInterrupt] = useState<any>(null);
+  const [inputRef] = useFocus();
 
-  const createChatRequest = useCallback(
-    (messagesToSend: ChatMessage[]): ChatRequest => {
-      return {
-        messages: messagesToSend.map((msg) => ({
-          role: msg.role,
-          content: msg.content,
-        })),
-      };
-    },
-    []
-  );
-
-  const performChatRequest = useCallback(
-    async (messagesToSend: ChatMessage[]): Promise<void> => {
-      if (isLoading) return;
-
-      setIsLoading(true);
-      setError(null);
-
-      // Create abort controller for this request
-      abortControllerRef.current = new AbortController();
-
+  useEffect(() => {
+    const fetchToken = async () => {
       try {
-        const token = await getToken();
-        const chatRequest = createChatRequest(messagesToSend);
+        const authToken = await getToken();
+        setToken(authToken);
+      } catch (error) {
+        console.error("Error getting token:", error);
+        setError("Failed to authenticate");
+      }
+    };
+    fetchToken();
+  }, [getToken]);
 
-        const response = await fetch(`${SERVER_URL}/chat`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(chatRequest),
-          signal: abortControllerRef.current.signal,
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+  // Memoize headers to avoid unnecessary re-renders
+  const defaultHeaders = useMemo(() => {
+    const headers = token
+      ? {
+          Authorization: `Bearer ${token}`,
         }
+      : undefined;
 
-        if (!response.body) {
-          throw new Error("Response body is null");
-        }
+    return headers;
+  }, [token]);
 
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let assistantContent = "";
-
-        // Create assistant message placeholder
-        const assistantMessage: ChatMessage = {
-          id: `assistant-${Date.now()}`,
-          role: "assistant",
-          content: "",
-          timestamp: new Date(),
-        };
-
-        setMessages((prev) => [...prev, assistantMessage]);
-
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            const chunk = decoder.decode(value);
-            const lines = chunk.split("\n");
-
-            for (const line of lines) {
-              if (line.startsWith("data: ")) {
-                const data = line.slice(6);
-
-                if (data === "[DONE]") {
-                  setIsLoading(false);
-                  return;
-                }
-
-                // Check for Auth0 AI interruption
-                if (data.startsWith(InterruptionPrefix)) {
-                  const interruptData = data.slice(InterruptionPrefix.length);
-                  try {
-                    const parsedInterrupt = JSON.parse(interruptData) as Omit<
-                      Auth0InterruptionUI,
-                      "resume"
-                    >;
-
-                    // Set tool interrupt state to show the popup
-                    setToolInterrupt({
-                      ...parsedInterrupt,
-                      resume: async () => {
-                        setToolInterrupt(null);
-                        setError(null);
-
-                        // Remove incomplete assistant message
-                        setMessages((prev) =>
-                          prev.filter(
-                            (msg) =>
-                              msg.role !== "assistant" || msg.content !== ""
-                          )
-                        );
-
-                        // Retry the chat request with the same messages but fresh token
-                        await performChatRequest(messagesToSend);
-                      },
-                    });
-
-                    setIsLoading(false);
-                    return;
-                  } catch (parseError) {
-                    console.error("Error parsing interrupt data:", parseError);
-                    setError("Failed to parse interrupt data");
-                    return;
-                  }
-                }
-
-                try {
-                  const parsed: unknown = JSON.parse(data);
-
-                  if (isSSEData(parsed)) {
-                    if (isSSEContentData(parsed) && parsed.content) {
-                      assistantContent = parsed.content;
-                      setMessages((prev) =>
-                        prev.map((msg) =>
-                          msg.id === assistantMessage.id
-                            ? { ...msg, content: assistantContent }
-                            : msg
-                        )
-                      );
-                    } else if (isSSEErrorData(parsed)) {
-                      throw new Error(parsed.error || "Unknown error occurred");
-                    }
-                  }
-                } catch (parseError) {
-                  console.error("Error parsing SSE data:", parseError);
-                  // Continue processing other lines instead of failing completely
-                }
-              }
-            }
-          }
-        } finally {
-          reader.releaseLock();
-        }
-      } catch (err) {
-        if (err instanceof Error && err.name === "AbortError") {
-          console.log("Request aborted");
-          return;
-        }
-
-        console.error("Chat error:", err);
-        const errorMessage =
-          err instanceof Error ? err.message : "An error occurred";
-        setError(errorMessage);
-
-        // Remove the incomplete assistant message
-        setMessages((prev) =>
-          prev.filter((msg) => msg.role !== "assistant" || msg.content !== "")
-        );
-      } finally {
-        setIsLoading(false);
-        abortControllerRef.current = null;
+  const thread = useStream({
+    apiUrl: `${SERVER_URL}/api/langgraph`,
+    assistantId: ASSISTANT_ID,
+    threadId,
+    onThreadId: setThreadId,
+    onError: (err) => {
+      console.error("Thread error:", err);
+    },
+    onUpdateEvent: (data) => {
+      if (data && typeof data === "object" && "__interrupt__" in data) {
+        console.log("🚨 INTERRUPT FOUND IN UPDATE EVENT:", data.__interrupt__);
+        setCurrentInterrupt(data.__interrupt__);
       }
     },
-    [isLoading, getToken, createChatRequest]
-  );
+    defaultHeaders,
+  });
+
+  // Resume function after authorization is complete
+  const resumeAfterAuth = useCallback(async () => {
+    console.log("🔄 Resuming after auth - clearing interrupt");
+    setCurrentInterrupt(null);
+    setError(null);
+
+    try {
+      // Get the fresh token after authorization
+      const freshToken = await getToken();
+      setToken(freshToken);
+
+      // Resume the thread
+      if (thread.interrupt) {
+        await thread.submit(null);
+      }
+    } catch (error) {
+      console.error("Error getting fresh token after authorization:", error);
+      setError("Failed to get fresh token after authorization");
+    }
+  }, [getToken, thread]);
+
+  const clearMessages = useCallback(() => {
+    setError(null);
+    setThreadId(null);
+    setCurrentInterrupt(null);
+  }, []);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
-      if (!input.trim() || isLoading) return;
+      if (!input.trim() || thread.isLoading) return;
 
-      const userMessage: ChatMessage = {
-        id: `user-${Date.now()}`,
-        role: "user",
-        content: input.trim(),
-        timestamp: new Date(),
-      };
-
-      setMessages((prev) => [...prev, userMessage]);
+      const messageContent = input.trim();
       setInput("");
 
-      // Use the shared chat request function
-      await performChatRequest([...messages, userMessage]);
+      try {
+        const humanMessage = new HumanMessage(messageContent);
+
+        thread.submit({
+          messages: [humanMessage],
+        });
+      } catch (err) {
+        console.error("Submit error:", err);
+      }
     },
-    [input, isLoading, messages, performChatRequest]
+    [input, thread]
   );
 
-  const clearMessages = useCallback(() => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-    setToolInterrupt(null);
-    setMessages([]);
-    setError(null);
-  }, []);
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-lg font-semibold">
           Calendar Assistant (LangGraph)
         </CardTitle>
-        {messages.length > 0 && (
+        {threadId && (
           <Button
             variant="outline"
             size="sm"
@@ -238,73 +141,96 @@ export function Chat() {
           </Button>
         )}
       </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Messages */}
-        <div className="space-y-4 max-h-96 overflow-y-auto">
-          {messages.length === 0 ? (
-            <div className="text-center text-muted-foreground py-8">
-              <p className="text-sm">Ask me about your calendar events!</p>
-              <p className="text-xs mt-1">
-                Try: "What meetings do I have today?" or "Show me my calendars"
-              </p>
-            </div>
-          ) : (
-            messages.map((message) => (
-              <MessageBubble key={message.id} message={message} />
-            ))
-          )}
-          {isLoading && (
-            <div className="flex justify-start">
-              <div className="bg-muted rounded-lg px-3 py-2 max-w-[80%] flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm text-muted-foreground">
-                  Thinking...
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Error message - hide if it's an Auth0 interrupt (we show the popup instead) */}
-        {error && !error.startsWith?.(InterruptionPrefix) && (
-          <div className="bg-red-50 text-red-700 text-sm p-3 rounded-lg">
+      <CardContent>
+        {error && (
+          <div className="bg-red-50 text-red-700 text-sm p-3 rounded-lg mb-4">
             Error: {error}
           </div>
         )}
 
-        {/* Federated Connection Interrupt Handling */}
-        {toolInterrupt && (
-          <FederatedConnectionPopup interrupt={toolInterrupt} />
-        )}
+        <div className="space-y-4">
+          {/* Messages */}
+          <div className="space-y-4 max-h-96 overflow-y-auto">
+            {thread.messages.length === 0 ? (
+              <div className="text-center text-muted-foreground py-8">
+                <p className="text-sm">Ask me about your calendar events!</p>
+                <p className="text-xs mt-1">
+                  Try: "What meetings do I have today?" or "Show me my
+                  calendars"
+                </p>
+              </div>
+            ) : (
+              thread.messages
+                .map(toUIMessage)
+                .filter((m) => m !== null)
+                .map((message, index) => (
+                  <MessageBubble
+                    key={message.id || `msg-${index}`}
+                    message={message}
+                  />
+                ))
+            )}
+            {thread.isLoading && (
+              <div className="flex justify-start">
+                <div className="bg-muted rounded-lg px-3 py-2 max-w-[80%] flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="text-sm text-muted-foreground">
+                    Thinking...
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
 
-        {/* Input form */}
-        <form onSubmit={handleSubmit} className="flex gap-2">
-          <Input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about your calendar..."
-            disabled={isLoading}
-            className="flex-1"
-          />
-          <Button
-            className="h-10"
-            type="submit"
-            disabled={isLoading || !input.trim()}
-          >
-            <Send className="h-4 w-4" />
-          </Button>
-        </form>
+          {/* Auth0 Interrupt Popup - Using currentInterrupt from stream updates */}
+          {currentInterrupt &&
+          FederatedConnectionInterrupt.isInterrupt(currentInterrupt.value) ? (
+            <FederatedConnectionPopup
+              interrupt={currentInterrupt.value}
+              onAuthComplete={resumeAfterAuth}
+            />
+          ) : null}
+
+          {/* Input form */}
+          <form onSubmit={handleSubmit} className="flex gap-2">
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask about your calendar..."
+              disabled={thread.isLoading}
+              className="flex-1"
+              ref={inputRef}
+              autoFocus
+            />
+            <Button
+              className="h-10"
+              type="submit"
+              disabled={thread.isLoading || !input.trim()}
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </form>
+        </div>
       </CardContent>
     </Card>
   );
 }
 
 interface MessageBubbleProps {
-  message: ChatMessage;
+  message: Message;
 }
 
 function MessageBubble({ message }: MessageBubbleProps) {
-  const isUser = message.role === "user";
+  const isUser = message.type === "human";
+
+  // Skip messages without content
+  if (
+    !message.content ||
+    typeof message.content !== "string" ||
+    message.content.trim() === ""
+  ) {
+    return null;
+  }
 
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
