@@ -19,6 +19,9 @@ export const withSlack = auth0AI.withTokenForConnection({
 
 export const withGoogleCalendarCommunity = auth0AI.withTokenForConnection({
   connection: "google-oauth2",
+  accessToken: async (_, config) => {
+    return config.configurable._credentials.accessToken;
+  },
   scopes: [
     "https://www.googleapis.com/auth/calendar",
     "https://www.googleapis.com/auth/calendar.events",

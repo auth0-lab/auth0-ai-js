@@ -32,7 +32,11 @@ export class FederatedConnectionAuthorizer extends FederatedConnectionAuthorizer
       "refreshToken"
     >
   ) {
-    const refreshToken = config.refreshToken ?? defaultGetRefreshToken();
+    // Only provide default refreshToken if no accessToken is provided
+    // This prevents conflicts when using accessToken for federated token exchange
+    const refreshToken = config.accessToken
+      ? undefined
+      : (config.refreshToken ?? defaultGetRefreshToken());
     super(auth0, {
       ...config,
       refreshToken,

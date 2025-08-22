@@ -15,7 +15,7 @@ function addAuthContext(body: any, session: any) {
     config: {
       configurable: {
         _credentials: {
-          refreshToken: session.tokenSet.refreshToken,
+          accessToken: session.tokenSet.accessToken,
         },
       },
     },
