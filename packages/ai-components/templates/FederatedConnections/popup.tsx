@@ -22,34 +22,14 @@ export function EnsureAPIAccessPopup({
       return;
     }
     const interval = setInterval(async () => {
-      try {
-        if (loginPopup && loginPopup.closed) {
-          setIsLoading(false);
-          setLoginPopup(null);
-          clearInterval(interval);
-          if (typeof onFinish === "function") {
-            onFinish();
-          } else if (typeof resume === "function") {
-            resume();
-          }
-        }
-      } catch (error) {
-        // Handle Cross-Origin-Opener-Policy error
-        if (error instanceof Error && error.message.includes('Cross-Origin-Opener-Policy')) {
-          console.warn('Popup window access blocked by COOP policy. Using fallback detection.');
-          // Fallback: assume popup is closed after a reasonable timeout
-          setTimeout(() => {
-            setIsLoading(false);
-            setLoginPopup(null);
-            clearInterval(interval);
-            if (typeof onFinish === "function") {
-              onFinish();
-            } else if (typeof resume === "function") {
-              resume();
-            }
-          }, 5000); // 5 second fallback
-        } else {
-          console.error('Error checking popup status:', error);
+      if (loginPopup && loginPopup.closed) {
+        setIsLoading(false);
+        setLoginPopup(null);
+        clearInterval(interval);
+        if (typeof onFinish === "function") {
+          onFinish();
+        } else if (typeof resume === "function") {
+          resume();
         }
       }
     }, 1000);
