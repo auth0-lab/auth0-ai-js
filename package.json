@@ -24,7 +24,8 @@
   },
   "packageManager": "npm@9.8.0",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "examples/**/*"
   ],
   "dependencies": {
     "@openfga/sdk": "^0.8.0",
