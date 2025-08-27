@@ -17,6 +17,84 @@ import { createListUserCalendarsTool } from "./tools/listUserCalendars";
 import type { RunnableLike } from "@langchain/core/runnables";
 import type { Context } from "hono";
 
+/**
+LangGraph Execution Flow (with tool_calls? branching logic)
+
+                       +-----------+
+        +--------+     | callLLM   |----- false ----+
+        | START  | --> +-----------+                |
+        +--------+           |                      v
+                             |                 +--------+
+                             |                 |  END   |
+                             |                 +--------+
+                             |
+                             v
+                      [tool_calls?]
+                          /   \
+                         /     \
+                   true /       \ false
+                       /         \
+                      v           \
+               +------------+      \
+               |   tools    | <-----+
+               +------------+
+                      |
+                      v
+                +-----------+
+                |  callLLM  |
+                +-----------+
+
+Node Summary:
+
+1. START
+   - Graph entry point.
+   - Edge: → callLLM
+
+2. callLLM
+   - Invokes the LLM with `state.messages`.
+   - Appends an AIMessage to `messages`.
+   - Conditional branch based on last AI message:
+     → If `tool_calls?.length > 0` → tools      (true)
+     → Else → END                                (false)
+
+3. tools
+   - Executes tools requested by LLM (e.g. listNearbyEvents, listUserCalendars).
+   - Appends tool output messages to `messages`.
+   - Edge: → callLLM (loop continues)
+
+4. END
+   - Terminates graph execution.
+
+Routing Logic:
+const routeAfterLLM = (state) => {
+  const lastMessage = state.messages[state.messages.length - 1];
+  return lastMessage.tool_calls?.length ? "tools" : END;
+};
+
+State Shape:
+{
+  messages: BaseMessage[];
+  // Includes user inputs, AI messages, tool calls, and tool outputs
+}
+
+Execution Example:
+User: "What's on my calendar tomorrow?"
+
+- START
+  → callLLM (LLM decides it needs a tool)
+- tool_calls? → true
+  → tools (runs calendar tool, appends output)
+  → callLLM (LLM sees tool output, finishes reasoning)
+- tool_calls? → false
+  → END
+
+Suggested Stream Modes:
+streamMode: ["updates", "values", "messages"]
+- "updates": Emits only changed keys in state (e.g. new messages)
+- "values": Emits full state after each step
+- "messages": Emits console-style logs from inside nodes
+*/
+
 export const createGraph = (c: Context) => {
   // Create the Google Calendar tool wrapper with auth context
   const withGoogleCalendar = createGoogleCalendarTool(c);
