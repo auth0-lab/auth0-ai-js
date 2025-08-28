@@ -17,27 +17,26 @@ const SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:3000";
 export function Chat() {
   const { getToken } = useAuth0();
 
-  const baseChatHelpers = useChat({
-    api: `${SERVER_URL}/chat`,
-    fetch: (async (url: string | URL | Request, init?: RequestInit) => {
-      const token = await getToken();
-      return fetch(url, {
-        ...init,
-        headers: {
-          "Content-Type": "application/json",
-          ...init?.headers,
-          Authorization: `Bearer ${token}`,
-        },
-      });
-    }) as typeof fetch,
-  });
-
-  const chatHelpers = useInterruptions((errorHandler) => ({
-    ...baseChatHelpers,
-    onError: errorHandler((error) => {
-      console.error("Chat error:", error);
-    }),
-  }));
+  const chatHelpers = useInterruptions((errorHandler) =>
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useChat({
+      api: `${SERVER_URL}/chat`,
+      fetch: (async (url: string | URL | Request, init?: RequestInit) => {
+        const token = await getToken();
+        return fetch(url, {
+          ...init,
+          headers: {
+            "Content-Type": "application/json",
+            ...init?.headers,
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      }) as typeof fetch,
+      onError: errorHandler((error) => {
+        console.error("Chat error:", error);
+      }),
+    })
+  );
 
   const {
     messages,
