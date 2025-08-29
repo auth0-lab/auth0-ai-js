@@ -6,6 +6,7 @@
     "build:deps": "npm run build --workspace=@auth0/ai --workspace=@auth0/ai-genkit --workspace=@auth0/ai-langchain --workspace=@auth0/ai-llamaindex --workspace=@auth0/ai-vercel",
     "dev": "next dev",
     "start": "next start",
+    "prebuild": "[ ! -f .env.local ] && cp .env.example .env.local || true",
     "build": "next build",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
