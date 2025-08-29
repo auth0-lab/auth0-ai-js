@@ -4,7 +4,8 @@ import {
   Message,
   ToolExecutionError,
 } from "ai";
-import { ChatMessage, OpenAIAgent } from "llamaindex";
+import { ReActAgent, Settings } from "llamaindex";
+import { openai } from "@llamaindex/openai";
 
 import {
   checkUsersCalendar,
@@ -15,6 +16,11 @@ import { setAIContext } from "@auth0/ai-llamaindex";
 import { withInterruptions } from "@auth0/ai-llamaindex/interrupts";
 import { errorSerializer } from "@auth0/ai-vercel/interrupts";
 
+// Configure OpenAI LLM
+Settings.llm = openai({
+  model: "gpt-4o-mini",
+});
+
 export async function POST(request: Request) {
   const { id, messages }: { id: string; messages: Message[] } =
     await request.json();
@@ -24,10 +30,9 @@ export async function POST(request: Request) {
   return createDataStreamResponse({
     execute: withInterruptions(
       async (dataStream) => {
-        const agent = new OpenAIAgent({
+        const agent = new ReActAgent({
           systemPrompt: "You are an AI assistant",
           tools: [checkUsersCalendar(), listChannels(), listRepositories()],
-          chatHistory: messages as ChatMessage[],
           verbose: true,
         });
 
