@@ -24,10 +24,15 @@
   },
   "packageManager": "npm@9.8.0",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "examples/**/*"
   ],
   "dependencies": {
     "@openfga/sdk": "^0.8.0",
     "vite": "^6.2.3"
+  },
+  "optionalDependencies": {
+    "glob-hasher-linux-x64-gnu": "^1.0.0",
+    "@rollup/rollup-linux-x64-gnu": "^4.0.0"
   }
 }
