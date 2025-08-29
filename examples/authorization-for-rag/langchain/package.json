@@ -16,8 +16,8 @@
   },
   "dependencies": {
     "@auth0/ai-langchain": "*",
-    "@langchain/openai": "^0.3.17",
-    "@openfga/sdk": "^0.8.0",
+    "@langchain/openai": "^0.3.14",
+    "@openfga/sdk": "0.8.0",
     "dotenv": "^16.4.7",
     "langchain": "^0.3.12"
   },
