@@ -3,12 +3,19 @@
   "private": true,
   "version": "0.1.0",
   "scripts": {
-    "dev": "next dev --turbopack",
+    "build:deps": "npm run build --workspace=@auth0/ai --workspace=@auth0/ai-genkit --workspace=@auth0/ai-langchain --workspace=@auth0/ai-llamaindex --workspace=@auth0/ai-vercel",
+    "dev": "next dev",
     "start": "next start",
+    "prebuild": "[ ! -f .env.local ] && cp .env.example .env.local || true",
+    "build": "next build",
+    "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "type-check": "tsc --noEmit",
     "all:dev": "run-p langgraph:dev dev",
     "all:start": "run-p langgraph:start start",
     "langgraph:start": "npx @langchain/langgraph-cli up",
-    "langgraph:dev": "npx @langchain/langgraph-cli dev --port 54367"
+    "langgraph:dev": "npx @langchain/langgraph-cli dev --port 54367",
+    "langgraph:debug": "NODE_OPTIONS='--inspect=0.0.0.0:9229' npx @langchain/langgraph-cli dev --port 54367"
   },
   "author": {
     "name": "Auth0 Inc.",
@@ -20,6 +27,7 @@
     "@agentic/google-drive": "^7.6.4",
     "@ai-sdk/openai": "^1.2.1",
     "@ai-sdk/react": "^1.1.21",
+    "@auth0/ai": "*",
     "@auth0/ai-genkit": "*",
     "@auth0/ai-langchain": "*",
     "@auth0/ai-llamaindex": "*",
@@ -45,7 +53,7 @@
     "genkit": "^1.5",
     "genkitx-openai": "^0.20.2",
     "googleapis": "^150.0.1",
-    "langgraph-nextjs-api-passthrough": "^0.0.3",
+    "jose": "^5.9.6",
     "lucide-react": "^0.479.0",
     "next": "^15.2.3",
     "nuqs": "^2.4.1",

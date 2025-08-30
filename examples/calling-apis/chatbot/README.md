@@ -14,6 +14,29 @@ This is a [Next.js](https://nextjs.org) application that implements [Auth0 AI](h
     - **Allowed Callback URLs**: `http://localhost:3000/auth/callback`
     - **Allowed Logout URLs**: `http://localhost:3000`
     - **Grant Type**: `Token Exchange (Federated Connection)` (or `urn:auth0:params:oauth:grant-type:token-exchange:federated-connection-access-token`)
+  - An API for representing the external Langgraph API Server
+    - In your Auth0 Dashboard, go to Applications > APIs
+    - Create a new API with an identifier (audience).
+  - A Resource Server Client for performing token exchanges with Token Vault on behalf of a user. This will be used by the Langgraph API server (@langchain/langgraph-cli or Langgraph Platform) when executing tools that require third-party access. 
+    - Create the Resource Server Client using the Management API:
+      ```
+          curl -L 'https://{tenant}.auth0.com/api/v2/clients' \
+      -H 'Content-Type: application/json' \
+      -H 'Accept: application/json' \
+      -H 'Authorization: Bearer {MANAGEMENT_API_TOKEN}' \
+      -d '{
+        "name": "Calendar API Resource Server Client",
+        "app_type": "resource_server",
+        "grant_types": ["urn:auth0:params:oauth:grant-type:token-exchange:federated-connection-access-token"],
+        "resource_server_identifier": "YOUR_API_IDENTIFIER"
+      }'
+      ```
+      - Your `MANAGEMENT_API_TOKEN` above must have the `create:clients` scope in order to create a new client. To create a new Management API token with the right access permissions:
+        - Navigate to Applications > APIs > Auth0 Management API > API Explorer tab in your tenant.
+        - Click the Create & Authorize Test Application button.
+        - Copy the JWT access token shown and provide it as the `MANAGEMENT_API_TOKEN`.
+        - Use the audience that you provided when creating the API for the Langgraph API Server as the `resource_server_identifier`.
+      - Note down the `client_id` and `client_secret` returned from the cURL response for your environment variables after running cURL successfully.
   - Either **Google**, **Slack** or **Github** social connections enabled for the application.
 
 ### Setup the workspace `.env` file
@@ -25,9 +48,23 @@ Copy the `.env.example` file to `.env` and fill in the values for the following 
 AUTH0_DOMAIN="<auth0-domain>"
 AUTH0_CLIENT_ID="<auth0-client-id>"
 AUTH0_CLIENT_SECRET="<auth0-client-secret>"
+AUTH0_SECRET="<use [openssl rand -hex 32] to generate a 32 bytes value>"
+APP_BASE_URL=http://localhost:3000
+AUTH0_SCOPE='openid profile email'
+# Langgraph API audience
+AUTH0_AUDIENCE="<auth0-audience>"
+NEXT_PUBLIC_URL="http://localhost:3000"
 
 # OpenAI
 OPENAI_API_KEY=xx-xxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# LANGGRAPH
+LANGGRAPH_API_URL=http://localhost:54367
+# Auth0 Resource Server Client Configuration (for token exchange with Token Vault)
+# These credentials belong to a special "resource_server" client that can perform token exchanges
+# on behalf of the user within your Langgraph API
+RESOURCE_SERVER_CLIENT_ID="<your-resource-server-client-id>"
+RESOURCE_SERVER_CLIENT_SECRET="<your-resource-server-client-secret>"
 ```
 
 > [!NOTE]
