@@ -37,12 +37,6 @@ async function makeLangGraphRequest(
     ...additionalHeaders,
   };
 
-  // Conditionally include x-api-key header only if LANGSMITH_API_KEY is defined
-  // This can still be useful for Langgraph Cloud
-  if (process.env.LANGSMITH_API_KEY) {
-    requestHeaders["x-api-key"] = `Bearer ${process.env.LANGSMITH_API_KEY}`;
-  }
-
   // Pass Auth0 access token for the API in the Authorization header
   requestHeaders["Authorization"] = `Bearer ${accessToken}`;
 
