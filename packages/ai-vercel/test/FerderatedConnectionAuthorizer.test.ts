@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { Tool, ToolExecutionOptions } from "ai";
+import { Tool } from "ai";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { z } from "zod";
+import { z } from 'zod/v3';
 
 import { FederatedConnectionAuthorizerBase } from "@auth0/ai/FederatedConnections";
 import { FederatedConnectionInterrupt } from "@auth0/ai/interrupts";
@@ -15,7 +15,7 @@ import {
 describe("FederatedConnectionAuthorizer", () => {
   const mockTool = {
     description: "A mock tool for testing",
-    parameters: z.object({
+    inputSchema: z.object({
       userID: z.string(),
       input: z.string(),
     }),
@@ -71,7 +71,7 @@ describe("FederatedConnectionAuthorizer", () => {
         setAIContext({ threadID: "123" });
         await protectedTool!.execute!(
           { userID: "user1", input: "input" },
-          {} as ToolExecutionOptions
+          {} as any
         );
       } catch (err) {
         error = err as FederatedConnectionInterrupt;
@@ -114,7 +114,7 @@ describe("FederatedConnectionAuthorizer", () => {
         });
         await protectedTool!.execute!(
           { userID: "user1", input: "input" },
-          {} as ToolExecutionOptions
+          {} as any
         );
       } catch (err) {
         error = err as FederatedConnectionInterrupt;

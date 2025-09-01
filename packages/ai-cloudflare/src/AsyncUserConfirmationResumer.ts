@@ -1,5 +1,5 @@
 import { Schedule } from "agents";
-import { Message } from "ai";
+import { UIMessage } from "ai";
 
 import {
   AuthorizationPendingInterrupt,
@@ -23,8 +23,8 @@ interface ChatAgent {
     callback: keyof this,
     payload?: T
   ): Promise<Schedule<T>>;
-  messages: Message[];
-  saveMessages(messages: Message[]): Promise<void>;
+  messages: UIMessage[];
+  saveMessages(messages: UIMessage[]): Promise<void>;
   get name(): string;
 }
 
@@ -94,7 +94,7 @@ export const AsyncUserConfirmationResumer = <
         return;
       }
 
-      const newMessage: Message = {
+      const newMessage: UIMessage = {
         ...message,
         parts: message.parts?.map((p) =>
           p.type === "tool-invocation" &&

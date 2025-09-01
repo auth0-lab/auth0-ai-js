@@ -1,6 +1,6 @@
 import { tool } from "ai";
 import { google } from "googleapis";
-import { z } from "zod";
+import { z } from 'zod/v3';
 
 import { getAccessTokenForConnection } from "@auth0/ai-vercel";
 
@@ -18,7 +18,7 @@ export const createListNearbyEventsTool = (
     tool({
       description:
         "List calendar events between a given start and end time from a user's calendar (personal or shared)",
-      parameters: z.object({
+      inputSchema: z.object({
         start: z.coerce.date(),
         end: z.coerce.date(),
         calendarId: z.string().optional().default("primary"),

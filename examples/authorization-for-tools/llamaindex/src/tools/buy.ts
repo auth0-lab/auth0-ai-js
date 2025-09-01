@@ -1,7 +1,7 @@
 import "dotenv/config";
 
 import { FunctionTool } from "llamaindex";
-import z from "zod";
+import { z } from 'zod/v3';
 
 import { Auth0AI } from "@auth0/ai-llamaindex";
 
@@ -32,7 +32,7 @@ export const buyTool = (context: Context) => {
       {
         name: "buy",
         description: "Use this function to buy stock",
-        parameters: z.object({
+        inputSchema: z.object({
           ticker: z.string(),
           qty: z.number(),
         }),
