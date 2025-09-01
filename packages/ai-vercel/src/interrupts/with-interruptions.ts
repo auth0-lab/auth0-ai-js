@@ -1,19 +1,19 @@
-import { DataStreamWriter, Message, Tool } from "ai";
+import { UIMessage, Tool, UIMessageStreamWriter } from "ai";
 
 import { invokeTools } from "./invokeTools";
 
-type ExecuteFN = (dataStream: DataStreamWriter) => Promise<void> | void;
+type ExecuteFN = (dataStream: { writer: UIMessageStreamWriter<UIMessage> }) => Promise<void> | void;
 
 export function withInterruptions(
   fn: ExecuteFN,
   config: {
-    messages: Message[];
+    messages: UIMessage[];
     tools: {
       [key: string]: Tool;
     };
   }
-): (dataStream: DataStreamWriter) => Promise<void> {
-  return async (dataStream: any): Promise<void> => {
+): (dataStream: any) => Promise<void> {
+  return async (dataStream: { writer: UIMessageStreamWriter<UIMessage> }): Promise<void> => {
     await invokeTools({
       messages: config.messages,
       tools: config.tools,

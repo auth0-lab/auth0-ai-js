@@ -107,7 +107,7 @@ export const app = new Hono()
             tools,
           });
 
-          result.mergeIntoDataStream(dataStream, {
+          result.mergeIntoUIMessageStream(dataStream, {
             sendReasoning: true,
           });
         },

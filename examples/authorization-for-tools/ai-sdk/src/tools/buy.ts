@@ -1,7 +1,7 @@
 import "dotenv/config";
 
 import { tool } from "ai";
-import { z } from "zod";
+import { z } from 'zod/v3';
 
 import { Auth0AI } from "@auth0/ai-vercel";
 
@@ -27,7 +27,7 @@ export const buy = (context: Context) => {
   return useFGA(
     tool({
       description: "Use this function to buy stock",
-      parameters: z.object({
+      inputSchema: z.object({
         ticker: z.string(),
         qty: z.number(),
       }),

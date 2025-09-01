@@ -1,7 +1,7 @@
 import { addHours, formatISO } from "date-fns";
 import { GaxiosError } from "gaxios";
 import { google } from "googleapis";
-import { z } from "zod";
+import { z } from 'zod/v3';
 
 import { withTokenForGoogleConnection } from "@/app/(genkit)/lib/auth0-ai";
 import { ai } from "@/app/(genkit)/lib/genkit";

@@ -56,11 +56,12 @@ export const useInterruptions = (
           setToolInterrupt(null);
 
           if (parsedError?.behavior === "reload") {
-            reload();
+            regenerate();
           } else {
             addToolResult({
+              tool: parsedError.toolName,
               toolCallId: id,
-              result: { continueInterruption: true, ...result },
+              output: { continueInterruption: true, ...result },
             });
           }
         },
@@ -68,7 +69,7 @@ export const useInterruptions = (
     };
   };
 
-  const { addToolResult, reload, ...chat } = useChatCreator(errorHandler);
+  const { addToolResult, regenerate, ...chat } = useChatCreator(errorHandler);
 
   let messages = chat.messages;
   if (toolInterrupt) {
@@ -76,12 +77,14 @@ export const useInterruptions = (
       ...message,
       parts: message.parts?.map((part) =>
         part.type === "tool-invocation" &&
-        part.toolInvocation.toolCallId === toolInterrupt.toolCallId
+        part.toolCallId === toolInterrupt.toolCallId
           ? {
-              ...part,
-              toolInvocation: {
-                ...part.toolInvocation,
-                state: "call",
+            ...part,
+            state: "output-available",
+            errorText: undefined,
+              output: {
+                ...(part?.output || {}),
+                state: "output-available",
               },
             }
           : part
@@ -92,7 +95,7 @@ export const useInterruptions = (
   return {
     ...chat,
     messages,
-    reload,
+    regenerate,
     addToolResult,
     toolInterrupt,
   };

@@ -2,7 +2,7 @@ import { addHours, formatISO } from "date-fns";
 import { GaxiosError } from "gaxios";
 import { google } from "googleapis";
 import { tool } from "llamaindex";
-import { z } from "zod";
+import { z } from 'zod/v3';
 
 import { withGoogleCalendar } from "@/app/(llamaindex)/lib/auth0-ai";
 import { getCredentialsForConnection } from "@auth0/ai-llamaindex";
