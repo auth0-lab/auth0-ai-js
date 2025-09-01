@@ -1,5 +1,5 @@
 import { useAgentChat } from "agents/ai-react";
-import { Message } from "ai";
+import { UIMessage } from "ai";
 
 import { Auth0InterruptionUI, useInterruptions } from "@auth0/ai-vercel/react";
 
@@ -7,6 +7,7 @@ export const useAgentChatInterruptions = <State>(
   options: Parameters<typeof useAgentChat<State>>[0]
 ): ReturnType<typeof useInterruptions> & ReturnType<typeof useAgentChat> => {
   const { agent } = options;
+  // @ts-expect-error ErrorHandler
   const result = useInterruptions((handler) => {
     const onError =
       options.onError ?? ((error) => console.error("Chat error:", error));
@@ -16,7 +17,7 @@ export const useAgentChatInterruptions = <State>(
     });
     return {
       setMessages: setMessages as (
-        messages: Message[] | ((messages: Message[]) => Message[])
+        messages: UIMessage[] | ((messages: UIMessage[]) => UIMessage[])
       ) => void,
       ...rest,
     };

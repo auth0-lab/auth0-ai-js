@@ -1,5 +1,5 @@
 import { tool } from "ai";
-import { z } from "zod";
+import { z } from "zod/v3";
 
 import { getCIBACredentials } from "@auth0/ai-vercel";
 
@@ -8,7 +8,7 @@ import { withAsyncUserConfirmation } from "../auth0ai";
 export const buyStock = withAsyncUserConfirmation(
   tool({
     description: "Execute an stock purchase given stock ticker and quantity",
-    parameters: z.object({
+    inputSchema: z.object({
       tradeID: z
         .string()
         .uuid()

@@ -1,16 +1,16 @@
-import { CoreMessage, ToolExecutionError } from "ai";
+import { ModelMessage, AISDKError } from "ai";
 
 import { Auth0Interrupt } from "@auth0/ai/interrupts";
 
-export const toolCallFromError = (error: ToolExecutionError): CoreMessage => {
+export const toolCallFromError = (error: AISDKError & { toolCallId: string }): any => {
   return {
     role: "assistant",
     content: [
       {
         type: "tool-call",
+        toolName: error.name,
         toolCallId: error.toolCallId,
-        toolName: error.toolName,
-        args: error.toolArgs,
+        input: error.message,
       },
     ],
   };
@@ -25,10 +25,10 @@ export const toolCallFromError = (error: ToolExecutionError): CoreMessage => {
  * @returns - The messages with the tool call appended or the current messages if the error is not a tool execution error.
  */
 export const appendToolCall = (
-  currentMessages: CoreMessage[],
-  error: ToolExecutionError
-): CoreMessage[] => {
-  if (!(error instanceof ToolExecutionError)) {
+  currentMessages: ModelMessage[],
+  error: AISDKError & { toolCallId: string }
+): ModelMessage[] => {
+  if (!(error instanceof AISDKError)) {
     return currentMessages;
   }
 

@@ -1,4 +1,4 @@
-import { CoreMessage, generateText, ToolExecutionError } from "ai";
+import { ModelMessage, generateText, AISDKError} from "ai";
 import { Job } from "bullmq";
 
 import { queue } from "@/src/queue";
@@ -14,7 +14,7 @@ import { Auth0Interrupt, AuthorizationPendingInterrupt, AuthorizationPollingInte
 import { ConditionalTrade } from "../../ConditionalTrade";
 
 export type ConditionalTradeHandlerParams = ConditionalTrade & {
-  messages?: CoreMessage[];
+  messages?: ModelMessage[];
 };
 
 export const conditionalTrade = async (
@@ -48,7 +48,7 @@ export const conditionalTrade = async (
     await invokeTools({
       messages,
       tools,
-      onToolResult: async (message: CoreMessage) => {
+      onToolResult: async (message: ModelMessage) => {
         messages.push(message);
         await job.updateData({
           ...conditionalTrade,
@@ -59,11 +59,10 @@ export const conditionalTrade = async (
 
     console.log(`Calling the LLM`);
     const r = await generateText({
-      model: openai("gpt-4o", { parallelToolCalls: false }),
+      model: openai("gpt-4o"),
       system:
         "You are a fictional stock trader bot. Please execute the trades of the user.",
       messages,
-      maxSteps: 5,
       tools,
       onStepFinish: async (step) => {
         const newMessages = [...messages, ...step.response.messages];
@@ -72,7 +71,7 @@ export const conditionalTrade = async (
           messages: newMessages,
         });
         const conditionIsMet = step.toolResults.some(
-          (r) => r.toolName === "compareMetric" && r.result === true
+          (r) => r.toolName === "compareMetric" && r.output === true
         );
         if (conditionIsMet) {
           console.log("Condition met! Stopping the scheduler");
@@ -83,7 +82,7 @@ export const conditionalTrade = async (
     console.log(`${r.text}`);
   } catch (err) {
     if (
-      err instanceof ToolExecutionError &&
+      err instanceof AISDKError &&
       Auth0Interrupt.isInterrupt(err.cause)
     ) {
       console.log("Handling tool execution error");
