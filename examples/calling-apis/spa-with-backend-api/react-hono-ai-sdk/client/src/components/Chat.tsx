@@ -9,7 +9,7 @@ import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
 
-import type { Message } from "ai";
+import type { UIMessage } from "ai";
 
 const InterruptionPrefix = "AUTH0_AI_INTERRUPTION:";
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:3000";
@@ -153,7 +153,7 @@ export function Chat() {
   );
 }
 
-function MessageBubble({ message }: { message: Message }) {
+function MessageBubble({ message }: { message: UIMessage }) {
   const isUser = message.role === "user";
 
   return (

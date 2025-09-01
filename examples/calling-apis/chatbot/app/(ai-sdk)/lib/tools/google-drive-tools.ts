@@ -17,7 +17,7 @@ export const googleDriveTools = Object.fromEntries(
     withGoogleDriveTools(
       tool({
         description: fn.spec.description,
-        parameters: isZodSchema(fn.inputSchema)
+        inputSchema: isZodSchema(fn.inputSchema)
           ? fn.inputSchema
           : jsonSchema(asAgenticSchema(fn.inputSchema).jsonSchema),
         execute: async (args) => {

@@ -1,6 +1,6 @@
 import "dotenv/config";
 
-import { CoreMessage, generateText } from "ai";
+import { ModelMessage, generateText } from "ai";
 import Enquirer from "enquirer";
 import crypto from "node:crypto";
 
@@ -9,11 +9,10 @@ import { setAIContext } from "@auth0/ai-vercel";
 
 import { buy } from "./tools/buy";
 
-async function generate(messages: CoreMessage[]) {
+async function generate(messages: ModelMessage[]) {
   const result = await generateText({
     model: openai("gpt-4o-mini"),
     messages,
-    maxSteps: 2,
     tools: {
       buy,
     },
@@ -29,7 +28,7 @@ async function main() {
 
   const enquirer = new Enquirer<{ prompt: string }>();
 
-  const messages: CoreMessage[] = [];
+  const messages: ModelMessage[] = [];
 
   try {
     while (true) {

@@ -2,12 +2,12 @@ import { useState } from "react";
 
 import { useAuth0 } from "./useAuth0";
 
-import type { Message } from "ai";
+import type { UIMessage } from "ai";
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:3000";
 
 export function useChat() {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<UIMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -28,7 +28,7 @@ export function useChat() {
     setError(null);
 
     // Add user message
-    const userMessage: Message = {
+    const userMessage: UIMessage = {
       id: crypto.randomUUID(),
       role: "user",
       content: currentInput,
@@ -52,7 +52,7 @@ export function useChat() {
       }
 
       // Add assistant message placeholder
-      const assistantMessage: Message = {
+      const assistantMessage: UIMessage = {
         id: crypto.randomUUID(),
         role: "assistant",
         content: "",

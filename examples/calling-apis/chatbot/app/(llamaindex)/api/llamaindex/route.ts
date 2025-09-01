@@ -1,9 +1,10 @@
 import {
-  createDataStreamResponse,
-  LlamaIndexAdapter,
-  Message,
-  ToolExecutionError,
+  createUIMessageStream,
+  UIMessage,
+  AISDKError,
+  createUIMessageStreamResponse,
 } from "ai";
+import { toUIMessageStream } from "@ai-sdk/llamaindex";
 import { ReActAgent, Settings } from "llamaindex";
 
 import {
@@ -22,30 +23,30 @@ Settings.llm = openai({
 });
 
 export async function POST(request: Request) {
-  const { id, messages }: { id: string; messages: Message[] } =
+  const { id, messages }: { id: string; messages: UIMessage[] } =
     await request.json();
 
   setAIContext({ threadID: id });
 
-  return createDataStreamResponse({
+  const stream = createUIMessageStream({
+    originalMessages: messages,
     execute: withInterruptions(
-      async (dataStream) => {
+      async ({ writer }) => {
         const agent = new ReActAgent({
           systemPrompt: "You are an AI assistant",
           tools: [checkUsersCalendar(), listChannels(), listRepositories()],
           verbose: true,
         });
-
         const stream = await agent.chat({
-          message: messages[messages.length - 1].content,
+          message: messages[messages.length - 1].parts[0]?.text,
           stream: true,
         });
 
-        LlamaIndexAdapter.mergeIntoDataStream(stream as any, { dataStream });
+        writer.merge(toUIMessageStream(stream as any));
       },
       {
         messages,
-        errorType: ToolExecutionError,
+        errorType: AISDKError
       }
     ),
     onError: errorSerializer((err) => {
@@ -53,4 +54,7 @@ export async function POST(request: Request) {
       return "Oops, an error occured!";
     }),
   });
+    return createUIMessageStreamResponse({ stream }); 
 }
+
+
