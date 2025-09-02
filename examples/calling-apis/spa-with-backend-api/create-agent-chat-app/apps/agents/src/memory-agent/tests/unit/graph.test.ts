@@ -1,5 +1,6 @@
-import { describe, it, expect } from "@jest/globals";
-import { graph } from "../../graph.js";
+import { describe, expect, it } from "@jest/globals";
+
+import { graph } from "../../graph";
 
 describe("Memory Graph", () => {
   it("should initialize and compile the graph", () => {

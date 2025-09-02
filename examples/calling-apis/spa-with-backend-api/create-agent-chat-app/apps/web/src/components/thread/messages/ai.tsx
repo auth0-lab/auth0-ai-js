@@ -1,18 +1,22 @@
-import { parsePartialJson } from "@langchain/core/output_parsers";
-import { useStreamContext } from "@/providers/Stream";
-import { AIMessage, Checkpoint, Message } from "@langchain/langgraph-sdk";
-import { getContentString } from "../utils";
-import { BranchSwitcher, CommandBar } from "./shared";
-import { MarkdownText } from "../markdown-text";
-import { LoadExternalComponent } from "@langchain/langgraph-sdk/react-ui";
-import { cn } from "@/lib/utils";
-import { ToolCalls, ToolResult } from "./tool-calls";
-import { MessageContentComplex } from "@langchain/core/messages";
+import { parseAsBoolean, useQueryState } from "nuqs";
 import { Fragment } from "react/jsx-runtime";
+
+import { Auth0InterruptHandler } from "@/components/auth0/Auth0InterruptHandler";
+import { useStreamContext } from "@/hooks/useStreamContext";
 import { isAgentInboxInterruptSchema } from "@/lib/agent-inbox-interrupt";
+import { cn } from "@/lib/utils";
+import { Auth0Interrupt } from "@auth0/ai/interrupts";
+import { MessageContentComplex } from "@langchain/core/messages";
+import { parsePartialJson } from "@langchain/core/output_parsers";
+import { AIMessage, Checkpoint, Message } from "@langchain/langgraph-sdk";
+import { LoadExternalComponent } from "@langchain/langgraph-sdk/react-ui";
+
 import { ThreadView } from "../agent-inbox";
-import { useQueryState, parseAsBoolean } from "nuqs";
+import { MarkdownText } from "../markdown-text";
+import { getContentString } from "../utils";
 import { GenericInterruptView } from "./generic-interrupt";
+import { BranchSwitcher, CommandBar } from "./shared";
+import { ToolCalls, ToolResult } from "./tool-calls";
 
 function CustomComponent({
   message,
@@ -142,7 +146,16 @@ export function AssistantMessage({
               <ThreadView interrupt={threadInterrupt.value} />
             )}
           {threadInterrupt?.value &&
+          Auth0Interrupt.isInterrupt(threadInterrupt.value) &&
+          isLastMessage ? (
+            <Auth0InterruptHandler
+              interrupt={threadInterrupt.value}
+              onResume={() => thread.submit(null)}
+            />
+          ) : null}
+          {threadInterrupt?.value &&
           !isAgentInboxInterruptSchema(threadInterrupt.value) &&
+          !Auth0Interrupt.isInterrupt(threadInterrupt.value) &&
           isLastMessage ? (
             <GenericInterruptView interrupt={threadInterrupt.value} />
           ) : null}

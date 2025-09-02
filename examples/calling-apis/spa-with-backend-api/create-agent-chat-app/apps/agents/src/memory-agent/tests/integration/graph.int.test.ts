@@ -1,6 +1,7 @@
-import { describe, it, expect } from "@jest/globals";
-import { MemorySaver, InMemoryStore } from "@langchain/langgraph";
-import { builder } from "../../graph.js";
+import { describe, expect, it } from "@jest/globals";
+import { InMemoryStore, MemorySaver } from "@langchain/langgraph";
+
+import { builder } from "../../graph";
 
 describe("Memory Graph", () => {
   const conversations = [
@@ -23,7 +24,7 @@ describe("Memory Graph", () => {
     conversations.map((conversation, index) => [
       ["short", "medium", "long"][index],
       conversation,
-    ]),
+    ])
   )(
     "should store memories for %s conversation",
     async (_, conversation) => {
@@ -33,7 +34,7 @@ describe("Memory Graph", () => {
         checkpointer: new MemorySaver(),
       });
       const userId = "test-user";
-      for (const content of conversation) {
+      for (const content of conversation || []) {
         await graph.invoke(
           {
             messages: [
@@ -47,7 +48,7 @@ describe("Memory Graph", () => {
               model: "gpt-4o-mini",
               systemPrompt: "You are a helpful assistant.",
             },
-          },
+          }
         );
       }
 
@@ -59,6 +60,6 @@ describe("Memory Graph", () => {
       const badMemories = await memStore.search(badNamespace);
       expect(badMemories.length).toBe(0);
     },
-    30000,
+    30000
   );
 });

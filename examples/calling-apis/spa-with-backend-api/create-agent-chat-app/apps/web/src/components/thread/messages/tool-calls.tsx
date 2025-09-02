@@ -1,7 +1,8 @@
-import { AIMessage, ToolMessage } from "@langchain/langgraph-sdk";
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { useState } from "react";
+
+import { AIMessage, ToolMessage } from "@langchain/langgraph-sdk";
 
 function isComplexValue(value: any): boolean {
   return Array.isArray(value) || (typeof value === "object" && value !== null);
@@ -44,9 +45,9 @@ export function ToolCalls({
                       </td>
                       <td className="px-4 py-2 text-sm text-gray-500">
                         {isComplexValue(value) ? (
-                          <code className="bg-gray-50 rounded px-2 py-1 font-mono text-sm break-all">
+                          <pre className="bg-gray-50 rounded px-3 py-2 font-mono text-sm overflow-x-auto whitespace-pre-wrap">
                             {JSON.stringify(value, null, 2)}
-                          </code>
+                          </pre>
                         ) : (
                           String(value)
                         )}
@@ -73,24 +74,41 @@ export function ToolResult({ message }: { message: ToolMessage }) {
 
   try {
     if (typeof message.content === "string") {
+      // Try to parse as JSON
       parsedContent = JSON.parse(message.content);
       isJsonContent = true;
     }
   } catch {
-    // Content is not JSON, use as is
-    parsedContent = message.content;
+    // Content is not JSON, check if it looks like JSON but might need cleaning
+    if (
+      typeof message.content === "string" &&
+      (message.content.trim().startsWith("{") ||
+        message.content.trim().startsWith("["))
+    ) {
+      try {
+        // Try to clean and parse potential JSON
+        const cleaned = message.content.trim();
+        parsedContent = JSON.parse(cleaned);
+        isJsonContent = true;
+      } catch {
+        // Still not JSON, use as is
+        parsedContent = message.content;
+      }
+    } else {
+      parsedContent = message.content;
+    }
   }
 
   const contentStr = isJsonContent
     ? JSON.stringify(parsedContent, null, 2)
     : String(message.content);
   const contentLines = contentStr.split("\n");
-  const shouldTruncate = contentLines.length > 4 || contentStr.length > 500;
+  const shouldTruncate = contentLines.length > 6 || contentStr.length > 800;
   const displayedContent =
     shouldTruncate && !isExpanded
-      ? contentStr.length > 500
-        ? contentStr.slice(0, 500) + "..."
-        : contentLines.slice(0, 4).join("\n") + "\n..."
+      ? contentStr.length > 800
+        ? contentStr.slice(0, 800) + "..."
+        : contentLines.slice(0, 6).join("\n") + "\n..."
       : contentStr;
 
   return (
@@ -135,7 +153,7 @@ export function ToolResult({ message }: { message: ToolMessage }) {
                     {(Array.isArray(parsedContent)
                       ? isExpanded
                         ? parsedContent
-                        : parsedContent.slice(0, 5)
+                        : parsedContent.slice(0, 8)
                       : Object.entries(parsedContent)
                     ).map((item, argIdx) => {
                       const [key, value] = Array.isArray(parsedContent)
@@ -148,9 +166,9 @@ export function ToolResult({ message }: { message: ToolMessage }) {
                           </td>
                           <td className="px-4 py-2 text-sm text-gray-500">
                             {isComplexValue(value) ? (
-                              <code className="bg-gray-50 rounded px-2 py-1 font-mono text-sm break-all">
+                              <pre className="bg-gray-50 rounded px-3 py-2 font-mono text-sm overflow-x-auto whitespace-pre-wrap">
                                 {JSON.stringify(value, null, 2)}
-                              </code>
+                              </pre>
                             ) : (
                               String(value)
                             )}
@@ -161,7 +179,9 @@ export function ToolResult({ message }: { message: ToolMessage }) {
                   </tbody>
                 </table>
               ) : (
-                <code className="text-sm block">{displayedContent}</code>
+                <pre className="text-sm font-mono whitespace-pre-wrap overflow-x-auto">
+                  {displayedContent}
+                </pre>
               )}
             </motion.div>
           </AnimatePresence>
@@ -169,7 +189,7 @@ export function ToolResult({ message }: { message: ToolMessage }) {
         {((shouldTruncate && !isJsonContent) ||
           (isJsonContent &&
             Array.isArray(parsedContent) &&
-            parsedContent.length > 5)) && (
+            parsedContent.length > 8)) && (
           <motion.button
             onClick={() => setIsExpanded(!isExpanded)}
             className="w-full py-2 flex items-center justify-center border-t-[1px] border-gray-200 text-gray-500 hover:text-gray-600 hover:bg-gray-50 transition-all ease-in-out duration-200 cursor-pointer"

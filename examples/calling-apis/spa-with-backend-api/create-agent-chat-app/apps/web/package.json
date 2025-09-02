@@ -1,11 +1,11 @@
 {
-  "name": "web",
+  "name": "@auth0/auth0-ai-js-examples-create-agent-chat-app-web",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "turbo build:internal --filter=web",
+    "build": "turbo build:internal --filter=@auth0/auth0-ai-js-examples-create-agent-chat-app-web",
     "build:internal": "tsc -b && vite build",
     "lint": "eslint .",
     "format": "prettier --write .",
@@ -13,11 +13,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@langchain/core": "^0.3.42",
-    "@langchain/langgraph": "^0.2.55",
-    "@langchain/langgraph-api": "^0.0.16",
-    "@langchain/langgraph-cli": "^0.0.16",
-    "@langchain/langgraph-sdk": "^0.0.57",
+    "@auth0/ai": "*",
+    "@auth0/auth0-spa-js": "^2.1.3",
+    "@langchain/core": "^0.3.72",
+    "@langchain/langgraph": "^0.4.6",
+    "@langchain/langgraph-api": "^0.0.63",
+    "@langchain/langgraph-cli": "^0.0.60",
+    "@langchain/langgraph-sdk": "^0.0.109",
     "@radix-ui/react-avatar": "^1.1.3",
     "@radix-ui/react-dialog": "^1.1.6",
     "@radix-ui/react-label": "^2.1.2",

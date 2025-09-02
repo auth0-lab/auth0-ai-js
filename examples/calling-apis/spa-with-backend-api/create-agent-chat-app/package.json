@@ -1,24 +1,31 @@
 {
   "name": "create-agent-chat-app",
-  "author": "Your Name",
+  "author": {
+    "name": "Auth0 Inc.",
+    "url": "https://auth0.com"
+  },
   "private": true,
   "workspaces": [
-    "apps/*"
+    "apps/**"
   ],
   "scripts": {
-    "dev": "concurrently \"turbo dev --filter=web\" \"turbo dev --filter=langgraph-agents\"",
-    "build": "turbo build",
+    "dev": "turbo dev",
+    "build:all": "turbo build",
     "turbo:command": "turbo",
     "format": "turbo format",
-    "lint": "turbo lint",
-    "lint:fix": "turbo lint:fix"
+    "lint:all": "turbo lint",
+    "lint:all:fix": "turbo lint:fix"
+  },
+  "dependencies": {
+    "@auth0/ai": "*",
+    "@auth0/ai-langchain": "*",
+    "@langchain/community": "^0.3.54"
   },
   "devDependencies": {
     "turbo": "latest",
     "tsx": "^4.19.1",
     "typescript": "^5",
     "eslint": "^9.19.0",
-    "concurrently": "^9.1.2",
     "@typescript-eslint/eslint-plugin": "^8.26.1",
     "@eslint/eslintrc": "^3.3.0",
     "@typescript-eslint/parser": "^8.26.1",
@@ -29,8 +36,5 @@
     "eslint-plugin-prettier": "^5.2.3",
     "prettier": "^3.3.3"
   },
-  "packageManager": "npm@11.2.1",
-  "overrides": {
-    "@langchain/core": "^0.3.42"
-  }
+  "packageManager": "npm@11.2.1"
 }
