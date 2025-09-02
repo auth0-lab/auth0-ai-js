@@ -1,27 +1,44 @@
+import { initChatModel } from "langchain/chat_models/universal";
+
+import { AIMessage, BaseMessage, ToolMessage } from "@langchain/core/messages";
+import { StructuredTool } from "@langchain/core/tools";
 // Main graph
 import {
+  END,
   LangGraphRunnableConfig,
   START,
   StateGraph,
-  END,
 } from "@langchain/langgraph";
-import { BaseMessage, AIMessage } from "@langchain/core/messages";
-import { initChatModel } from "langchain/chat_models/universal";
-import { initializeTools } from "./tools.js";
-import {
-  ConfigurationAnnotation,
-  ensureConfiguration,
-} from "./configuration.js";
-import { GraphAnnotation } from "./state.js";
-import { getStoreFromConfigOrThrow, splitModelAndProvider } from "./utils.js";
+
+import { ConfigurationAnnotation, ensureConfiguration } from "./configuration";
+import { GraphAnnotation } from "./state";
+import { initializeTools } from "./tools";
+import { getStoreFromConfigOrThrow, splitModelAndProvider } from "./utils";
 
 async function callModel(
   state: typeof GraphAnnotation.State,
-  config: LangGraphRunnableConfig,
+  config: LangGraphRunnableConfig
 ): Promise<{ messages: BaseMessage[] }> {
-  const llm = await initChatModel();
-  const store = getStoreFromConfigOrThrow(config);
   const configurable = ensureConfiguration(config);
+  const { model, provider } = splitModelAndProvider(configurable.model);
+
+  // Access authenticated user data from the standard LangGraph location
+  const authenticatedUser = config?.configurable?.langgraph_auth_user;
+  if (authenticatedUser) {
+    console.log("👤 Authenticated user found:", authenticatedUser.identity);
+  } else {
+    console.log(
+      "❌ No authenticated user found in config.configurable.langgraph_auth_user"
+    );
+  }
+
+  const llm = await initChatModel(model, {
+    modelProvider: provider,
+    configurable: config?.configurable,
+  });
+
+  const store = getStoreFromConfigOrThrow(config);
+
   const memories = await store.search(["memories", configurable.userId], {
     limit: 10,
   });
@@ -34,9 +51,18 @@ async function callModel(
     formatted = `\n<memories>\n${formatted}\n</memories>`;
   }
 
-  const sys = configurable.systemPrompt
+  let sys = configurable.systemPrompt
     .replace("{user_info}", formatted)
     .replace("{time}", new Date().toISOString());
+
+  // Add user context to the system message if authenticated
+  if (authenticatedUser) {
+    const userContext = `You are authenticated as ${authenticatedUser.identity || authenticatedUser.sub} via Auth0.`;
+    const scopeInfo = authenticatedUser.permissions
+      ? ` The user has the following permissions: ${authenticatedUser.permissions.join(", ")}.`
+      : "";
+    sys += `\n\n${userContext}${scopeInfo}`;
+  }
 
   const tools = initializeTools(config);
   const boundLLM = llm.bind({
@@ -44,37 +70,62 @@ async function callModel(
     tool_choice: "auto",
   });
 
-  const result = await boundLLM.invoke(
-    [{ role: "system", content: sys }, ...state.messages],
-    {
-      configurable: splitModelAndProvider(configurable.model),
-    },
-  );
+  const result = await boundLLM.invoke([
+    { role: "system", content: sys },
+    ...state.messages,
+  ]);
 
   return { messages: [result] };
 }
 
 async function storeMemory(
   state: typeof GraphAnnotation.State,
-  config: LangGraphRunnableConfig,
+  config: LangGraphRunnableConfig
 ): Promise<{ messages: BaseMessage[] }> {
   const lastMessage = state.messages[state.messages.length - 1] as AIMessage;
   const toolCalls = lastMessage.tool_calls || [];
 
   const tools = initializeTools(config);
-  const upsertMemoryTool = tools[0];
 
-  const savedMemories = await Promise.all(
+  const toolMessages = await Promise.all(
     toolCalls.map(async (tc) => {
-      return await upsertMemoryTool.invoke(tc);
-    }),
+      const tool = tools.find((t) => t.name === tc.name);
+      if (!tool) {
+        throw new Error(`Tool ${tc.name} not found`);
+      }
+
+      const result = await (tool as StructuredTool).invoke(tc.args, config);
+
+      // Format the result for better readability
+      let formattedContent: string;
+      if (typeof result === "string") {
+        // If it's already a string, check if it contains JSON and format it
+        try {
+          const parsed = JSON.parse(result);
+          formattedContent = JSON.stringify(parsed, null, 2);
+        } catch {
+          // If it's not JSON, keep as is
+          formattedContent = result;
+        }
+      } else {
+        // If it's an object, format it nicely
+        formattedContent = JSON.stringify(result, null, 2);
+      }
+
+      // Create a proper ToolMessage with the correct tool_call_id
+      return new ToolMessage({
+        content: formattedContent,
+        tool_call_id: tc.id!,
+        name: tc.name,
+      });
+    })
   );
 
-  return { messages: savedMemories };
+  return { messages: toolMessages };
 }
 
 function routeMessage(
-  state: typeof GraphAnnotation.State,
+  state: typeof GraphAnnotation.State
 ): "store_memory" | typeof END {
   const lastMessage = state.messages[state.messages.length - 1] as AIMessage;
   if (lastMessage.tool_calls?.length) {
@@ -88,7 +139,7 @@ export const builder = new StateGraph(
   {
     stateSchema: GraphAnnotation,
   },
-  ConfigurationAnnotation,
+  ConfigurationAnnotation
 )
   .addNode("call_model", callModel)
   .addNode("store_memory", storeMemory)

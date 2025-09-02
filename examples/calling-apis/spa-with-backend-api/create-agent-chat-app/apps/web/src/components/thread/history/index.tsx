@@ -1,10 +1,8 @@
-import { Button } from "@/components/ui/button";
-import { useThreads } from "@/providers/Thread";
-import { Thread } from "@langchain/langgraph-sdk";
+import { PanelRightClose, PanelRightOpen } from "lucide-react";
+import { parseAsBoolean, useQueryState } from "nuqs";
 import { useEffect } from "react";
 
-import { getContentString } from "../utils";
-import { useQueryState, parseAsBoolean } from "nuqs";
+import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
@@ -12,8 +10,11 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PanelRightOpen, PanelRightClose } from "lucide-react";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { useThreads } from "@/providers/Thread";
+import { Thread } from "@langchain/langgraph-sdk";
+
+import { getContentString } from "../utils";
 
 function ThreadList({
   threads,
@@ -83,10 +84,14 @@ export default function ThreadHistory() {
     if (typeof window === "undefined") return;
     setThreadsLoading(true);
     getThreads()
-      .then(setThreads)
-      .catch(console.error)
+      .then((fetchedThreads) => {
+        setThreads(fetchedThreads);
+      })
+      .catch((error) => {
+        console.error("🎯 ThreadHistory error:", error);
+      })
       .finally(() => setThreadsLoading(false));
-  }, []);
+  }, [getThreads]);
 
   return (
     <>

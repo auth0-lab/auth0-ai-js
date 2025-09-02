@@ -1,8 +1,12 @@
 import { Client } from "@langchain/langgraph-sdk";
 
-export function createClient(apiUrl: string, apiKey: string | undefined) {
+export function createClient(apiUrl: string, accessToken: string | null) {
   return new Client({
-    apiKey,
     apiUrl,
+    defaultHeaders: accessToken
+      ? {
+          Authorization: `Bearer ${accessToken}`,
+        }
+      : undefined,
   });
 }

@@ -1,12 +1,10 @@
 {
-  "name": "langgraph-agents",
-  "author": "Your Name",
+  "name": "@auth0/auth0-ai-js-examples-create-agent-chat-app-agents",
   "version": "0.0.1",
   "private": true,
-  "type": "module",
   "scripts": {
-    "dev": "npx @langchain/langgraph-cli dev --port 2024 --config ../../langgraph.json",
-    "build": "turbo build:internal --filter=langgraph-agents",
+    "dev": "npx @langchain/langgraph-cli dev --port 2024 --config langgraph.json",
+    "build": "turbo build:internal --filter=@auth0/auth0-ai-js-examples-create-agent-chat-app-agents",
     "build:internal": "npm run clean && tsc",
     "clean": "rm -rf ./dist .turbo || true",
     "format": "prettier --config .prettierrc --write \"src\"",
@@ -14,15 +12,22 @@
     "lint:fix": "eslint src --fix"
   },
   "dependencies": {
-    "@langchain/anthropic": "^0.3.15",
+    "@auth0/ai": "*",
+    "@auth0/ai-langchain": "*",
+    "@langchain/anthropic": "^0.3.26",
     "@langchain/community": "^0.3.54",
-    "@langchain/core": "^0.3.42",
-    "@langchain/langgraph": "^0.2.55",
-    "@langchain/tavily": "^0.1.5",
+    "@langchain/core": "^0.3.72",
+    "@langchain/langgraph": "^0.4.6",
+    "@langchain/langgraph-sdk": "^0.0.107",
+    "@langchain/openai": "^0.3.0",
+    "date-fns": "^4.1.0",
     "dotenv": "^16.4.5",
+    "gaxios": "^6.7.1",
+    "googleapis": "^150.0.1",
+    "jose": "^6.1.0",
     "langchain": "^0.3.19",
     "uuid": "^10.0.0",
-    "zod": "^3.23.8"
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.0",
