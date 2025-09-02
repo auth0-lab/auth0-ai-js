@@ -18,7 +18,6 @@ export function Chat() {
   const { getToken } = useAuth0();
 
   const chatHelpers = useInterruptions((errorHandler) =>
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     useChat({
       api: `${SERVER_URL}/chat`,
       fetch: (async (url: string | URL | Request, init?: RequestInit) => {

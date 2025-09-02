@@ -21,7 +21,7 @@ import { createListNearbyEventsTool } from "./lib/tools/listNearbyEvents";
 import { createListUserCalendarsTool } from "./lib/tools/listUserCalendars";
 import { jwtAuthMiddleware } from "./middleware/auth";
 
-import type { ApiResponse } from "shared/dist";
+import type { ApiResponse } from "@auth0/auth0-ai-js-examples-react-hono-ai-sdk-shared";
 
 const getAllowedOrigins = (): string[] => {
   const allowedOrigins = process.env.ALLOWED_ORIGINS;
