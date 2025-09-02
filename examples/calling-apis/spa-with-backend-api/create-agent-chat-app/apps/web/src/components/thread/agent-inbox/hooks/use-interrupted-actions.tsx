@@ -1,18 +1,20 @@
-import { HumanResponseWithEdits, SubmitType } from "../types";
 import {
-  KeyboardEvent,
   Dispatch,
-  SetStateAction,
+  KeyboardEvent,
   MutableRefObject,
-  useState,
-  useRef,
+  SetStateAction,
   useEffect,
+  useRef,
+  useState,
 } from "react";
-import { createDefaultHumanResponse } from "../utils";
 import { toast } from "sonner";
+
+import { useStreamContext } from "@/hooks/useStreamContext";
 import { HumanInterrupt, HumanResponse } from "@langchain/langgraph/prebuilt";
 import { END } from "@langchain/langgraph/web";
-import { useStreamContext } from "@/providers/Stream";
+
+import { HumanResponseWithEdits, SubmitType } from "../types";
+import { createDefaultHumanResponse } from "../utils";
 
 interface UseInterruptedActionsInput {
   interrupt: HumanInterrupt;
