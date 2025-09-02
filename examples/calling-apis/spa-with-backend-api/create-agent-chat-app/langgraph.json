@@ -1,0 +1,11 @@
+{
+  "node_version": "20",
+  "dependencies": [
+    "."
+  ],
+  "graphs": {
+    "agent": "./apps/agents/src/react-agent/graph.ts:graph",
+    "memory_agent": "./apps/agents/src/memory-agent/graph.ts:graph"
+  },
+  "env": ".env"
+}
