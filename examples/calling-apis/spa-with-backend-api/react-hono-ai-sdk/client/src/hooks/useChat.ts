@@ -31,7 +31,7 @@ export function useChat() {
     const userMessage: UIMessage = {
       id: crypto.randomUUID(),
       role: "user",
-      content: currentInput,
+      parts: [{ type: "text", text: currentInput }],
     };
 
     setMessages((prev) => [...prev, userMessage]);
@@ -55,7 +55,7 @@ export function useChat() {
       const assistantMessage: UIMessage = {
         id: crypto.randomUUID(),
         role: "assistant",
-        content: "",
+        parts: [{ type: "text", text: "" }],
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
@@ -97,7 +97,7 @@ export function useChat() {
               setMessages((prev) =>
                 prev.map((msg) =>
                   msg.id === assistantMessage.id
-                    ? { ...msg, content: assistantContent }
+                    ? { ...msg, parts: [{ type: "text", text: assistantContent }] }
                     : msg
                 )
               );

@@ -1,6 +1,7 @@
 import { Loader2, Send, Trash2 } from "lucide-react";
 
-import { useChat } from "@ai-sdk/react";
+import {  useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
 import { useInterruptions } from "@auth0/ai-vercel/react";
 
 import { useAuth0 } from "../hooks/useAuth0";
@@ -10,27 +11,30 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
 
 import type { UIMessage } from "ai";
+import { useState } from "react";
 
 const InterruptionPrefix = "AUTH0_AI_INTERRUPTION:";
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:3000";
 
 export function Chat() {
   const { getToken } = useAuth0();
-
+  const [input, setInput] = useState<string>("");
   const chatHelpers = useInterruptions((errorHandler) =>
     useChat({
-      api: `${SERVER_URL}/chat`,
-      fetch: (async (url: string | URL | Request, init?: RequestInit) => {
-        const token = await getToken();
-        return fetch(url, {
-          ...init,
-          headers: {
-            "Content-Type": "application/json",
-            ...init?.headers,
-            Authorization: `Bearer ${token}`,
-          },
-        });
-      }) as typeof fetch,
+      transport: new DefaultChatTransport({
+        api: `${SERVER_URL}/chat`,
+        fetch: (async (url: string | URL | Request, init?: RequestInit) => {
+          const token = await getToken();
+          return fetch(url, {
+            ...init,
+            headers: {
+              "Content-Type": "application/json",
+              ...init?.headers,
+              Authorization: `Bearer ${token}`,
+            },
+          });
+        }) as typeof fetch,
+      }),
       onError: errorHandler((error) => {
         console.error("Chat error:", error);
       }),
@@ -39,10 +43,8 @@ export function Chat() {
 
   const {
     messages,
-    input,
-    handleInputChange,
-    handleSubmit,
-    isLoading,
+    sendMessage,
+    status,
     error,
     setMessages,
     toolInterrupt,
@@ -56,11 +58,11 @@ export function Chat() {
       ...message,
       parts: message.parts?.map((part) =>
         part.type === "tool-invocation" &&
-        part.toolInvocation.toolCallId === toolInterrupt.toolCall?.id
+        part.toolCallId === toolInterrupt.toolCall?.id
           ? {
               ...part,
               toolInvocation: {
-                ...part.toolInvocation,
+                ...part,
                 state: "call",
               },
             }
@@ -107,7 +109,7 @@ export function Chat() {
               <MessageBubble key={message.id} message={message} />
             ))
           )}
-          {isLoading && (
+          {status === "streaming" && (
             <div className="flex justify-start">
               <div className="bg-muted rounded-lg px-3 py-2 max-w-[80%] flex items-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -132,18 +134,22 @@ export function Chat() {
         )}
 
         {/* Input form */}
-        <form onSubmit={handleSubmit} className="flex gap-2">
+        <form onSubmit={e => {
+        e.preventDefault();
+        sendMessage({ text: input });
+        setInput('');
+      }} className="flex gap-2">
           <Input
             value={input}
-            onChange={handleInputChange}
+            onChange={e => setInput(e.target.value)}
             placeholder="Ask about your calendar..."
-            disabled={isLoading}
+            disabled={status === "streaming"}
             className="flex-1"
           />
           <Button
             className="h-10"
             type="submit"
-            disabled={isLoading || !input.trim()}
+            disabled={status === "streaming" || !input.trim()}
           >
             <Send className="h-4 w-4" />
           </Button>
@@ -163,7 +169,7 @@ function MessageBubble({ message }: { message: UIMessage }) {
           isUser ? "bg-primary text-primary-foreground" : "bg-muted"
         }`}
       >
-        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+        <p className="text-sm whitespace-pre-wrap">{(message.parts[0] as any)?.text}</p>
       </div>
     </div>
   );

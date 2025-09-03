@@ -1,9 +1,10 @@
-import { UIMessage, streamText, createUIMessageStream, createUIMessageStreamResponse, convertToModelMessages, UIMessageStreamWriter } from "ai";
+import { UIMessage, streamText, createUIMessageStream, createUIMessageStreamResponse, convertToModelMessages } from "ai";
 
 import { checkUsersCalendar, googleDriveTools, listChannels, listRepositories } from "@/app/(ai-sdk)/lib/tools/";
 import { openai } from "@ai-sdk/openai";
 import { setAIContext } from "@auth0/ai-vercel";
 import { errorSerializer, InterruptionPrefix, withInterruptions } from "@auth0/ai-vercel/interrupts";
+import { Auth0Interrupt } from "@auth0/ai/interrupts";
 
 export async function POST(request: Request) {
   const {
@@ -24,7 +25,7 @@ export async function POST(request: Request) {
   const stream = createUIMessageStream({
     originalMessages: messages,
     execute: withInterruptions(
-      async ({ writer }: UIMessageStreamWriter<UIMessage>) => {
+      async ({ writer }) => {
         const result = streamText({
           model: openai("gpt-4o-mini"),
           system:
@@ -37,12 +38,7 @@ export async function POST(request: Request) {
           sendReasoning: true,
           onError: (error) => {
             const serializableError = {
-              ...error,
-              toolCall: {
-                id: error.toolCallId,
-                args: error.toolArgs,
-                name: error.name,
-              },
+              ...error as Auth0Interrupt,
             };
         
             const result = `${InterruptionPrefix}${JSON.stringify(serializableError)}`;

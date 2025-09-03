@@ -25,7 +25,7 @@ export default function Chat() {
       {messages.map((message) => (
         <div key={message.id} className="whitespace-pre-wrap">
           {message.role === "user" ? "User: " : "AI: "}
-          {message?.parts[message.role === "user" ? 0 : 1]?.text}
+          {(message?.parts[message.role === "user" ? 0 : 1] as any)?.text}
         </div>
       ))}
 
