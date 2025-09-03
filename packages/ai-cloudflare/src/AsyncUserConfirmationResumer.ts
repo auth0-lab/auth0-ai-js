@@ -87,7 +87,7 @@ export const AsyncUserConfirmationResumer = <
         m.parts?.some(
           (p) =>
             p.type === "tool-invocation" &&
-            p.toolInvocation?.toolCallId === params.context.toolCallID
+            p.toolCallId === params.context.toolCallID
         )
       );
       if (!message) {
@@ -98,13 +98,13 @@ export const AsyncUserConfirmationResumer = <
         ...message,
         parts: message.parts?.map((p) =>
           p.type === "tool-invocation" &&
-          p.toolInvocation?.toolCallId === params.context.toolCallID
+          p.toolCallId === params.context.toolCallID
             ? {
                 ...p,
                 toolInvocation: {
-                  ...p.toolInvocation,
-                  state: "result",
-                  result: { continueInterruption: true },
+                  ...p,
+                  state: "output-available",
+                  output: { continueInterruption: true },
                 },
               }
             : p

@@ -2,7 +2,7 @@ import { ModelMessage, AISDKError } from "ai";
 
 import { Auth0Interrupt } from "@auth0/ai/interrupts";
 
-export const toolCallFromError = (error: AISDKError): ModelMessage => {
+export const toolCallFromError = (error: AISDKError & { toolCallId: string }): any => {
   return {
     role: "assistant",
     content: [
@@ -26,7 +26,7 @@ export const toolCallFromError = (error: AISDKError): ModelMessage => {
  */
 export const appendToolCall = (
   currentMessages: ModelMessage[],
-  error: AISDKError
+  error: AISDKError & { toolCallId: string }
 ): ModelMessage[] => {
   if (!(error instanceof AISDKError)) {
     return currentMessages;

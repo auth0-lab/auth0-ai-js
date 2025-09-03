@@ -32,7 +32,7 @@ export const buyTool = (context: Context) => {
       {
         name: "buy",
         description: "Use this function to buy stock",
-        inputSchema: z.object({
+        parameters: z.object({
           ticker: z.string(),
           qty: z.number(),
         }),
