@@ -1,5 +1,6 @@
 import React, { ReactNode, useEffect, useRef, useState } from "react";
-import { User } from "shared/dist";
+
+import { User } from "@auth0/auth0-ai-js-examples-react-hono-ai-sdk-shared";
 
 import {
   getToken,

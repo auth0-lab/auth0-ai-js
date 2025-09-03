@@ -243,20 +243,20 @@ This setup provides a solid foundation for building Auth0-protected Single Page 
 
 ```bash
 # Build all workspaces with Turbo
-npm run build
+npm run build:all
 
 # Or build individual workspaces directly
 npm run build:client  # Build the React frontend
 npm run build:server  # Build the Hono backend
 
 # Lint all workspaces
-npm run lint
+npm run lint:all
 
 # Type check all workspaces
 npm run type-check
 
 # Run tests across all workspaces
-npm run test
+npm run test:all
 ```
 
 ### Deployment
