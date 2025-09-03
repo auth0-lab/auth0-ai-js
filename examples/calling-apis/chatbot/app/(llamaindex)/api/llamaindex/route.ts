@@ -5,7 +5,6 @@ import {
   ToolExecutionError,
 } from "ai";
 import { ReActAgent, Settings } from "llamaindex";
-import { openai } from "@llamaindex/openai";
 
 import {
   checkUsersCalendar,
@@ -15,6 +14,7 @@ import {
 import { setAIContext } from "@auth0/ai-llamaindex";
 import { withInterruptions } from "@auth0/ai-llamaindex/interrupts";
 import { errorSerializer } from "@auth0/ai-vercel/interrupts";
+import { openai } from "@llamaindex/openai";
 
 // Configure OpenAI LLM
 Settings.llm = openai({

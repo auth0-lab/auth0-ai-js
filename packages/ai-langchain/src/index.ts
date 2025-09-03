@@ -8,3 +8,5 @@ export {
 export { GraphResumer } from "./ciba/GraphResumer";
 
 export { Auth0AI } from "./Auth0AI";
+
+export type { ToolWrapper } from "./util/ToolWrapper";
