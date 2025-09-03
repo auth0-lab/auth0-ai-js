@@ -1,6 +1,6 @@
 import "dotenv/config";
 
-import { createDataStreamResponse, generateId, streamText } from "ai";
+import { convertToModelMessages, createUIMessageStream, createUIMessageStreamResponse, generateId, streamText } from "ai";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 
@@ -95,21 +95,20 @@ export const app = new Hono()
     // note: you can see more examples of Hono API consumption with AI SDK here:
     // https://ai-sdk.dev/cookbook/api-servers/hono?utm_source=chatgpt.com#hono
 
-    return createDataStreamResponse({
+    const stream = createUIMessageStream({
       execute: withInterruptions(
         async (dataStream) => {
           const result = streamText({
             model: openai("gpt-4o-mini"),
             system:
               "You are a helpful calendar assistant! You can help users with their calendar events and schedules. Keep your responses concise and helpful.",
-            messages: requestMessages,
-            maxSteps: 5,
+            messages: convertToModelMessages(requestMessages),
             tools,
           });
 
-          result.mergeIntoUIMessageStream(dataStream, {
+          dataStream.writer.merge(result.toUIMessageStream({
             sendReasoning: true,
-          });
+          }));
         },
         { messages: requestMessages, tools }
       ),
@@ -134,6 +133,8 @@ export const app = new Hono()
         return "Oops! An error occurred.";
       },
     });
+
+    return createUIMessageStreamResponse({ stream });
   });
 
 // Start the server for Node.js

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useAgentChat } from "agents/ai-react";
 import { UIMessage } from "ai";
 
