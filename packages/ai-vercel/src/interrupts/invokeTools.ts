@@ -1,12 +1,5 @@
 // @ts-nocheck
-import {
-  ModelMessage,
-  JSONValue,
-  UIMessage,
-  Tool,
-  ToolCallPart,
-  AISDKError,
-} from "ai";
+import { AISDKError, JSONValue, ModelMessage, Tool, ToolCallPart, UIMessage } from "ai";
 
 type ContinueParams<T extends UIMessage | ModelMessage> = {
   /**
@@ -76,7 +69,7 @@ const invokeToolsMessages = async ({
   const lastPart =
     lastMessage?.parts && lastMessage?.parts[lastMessage.parts.length - 1];
 
-  if (!lastPart || lastPart.type !== "tool-invocation") {
+  if (!lastPart || !lastPart.type.startsWith("tool-")) {
     return;
   }
   const lastToolInvocation = lastPart;
@@ -91,34 +84,35 @@ const invokeToolsMessages = async ({
     lastToolInvocation.state === "output-available" &&
     lastToolInvocation.output?.continueInterruption
   ) {
-    const tool = tools[lastToolInvocation.toolName as keyof typeof tools];
+    const tool = tools[lastToolInvocation.output?.toolName as keyof typeof tools];
     if (!tool) {
       console.warn(
         `Last message contains a tool invocation in state result but the tool ${lastToolInvocation.toolName} is not found in the tools object`
       );
     }
     try {
-      const result = await tool.execute!(lastToolInvocation.args, {
+      const result = await tool.execute!(lastToolInvocation.input, {
         toolCallId: lastToolInvocation.toolCallId,
         messages: [],
       });
       lastPart.output = {
         ...lastToolInvocation,
+        toolName: lastToolInvocation.output?.toolName,
         state: "output-available",
         result,
       };
     } catch (err: any) {
       lastPart.output = {
         ...lastToolInvocation,
-        state: "call",
+        state: "input-available",
       };
       if (onToolResult) {
         await onToolResult(lastMessage);
       }
       throw new AISDKError({
         toolCallId: lastToolInvocation.toolCallId,
-        toolName: lastToolInvocation.toolName,
-        toolArgs: lastToolInvocation.args as JSONValue,
+        toolName: lastToolInvocation.output?.toolName,
+        toolArgs: lastToolInvocation.input as JSONValue,
         cause: err,
       });
     }
