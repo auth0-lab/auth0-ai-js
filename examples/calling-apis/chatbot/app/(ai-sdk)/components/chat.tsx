@@ -1,11 +1,12 @@
 "use client";
 
+import { DefaultChatTransport, generateId, lastAssistantMessageIsCompleteWithToolCalls } from "ai";
+import { useState } from "react";
+
 import { EnsureAPIAccessPopup } from "@/components/auth0-ai/FederatedConnections/popup";
 import { useChat } from "@ai-sdk/react";
 import { useInterruptions } from "@auth0/ai-vercel/react";
 import { FederatedConnectionInterrupt } from "@auth0/ai/interrupts";
-import { DefaultChatTransport, generateId } from "ai";
-import { useState } from "react";
 
 export default function Chat() {
   const [input, setInput] = useState("");
@@ -16,6 +17,7 @@ export default function Chat() {
         experimental_throttle: 100,
         generateId,
         onError: handler((error) => console.error("Chat error:", error)),
+        sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
       })
     );
   console.log('messages', messages);
@@ -25,7 +27,7 @@ export default function Chat() {
       {messages.map((message) => (
         <div key={message.id} className="whitespace-pre-wrap">
           {message.role === "user" ? "User: " : "AI: "}
-          {(message?.parts[message.role === "user" ? 0 : 1] as any)?.text}
+          {(message?.parts[message.parts.length - 1] as any)?.text}
         </div>
       ))}
 

@@ -1,10 +1,15 @@
-import { UIMessage, streamText, createUIMessageStream, createUIMessageStreamResponse, convertToModelMessages } from "ai";
+import {
+  convertToModelMessages,
+  createUIMessageStream,
+  createUIMessageStreamResponse,
+  streamText,
+  UIMessage,
+} from "ai";
 
 import { checkUsersCalendar, googleDriveTools, listChannels, listRepositories } from "@/app/(ai-sdk)/lib/tools/";
 import { openai } from "@ai-sdk/openai";
 import { setAIContext } from "@auth0/ai-vercel";
-import { errorSerializer, InterruptionPrefix, withInterruptions } from "@auth0/ai-vercel/interrupts";
-import { Auth0Interrupt } from "@auth0/ai/interrupts";
+import { errorSerializer, withInterruptions } from "@auth0/ai-vercel/interrupts";
 
 export async function POST(request: Request) {
   const {
@@ -32,26 +37,39 @@ export async function POST(request: Request) {
             "You are a friendly assistant! Keep your responses concise and helpful.",
             messages: convertToModelMessages(messages),
           tools,
+          
+          onFinish: (output) => {
+            if (output.finishReason === "tool-calls") {
+              const lastMessage = output.content[output.content.length - 1];
+              if (lastMessage?.type === "tool-error") {
+                const { toolName, toolCallId, error, input } = lastMessage;
+                const serializableError = {
+                  cause: error,
+                  toolCallId: toolCallId,
+                  toolName: toolName,
+                  toolArgs: input
+                };
+  
+                throw serializableError;
+              }
+            }
+          }
         });
-
         writer.merge(result.toUIMessageStream({
           sendReasoning: true,
-          onError: (error) => {
-            const serializableError = {
-              ...error as Auth0Interrupt,
-            };
-        
-            const result = `${InterruptionPrefix}${JSON.stringify(serializableError)}`;
-            throw new Error(result);
-          },
         }));
       },
       {
         messages: messages,
         tools,
       }
-    )
-  });
+    ),
+    onError: errorSerializer((err) => {
+      console.log(err);
+      return "Oops, an error occured!";
+    }),
+  },
+);
 
   return createUIMessageStreamResponse({ stream }); 
 }
