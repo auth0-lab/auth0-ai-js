@@ -20,7 +20,6 @@ export function Chat() {
   const { getToken } = useAuth0();
   const [input, setInput] = useState<string>("");
   const chatHelpers = useInterruptions((errorHandler) =>
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     useChat({
       transport: new DefaultChatTransport({
         api: `${SERVER_URL}/chat`,

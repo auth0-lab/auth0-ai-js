@@ -1,5 +1,5 @@
 {
-  "name": "client",
+  "name": "@auth0/auth0-ai-js-examples-react-hono-ai-sdk-client",
   "private": true,
   "version": "0.0.1",
   "type": "module",
@@ -22,8 +22,8 @@
     "lucide-react": "^0.507.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "server": "*",
-    "shared": "*",
+    "@auth0/auth0-ai-js-examples-react-hono-ai-sdk-server": "*",
+    "@auth0/auth0-ai-js-examples-react-hono-ai-sdk-shared": "*",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^4.1.10"
   },
