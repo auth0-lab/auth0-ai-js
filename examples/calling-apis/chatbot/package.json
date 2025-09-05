@@ -22,11 +22,8 @@
     "url": "https://auth0.com"
   },
   "license": "Apache-2.0",
-  "workspaces": [
-    "../../../../packages/ai-llamaindex"
-  ],
   "dependencies": {
-    "@agentic/ai-sdk": "^7.6.4",
+    "@agentic/ai-sdk": "^8.4.4",
     "@agentic/google-drive": "^7.6.4",
     "@ai-sdk/llamaindex": "^1.0.28",
     "@ai-sdk/openai": "^2.0.0",
