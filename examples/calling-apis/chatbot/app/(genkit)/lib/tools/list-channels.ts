@@ -1,4 +1,4 @@
-import { z } from 'zod/v3';
+import { z } from "zod/v3";
 
 import { withSlack } from "@/app/(genkit)/lib/auth0-ai";
 import { ai } from "@/app/(genkit)/lib/genkit";

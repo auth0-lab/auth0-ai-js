@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { Tool } from "ai";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { z } from 'zod/v3';
+import { z } from "zod/v3";
 
 import { FederatedConnectionAuthorizerBase } from "@auth0/ai/FederatedConnections";
 import { FederatedConnectionInterrupt } from "@auth0/ai/interrupts";

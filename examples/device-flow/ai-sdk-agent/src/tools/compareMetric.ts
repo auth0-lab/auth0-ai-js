@@ -1,5 +1,5 @@
 import { tool } from "ai";
-import { z } from 'zod/v3';
+import { z } from "zod/v3";
 
 export const compareMetric = tool({
   description: "Compare a metric to a given treshold using a given operator",
