@@ -14,7 +14,8 @@ const withAccessTokenForConnection = (connection: string, scopes: string[]) =>
     connection,
     scopes,
     accessToken: async (_, config) => {
-      return config.configurable._credentials.accessToken;
+      return config.configurable?.langgraph_auth_user?._credentials
+        ?.accessToken;
     },
     subjectTokenType: SUBJECT_TOKEN_TYPES.SUBJECT_TYPE_ACCESS_TOKEN,
   });
