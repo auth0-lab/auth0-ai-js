@@ -1,4 +1,4 @@
-import { ModelMessage, generateText, StaticToolError, AISDKError} from "ai";
+import { ModelMessage, generateText, AISDKError} from "ai";
 import { Job } from "bullmq";
 
 import { queue } from "@/src/queue";

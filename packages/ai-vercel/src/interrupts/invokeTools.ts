@@ -1,5 +1,4 @@
-// @ts-nocheck
-import { AISDKError, JSONValue, ModelMessage, Tool, ToolCallPart, UIMessage } from "ai";
+import { AISDKError, DynamicToolUIPart, ModelMessage, Tool, ToolCallPart, ToolUIPart, UIMessage, UITools } from "ai";
 
 type ContinueParams<T extends UIMessage | ModelMessage> = {
   /**
@@ -67,7 +66,7 @@ const invokeToolsMessages = async ({
 }: ContinueParams<UIMessage>) => {
   const lastMessage = messages[messages.length - 1];
   const lastPart =
-    lastMessage?.parts && lastMessage?.parts[lastMessage.parts.length - 1];
+    lastMessage?.parts && lastMessage?.parts[lastMessage.parts.length - 1] as { output: any, toolCallId: string } & (ToolUIPart<UITools> | DynamicToolUIPart);
 
   if (!lastPart || !lastPart.type.startsWith("tool-")) {
     return;
@@ -87,7 +86,7 @@ const invokeToolsMessages = async ({
     const tool = tools[lastToolInvocation.output?.toolName as keyof typeof tools];
     if (!tool) {
       console.warn(
-        `Last message contains a tool invocation in state result but the tool ${lastToolInvocation.toolName} is not found in the tools object`
+        `Last message contains a tool invocation in state result but the tool ${lastToolInvocation.output?.toolName} is not found in the tools object`
       );
     }
     try {
@@ -110,9 +109,11 @@ const invokeToolsMessages = async ({
         await onToolResult(lastMessage);
       }
       throw new AISDKError({
-        toolCallId: lastToolInvocation.toolCallId,
-        toolName: lastToolInvocation.output?.toolName,
-        toolArgs: lastToolInvocation.input as JSONValue,
+        name: err.name,
+        message: err.message,
+        // toolCallId: lastToolInvocation.toolCallId,
+        // toolName: lastToolInvocation.output?.toolName,
+        // toolArgs: lastToolInvocation.input as JSONValue,
         cause: err,
       });
     }
@@ -149,7 +150,7 @@ const invokeToolsCoreMessage = async ({
     );
   }
   try {
-    const result = await tool.execute!(lastContent.args, {
+    const result = await tool.execute!(lastContent.input, {
       toolCallId: lastContent.toolCallId,
       messages: [],
     });
@@ -161,16 +162,17 @@ const invokeToolsCoreMessage = async ({
             type: "tool-result",
             toolCallId: lastContent.toolCallId,
             toolName: lastContent.toolName,
-            result,
+            output: result,
           },
         ],
       });
     }
   } catch (err: any) {
     throw new AISDKError({
-      toolCallId: lastContent.toolCallId,
-      toolName: lastContent.toolName,
-      toolArgs: lastContent.args as JSONValue,
+      name: err.name,
+      message: err.message,
+      // toolName: lastContent.toolName,
+      // toolArgs: lastContent.input as JSONValue,
       cause: err,
     });
   }

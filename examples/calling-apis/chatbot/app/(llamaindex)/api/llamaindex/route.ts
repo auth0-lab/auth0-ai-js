@@ -38,14 +38,14 @@ export async function POST(request: Request) {
           verbose: true,
         });
         const stream = await agent.chat({
-          message: messages[messages.length - 1].parts[0]?.text,
+          message: (messages[messages.length - 1].parts[0] as any)?.text,
           stream: true,
         });
 
         writer.merge(toUIMessageStream(stream as any));
       },
       {
-        messages,
+        messages: messages as any,
         errorType: AISDKError
       }
     ),

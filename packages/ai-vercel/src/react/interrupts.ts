@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState } from "react";
 
 import { useChat } from "@ai-sdk/react";
@@ -60,6 +59,7 @@ export const useInterruptions = (
             regenerate();
           } else {
             addToolResult({
+              // @ts-expect-error toolCall
               toolName: parsedError.toolCall?.name,
               toolCallId: id,
               output: { continueInterruption: true, toolName: parsedError.toolCall?.name, ...result },
@@ -76,20 +76,21 @@ export const useInterruptions = (
   if (toolInterrupt) {
     messages = messages.map((message) => ({
       ...message,
-      parts: message.parts?.map((part) =>
-        part.type === `tool-${toolInterrupt?.toolCall?.name}` &&
-        part.toolCallId === toolInterrupt.toolCall?.id
-          ? {
+      parts: message.parts?.map((part) => {
+        if (part.type.startsWith("tool-") && "toolCallId" in part && 
+            part.toolCallId === toolInterrupt.toolCall?.id) {
+          return {
             ...part,
             state: "output-available",
             errorText: undefined,
-              output: {
-                ...(part?.output || {}),
-                state: "output-available",
-              },
-            }
-          : part
-      ),
+            output: {
+              ...(part?.output || {}),
+              state: "output-available",
+            },
+          };
+        }
+        return part;
+      }),
     }));
   }
 
