@@ -2,7 +2,7 @@ import "dotenv/config";
 
 import { tool } from "ai";
 import Enquirer from "enquirer";
-import { z } from 'zod/v3';
+import { z } from "zod/v3";
 
 import { getCIBACredentials } from "@auth0/ai-vercel";
 

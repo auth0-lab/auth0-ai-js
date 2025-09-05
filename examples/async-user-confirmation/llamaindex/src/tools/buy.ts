@@ -1,7 +1,7 @@
 import "dotenv/config";
 
 import { tool } from "llamaindex";
-import { z } from 'zod/v3';
+import { z } from "zod/v3";
 
 import { getCIBACredentials } from "@auth0/ai-llamaindex";
 

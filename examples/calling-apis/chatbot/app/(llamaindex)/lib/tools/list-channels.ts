@@ -1,5 +1,5 @@
 import { tool } from "llamaindex";
-import { z } from 'zod/v3';
+import { z } from "zod/v3";
 
 import { withSlack } from "@/app/(llamaindex)/lib/auth0-ai";
 import { getCredentialsForConnection } from "@auth0/ai-llamaindex";

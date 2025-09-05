@@ -1,6 +1,6 @@
 import { tool } from "ai";
 import { google } from "googleapis";
-import { z } from 'zod/v3';
+import { z } from "zod/v3";
 
 import { getAccessTokenForConnection } from "@auth0/ai-vercel";
 
