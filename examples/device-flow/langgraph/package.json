@@ -34,7 +34,7 @@
     "node-cron": "^3.0.3",
     "node-persist": "^4.0.4",
     "open": "^10.1.0",
-    "zod": "^3.23.8"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@auth0/auth0-ai-js-tools-login-helper": "file:../../../tools/login-helper",

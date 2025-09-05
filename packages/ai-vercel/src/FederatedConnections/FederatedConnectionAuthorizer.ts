@@ -1,4 +1,3 @@
-import { ToolExecutionOptions } from "ai";
 
 import { FederatedConnectionAuthorizerBase } from "@auth0/ai/FederatedConnections";
 
@@ -6,7 +5,7 @@ import { ToolContext } from "../util/ToolContext";
 import { ToolWrapper } from "../util/ToolWrapper";
 
 export class FederatedConnectionAuthorizer extends FederatedConnectionAuthorizerBase<
-  [any, ToolExecutionOptions]
+  [any, any]
 > {
   authorizer(): ToolWrapper {
     return (t) => {
