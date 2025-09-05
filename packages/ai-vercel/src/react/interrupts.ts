@@ -62,8 +62,13 @@ export const useInterruptions = (
               // @ts-expect-error toolCall
               toolName: parsedError.toolCall?.name,
               toolCallId: id,
-              output: { continueInterruption: true, toolName: parsedError.toolCall?.name, ...result },
+              output: {
+                continueInterruption: true,
+                toolName: parsedError.toolCall?.name,
+                ...result,
+              },
             });
+            // Don't call regenerate() here - sendAutomaticallyWhen will handle continuation
           }
         },
       });
@@ -77,8 +82,11 @@ export const useInterruptions = (
     messages = messages.map((message) => ({
       ...message,
       parts: message.parts?.map((part) => {
-        if (part.type.startsWith("tool-") && "toolCallId" in part && 
-            part.toolCallId === toolInterrupt.toolCall?.id) {
+        if (
+          part.type.startsWith("tool-") &&
+          "toolCallId" in part &&
+          part.toolCallId === toolInterrupt.toolCall?.id
+        ) {
           return {
             ...part,
             state: "output-available",
