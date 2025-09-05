@@ -10,7 +10,7 @@ import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
 
-import type { UIMessage } from "ai";
+import type { TextUIPart, UIMessage } from "ai";
 import { useState } from "react";
 
 const InterruptionPrefix = "AUTH0_AI_INTERRUPTION:";
@@ -169,7 +169,7 @@ function MessageBubble({ message }: { message: UIMessage }) {
           isUser ? "bg-primary text-primary-foreground" : "bg-muted"
         }`}
       >
-        <p className="text-sm whitespace-pre-wrap">{(message.parts[0] as any)?.text}</p>
+        <p className="text-sm whitespace-pre-wrap">{(message.parts[0] as TextUIPart)?.text}</p>
       </div>
     </div>
   );
