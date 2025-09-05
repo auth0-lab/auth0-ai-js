@@ -72,6 +72,10 @@ auth.authenticate(async (request: Request) => {
           permissions:
             typeof payload.scope === "string" ? payload.scope.split(" ") : [],
           auth_type: "auth0",
+          // include the access token for use with Auth0 Token Vault exchanges by tools
+          _credentials: {
+            accessToken: token,
+          },
           // Add any other claims you need
           ...payload,
         };

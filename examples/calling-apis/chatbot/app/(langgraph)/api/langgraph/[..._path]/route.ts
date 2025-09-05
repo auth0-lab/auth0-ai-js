@@ -12,19 +12,6 @@ async function getAccessToken() {
   return tokenResult.token;
 }
 
-function addAuthContext(body: any, accessToken: string) {
-  return {
-    ...body,
-    config: {
-      configurable: {
-        _credentials: {
-          accessToken,
-        },
-      },
-    },
-  };
-}
-
 async function makeLangGraphRequest(
   endpoint: string,
   method: string = "GET",
@@ -76,21 +63,11 @@ export async function POST(
     const path = _path || [];
     const endpoint = path.length > 0 ? `/${path.join("/")}` : "/";
 
-    let requestBody = body;
-
-    if (endpoint.includes("/runs")) {
-      requestBody = addAuthContext(body, accessToken);
-    } else if (endpoint.includes("/threads")) {
-      requestBody = body;
-    } else {
-      requestBody = addAuthContext(body, accessToken);
-    }
-
     const response = await makeLangGraphRequest(
       endpoint,
       "POST",
       accessToken,
-      requestBody
+      body
     );
 
     if (endpoint.includes("/stream")) {
