@@ -25,17 +25,16 @@ export default function Chat() {
       sendMessage({ text: input });
       setInput('');
     };
-  console.log('toolInterrupt', toolInterrupt);
-  console.log('messages', messages);
+
   return (
     <div className="flex flex-col gap-4 w-full max-w-md py-12 sm:py-24 px-4 sm:px-0 mx-auto stretch">
-      {messages.map((message) => {
+      {messages.map((message, index) => {
         const answer = message.role === "user" ? (message.parts[0] as any)?.text : message.parts && message.parts.length > 0 && (message.parts[0] as any)?.text?.match(/[\n\r]Answer:(.*?)[\n\r]/);
         const isInterrupt = FederatedConnectionInterrupt.isInterrupt(toolInterrupt);
         return (
           <div key={message.id} className="whitespace-pre-wrap">
             {message.role === "user" ? "User: " : "AI: "}
-            {(isInterrupt && message.role === "assistant") ? (
+            {(isInterrupt && message.role === "assistant" && index === messages.length - 1) ? (
               <div className="flex flex-col gap-4">
               {FederatedConnectionInterrupt.isInterrupt(toolInterrupt) && (
                   <EnsureAPIAccessPopup
