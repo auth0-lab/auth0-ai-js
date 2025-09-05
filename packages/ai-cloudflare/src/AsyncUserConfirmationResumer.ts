@@ -86,7 +86,7 @@ export const AsyncUserConfirmationResumer = <
       const message = this.messages.find((m) =>
         m.parts?.some(
           (p) =>
-            p.type === "tool-invocation" &&
+            p.type.startsWith("tool-") && "toolCallId" in p &&
             p.toolCallId === params.context.toolCallID
         )
       );
@@ -94,28 +94,30 @@ export const AsyncUserConfirmationResumer = <
         return;
       }
 
-      const newMessage: UIMessage = {
+      const newMessage = {
         ...message,
-        parts: message.parts?.map((p) =>
-          p.type === "tool-invocation" &&
-          p.toolCallId === params.context.toolCallID
-            ? {
-                ...p,
-                toolInvocation: {
+        parts: message.parts?.map((p) => {
+          if (p.type.startsWith("tool-") && "toolCallId" in p &&
+            p.toolCallId === params.context.toolCallID) {
+              return {
                   ...p,
-                  state: "output-available",
-                  output: { continueInterruption: true },
-                },
+                  toolInvocation: {
+                    ...p,
+                    state: "output-available",
+                    output: { continueInterruption: true },
+                  },
+                }
               }
-            : p
-        ),
+          return p;
+        }
+      )
       };
 
       const newMessages = this.messages.map((m, index) =>
         index === this.messages.indexOf(message) ? newMessage : m
       );
 
-      await this.saveMessages(newMessages);
+      await this.saveMessages(newMessages as UIMessage[]);
     }
   };
 };

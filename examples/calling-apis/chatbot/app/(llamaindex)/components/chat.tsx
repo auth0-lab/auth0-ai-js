@@ -20,7 +20,7 @@ export default function Chat() {
       })
     );
 
-    const handleSubmit = e => {
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
       sendMessage({ text: input });
       setInput('');
@@ -30,11 +30,11 @@ export default function Chat() {
   return (
     <div className="flex flex-col gap-4 w-full max-w-md py-12 sm:py-24 px-4 sm:px-0 mx-auto stretch">
       {messages.map((message) => {
-        const answer = message.role === "user" ? message.parts[0]?.text : message.parts && message.parts.length > 0 && message.parts[0]?.text?.match(/[\n\r]Answer:(.*?)[\n\r]/s);
+        const answer = message.role === "user" ? (message.parts[0] as any)?.text : message.parts && message.parts.length > 0 && (message.parts[0] as any)?.text?.match(/[\n\r]Answer:(.*?)[\n\r]/);
         const isInterrupt = FederatedConnectionInterrupt.isInterrupt(toolInterrupt);
         return (
           <div key={message.id} className="whitespace-pre-wrap">
-          {message.role === "user" ? "User: " : "AI: "}
+            {message.role === "user" ? "User: " : "AI: "}
             {(isInterrupt && message.role === "assistant") ? (
               <div className="flex flex-col gap-4">
               {FederatedConnectionInterrupt.isInterrupt(toolInterrupt) && (
