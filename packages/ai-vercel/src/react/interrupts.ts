@@ -56,43 +56,56 @@ export const useInterruptions = (
           setToolInterrupt(null);
 
           if (parsedError?.behavior === "reload") {
-            reload();
+            regenerate();
           } else {
             addToolResult({
+              // @ts-expect-error toolCall
+              toolName: parsedError.toolCall?.name,
               toolCallId: id,
-              result: { continueInterruption: true, ...result },
+              output: {
+                continueInterruption: true,
+                toolName: parsedError.toolCall?.name,
+                ...result,
+              },
             });
+            // Don't call regenerate() here - sendAutomaticallyWhen will handle continuation
           }
         },
       });
     };
   };
 
-  const { addToolResult, reload, ...chat } = useChatCreator(errorHandler);
+  const { addToolResult, regenerate, ...chat } = useChatCreator(errorHandler);
 
   let messages = chat.messages;
   if (toolInterrupt) {
     messages = messages.map((message) => ({
       ...message,
-      parts: message.parts?.map((part) =>
-        part.type === "tool-invocation" &&
-        part.toolInvocation.toolCallId === toolInterrupt.toolCallId
-          ? {
-              ...part,
-              toolInvocation: {
-                ...part.toolInvocation,
-                state: "call",
-              },
-            }
-          : part
-      ),
+      parts: message.parts?.map((part) => {
+        if (
+          part.type.startsWith("tool-") &&
+          "toolCallId" in part &&
+          part.toolCallId === toolInterrupt.toolCall?.id
+        ) {
+          return {
+            ...part,
+            state: "output-available",
+            errorText: undefined,
+            output: {
+              ...(part?.output || {}),
+              state: "output-available",
+            },
+          };
+        }
+        return part;
+      }),
     }));
   }
 
   return {
     ...chat,
     messages,
-    reload,
+    regenerate,
     addToolResult,
     toolInterrupt,
   };

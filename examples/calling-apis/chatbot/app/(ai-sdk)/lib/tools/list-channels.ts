@@ -1,5 +1,5 @@
 import { tool } from "ai";
-import { z } from "zod";
+import { z } from "zod/v3";
 
 import { withSlack } from "@/app/(ai-sdk)/lib/auth0-ai";
 import { getAccessTokenForConnection } from "@auth0/ai-vercel";
@@ -9,7 +9,7 @@ import { ErrorCode, WebClient } from "@slack/web-api";
 export const listChannels = withSlack(
   tool({
     description: "List channels for the current user on Slack",
-    parameters: z.object({}),
+    inputSchema: z.object({}),
     execute: async () => {
       // Get the access token from Auth0 AI
       const accessToken = getAccessTokenForConnection();

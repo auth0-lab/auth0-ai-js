@@ -1,6 +1,6 @@
 import "dotenv/config";
 
-import { CoreMessage, generateText } from "ai";
+import { ModelMessage, generateText } from "ai";
 import Enquirer from "enquirer";
 
 import { openai } from "@ai-sdk/openai";
@@ -9,7 +9,7 @@ import { Context } from "./context";
 import { systemPrompt } from "./system";
 import { buy } from "./tools/buy";
 
-async function generate(messages: CoreMessage[], context: Context) {
+async function generate(messages: ModelMessage[], context: Context) {
   const result = await generateText({
     model: openai("gpt-4o-mini"),
     system: systemPrompt,
@@ -27,7 +27,7 @@ async function main() {
   console.log(`<Enter a command (type "exit" to quit)>\n\n`);
 
   const enquirer = new Enquirer<{ prompt: string }>();
-  const messages: CoreMessage[] = [];
+  const messages: ModelMessage[] = [];
 
   try {
     while (true) {

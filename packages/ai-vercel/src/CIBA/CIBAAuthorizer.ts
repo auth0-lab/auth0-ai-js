@@ -1,5 +1,3 @@
-import { ToolExecutionOptions } from "ai";
-
 import { CIBAAuthorizerBase } from "@auth0/ai/CIBA";
 
 import { ToolContext } from "../util/ToolContext";
@@ -12,7 +10,7 @@ import { ToolWrapper } from "../util/ToolWrapper";
  * request authorization from the user via an out-of-band channel.
  */
 export class CIBAAuthorizer extends CIBAAuthorizerBase<
-  [any, ToolExecutionOptions]
+  [any, any]
 > {
   /**
    *
