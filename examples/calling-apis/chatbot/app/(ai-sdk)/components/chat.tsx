@@ -1,6 +1,10 @@
 "use client";
 
-import { DefaultChatTransport, generateId, lastAssistantMessageIsCompleteWithToolCalls } from "ai";
+import {
+  DefaultChatTransport,
+  generateId,
+  lastAssistantMessageIsCompleteWithToolCalls,
+} from "ai";
 import { useState } from "react";
 
 import { EnsureAPIAccessPopup } from "@/components/auth0-ai/FederatedConnections/popup";
@@ -10,18 +14,15 @@ import { FederatedConnectionInterrupt } from "@auth0/ai/interrupts";
 
 export default function Chat() {
   const [input, setInput] = useState("");
-  const { messages, sendMessage, toolInterrupt } =
-    useInterruptions((handler) =>
-      useChat({
-        transport: new DefaultChatTransport({ api: '/api/ai-sdk' }),
-        experimental_throttle: 100,
-        generateId,
-        onError: handler((error) => console.error("Chat error:", error)),
-        sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
-      })
-    );
-  console.log('messages', messages);
-  console.log('toolInterrupt', toolInterrupt);
+  const { messages, sendMessage, toolInterrupt } = useInterruptions((handler) =>
+    useChat({
+      transport: new DefaultChatTransport({ api: "/api/ai-sdk" }),
+      experimental_throttle: 100,
+      generateId,
+      onError: handler((error) => console.error("Chat error:", error)),
+      sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
+    })
+  );
   return (
     <div className="flex flex-col gap-4 w-full max-w-md py-12 sm:py-24 px-4 sm:px-0 mx-auto stretch">
       {messages.map((message) => (
@@ -42,11 +43,13 @@ export default function Chat() {
         />
       )}
 
-      <form onSubmit={e => {
-        e.preventDefault();
-        sendMessage({ text: input });
-        setInput('');
-      }}>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          sendMessage({ text: input });
+          setInput("");
+        }}
+      >
         <input
           className="fixed dark:bg-zinc-900 bg-white bottom-0 w-full max-w-sm sm:max-w-md p-3 mb-8 border border-zinc-300 dark:border-zinc-800 rounded-lg shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
           value={input}
