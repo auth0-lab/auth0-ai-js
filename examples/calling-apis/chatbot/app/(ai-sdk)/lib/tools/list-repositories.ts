@@ -1,6 +1,6 @@
 import { tool } from "ai";
 import { Octokit, RequestError } from "octokit";
-import { z } from 'zod/v3';
+import { z } from "zod/v3";
 
 import { withGitHub } from "@/app/(ai-sdk)/lib/auth0-ai";
 import { getAccessTokenForConnection } from "@auth0/ai-vercel";

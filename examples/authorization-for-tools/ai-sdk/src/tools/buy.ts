@@ -1,7 +1,7 @@
 import "dotenv/config";
 
 import { tool } from "ai";
-import { z } from 'zod/v3';
+import { z } from "zod/v3";
 
 import { Auth0AI } from "@auth0/ai-vercel";
 

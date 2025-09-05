@@ -2,7 +2,7 @@ import { tool } from "ai";
 import { addHours, formatISO } from "date-fns";
 import { GaxiosError } from "gaxios";
 import { google } from "googleapis";
-import { z } from 'zod/v3';
+import { z } from "zod/v3";
 
 import { withGoogleCalendar } from "@/app/(ai-sdk)/lib/auth0-ai";
 import { getAccessTokenForConnection } from "@auth0/ai-vercel";
