@@ -36,14 +36,14 @@ export const useCIBA = auth0AI.withAsyncUserConfirmation({
    * For a more real world scenario refer to `demos/vercel-ai-agent`.
    */
   onAuthorizationRequest: async (authReq, creds) => {
-    console.log(`An authorization request was sent to your mobile device.`);
+    console.log(`An authorization request was sent to your mobile device or your email.`);
     await creds;
     console.log(`Thanks for approving the order.`);
   },
 
   onUnauthorized: async (e: Error) => {
     if (e instanceof AccessDeniedInterrupt) {
-      return "The user has deny the request";
+      return "The user has denied the request";
     }
     return e.message;
   },
