@@ -1,6 +1,6 @@
 import { tool } from "llamaindex";
 import { Octokit, RequestError } from "octokit";
-import { z } from "zod";
+import { z } from "zod/v3";
 
 import { withGitHub } from "@/app/(llamaindex)/lib/auth0-ai";
 import { getCredentialsForConnection } from "@auth0/ai-vercel";

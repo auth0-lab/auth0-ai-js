@@ -1,4 +1,4 @@
-import { ToolExecutionOptions } from "ai";
+
 
 import { FGAAuthorizerBase } from "@auth0/ai/FGA";
 
@@ -12,7 +12,7 @@ import { ToolWrapper } from "../util/ToolWrapper";
  *
  */
 export class FGAAuthorizer extends FGAAuthorizerBase<
-  [any, ToolExecutionOptions]
+  [any, any]
 > {
   /**
    *
