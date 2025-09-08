@@ -1,13 +1,13 @@
 import { DeviceAuthorizerBase } from "@auth0/ai/Device";
 
-import { ToolContext } from "../util/ToolContext";
+import { ToolContext, ToolExecutionOptions } from "../util/ToolContext";
 import { ToolWrapper } from "../util/ToolWrapper";
 
 /**
  * The DeviceAuthorizer class implements the Device Authorization Flow for a Vercel-AI tool.
  */
 export class DeviceAuthorizer extends DeviceAuthorizerBase<
-  [any, any]
+  [any, ToolExecutionOptions]
 > {
   /**
    *

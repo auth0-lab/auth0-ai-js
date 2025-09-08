@@ -71,7 +71,7 @@ describe("FederatedConnectionAuthorizer", () => {
         setAIContext({ threadID: "123" });
         await protectedTool!.execute!(
           { userID: "user1", input: "input" },
-          {} as any
+          { toolCallId: "test-call-id", messages: [] }
         );
       } catch (err) {
         error = err as FederatedConnectionInterrupt;
@@ -114,7 +114,7 @@ describe("FederatedConnectionAuthorizer", () => {
         });
         await protectedTool!.execute!(
           { userID: "user1", input: "input" },
-          {} as any
+          { toolCallId: "test-call-id", messages: [] }
         );
       } catch (err) {
         error = err as FederatedConnectionInterrupt;
