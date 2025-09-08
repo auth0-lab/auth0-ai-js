@@ -1,4 +1,13 @@
-import { AISDKError, DynamicToolUIPart, ModelMessage, Tool, ToolCallPart, ToolUIPart, UIMessage, UITools } from "ai";
+import {
+  AISDKError,
+  DynamicToolUIPart,
+  ModelMessage,
+  Tool,
+  ToolCallPart,
+  ToolUIPart,
+  UIMessage,
+  UITools,
+} from "ai";
 
 type ContinueParams<T extends UIMessage | ModelMessage> = {
   /**
@@ -66,7 +75,11 @@ const invokeToolsMessages = async ({
 }: ContinueParams<UIMessage>) => {
   const lastMessage = messages[messages.length - 1];
   const lastPart =
-    lastMessage?.parts && lastMessage?.parts[lastMessage.parts.length - 1] as { output: any, toolCallId: string } & (ToolUIPart<UITools> | DynamicToolUIPart);
+    lastMessage?.parts &&
+    (lastMessage?.parts[lastMessage.parts.length - 1] as {
+      output: any;
+      toolCallId: string;
+    } & (ToolUIPart<UITools> | DynamicToolUIPart));
 
   if (!lastPart || !lastPart.type.startsWith("tool-")) {
     return;
@@ -83,7 +96,8 @@ const invokeToolsMessages = async ({
     lastToolInvocation.state === "output-available" &&
     lastToolInvocation.output?.continueInterruption
   ) {
-    const tool = tools[lastToolInvocation.output?.toolName as keyof typeof tools];
+    const tool =
+      tools[lastToolInvocation.output?.toolName as keyof typeof tools];
     if (!tool) {
       console.warn(
         `Last message contains a tool invocation in state result but the tool ${lastToolInvocation.output?.toolName} is not found in the tools object`
@@ -94,12 +108,15 @@ const invokeToolsMessages = async ({
         toolCallId: lastToolInvocation.toolCallId,
         messages: [],
       });
+
       lastPart.output = {
-        ...lastToolInvocation,
         toolName: lastToolInvocation.output?.toolName,
         state: "output-available",
         result,
       };
+
+      // Clear any error text from the interruption since the tool executed successfully
+      lastPart.errorText = undefined;
     } catch (err: any) {
       lastPart.output = {
         ...lastToolInvocation,

@@ -12,6 +12,7 @@
   "devDependencies": {
     "@commitlint/config-conventional": "^19.8.0",
     "@semantic-release/release-notes-generator": "^14.0.3",
+    "@swc/core": "^1.7.26",
     "commitlint": "^19.8.0",
     "husky": "^9.1.7",
     "ioredis": "^5.7.0",
@@ -23,7 +24,6 @@
     "semantic-release-unsquash": "^0.2.0",
     "terminal-link": "^3.0.0"
   },
-  "packageManager": "npm@9.8.0",
   "workspaces": [
     "packages/*",
     "examples/**/*"
@@ -35,6 +35,8 @@
   },
   "optionalDependencies": {
     "@rollup/rollup-linux-x64-gnu": "^4.0.0",
-    "glob-hasher-linux-x64-gnu": "^1.0.0"
+    "@tailwindcss/oxide-linux-x64-gnu": "^4.1.13",
+    "glob-hasher-linux-x64-gnu": "^1.0.0",
+    "lightningcss-linux-x64-gnu": "^1.30.1"
   }
 }

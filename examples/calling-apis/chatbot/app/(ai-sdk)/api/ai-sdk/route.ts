@@ -6,10 +6,18 @@ import {
   UIMessage,
 } from "ai";
 
-import { checkUsersCalendar, googleDriveTools, listChannels, listRepositories } from "@/app/(ai-sdk)/lib/tools/";
+import {
+  checkUsersCalendar,
+  googleDriveTools,
+  listChannels,
+  listRepositories,
+} from "@/app/(ai-sdk)/lib/tools/";
 import { openai } from "@ai-sdk/openai";
 import { setAIContext } from "@auth0/ai-vercel";
-import { errorSerializer, withInterruptions } from "@auth0/ai-vercel/interrupts";
+import {
+  errorSerializer,
+  withInterruptions,
+} from "@auth0/ai-vercel/interrupts";
 
 export async function POST(request: Request) {
   const {
@@ -35,9 +43,9 @@ export async function POST(request: Request) {
           model: openai("gpt-4o-mini"),
           system:
             "You are a friendly assistant! Keep your responses concise and helpful.",
-            messages: convertToModelMessages(messages),
+          messages: convertToModelMessages(messages),
           tools,
-          
+
           onFinish: (output) => {
             if (output.finishReason === "tool-calls") {
               const lastMessage = output.content[output.content.length - 1];
@@ -47,17 +55,19 @@ export async function POST(request: Request) {
                   cause: error,
                   toolCallId: toolCallId,
                   toolName: toolName,
-                  toolArgs: input
+                  toolArgs: input,
                 };
-  
+
                 throw serializableError;
               }
             }
-          }
+          },
         });
-        writer.merge(result.toUIMessageStream({
-          sendReasoning: true,
-        }));
+        writer.merge(
+          result.toUIMessageStream({
+            sendReasoning: true,
+          })
+        );
       },
       {
         messages: messages,
@@ -65,12 +75,11 @@ export async function POST(request: Request) {
       }
     ),
     onError: errorSerializer((err) => {
-      console.log(err);
+      console.error("ai-sdk route: stream error", err);
       return "Oops, an error occured!";
     }),
-  },
-);
+  });
 
-  return createUIMessageStreamResponse({ stream }); 
+  return createUIMessageStreamResponse({ stream });
 }
 
