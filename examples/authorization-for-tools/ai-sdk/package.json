@@ -5,7 +5,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build": "npm run clean && tsc --project ./tsconfig.build.json",
+    "build:watch": "tsc --project ./tsconfig.build.json --watch",
+    "clean": "rm -rf dist",
+    "type-check": "tsc --noEmit",
     "start": "npx tsx src/index.ts",
+    "start:built": "node dist/index.js",
     "fga:init": "npx tsx ./scripts/fga-init.ts"
   },
   "author": {
@@ -21,5 +26,9 @@
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.7",
     "enquirer": "^2.4.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.7",
+    "typescript": "^5.8.3"
   }
 }

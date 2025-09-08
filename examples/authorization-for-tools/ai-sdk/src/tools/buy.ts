@@ -11,7 +11,7 @@ const auth0AI = new Auth0AI.FGA();
 
 export const buy = (context: Context) => {
   const useFGA = auth0AI.withFGA({
-    buildQuery: async ({ ticker }) => {
+    buildQuery: async ({ ticker }: { ticker: string; qty: number }) => {
       return {
         user: `user:${context.userId}`,
         object: `asset:${ticker}`,
@@ -19,7 +19,7 @@ export const buy = (context: Context) => {
         context: { current_time: new Date().toISOString() },
       };
     },
-    onUnauthorized({ ticker }) {
+    onUnauthorized({ ticker }: { ticker: string; qty: number }) {
       return `The user is not allowed to buy ${ticker}.`;
     },
   });
