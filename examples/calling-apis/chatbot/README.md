@@ -54,7 +54,7 @@ AUTH0_SECRET="<use [openssl rand -hex 32] to generate a 32 bytes value>"
 APP_BASE_URL=http://localhost:3000
 # the offline_access scope is needed if your flow is using a refresh token
 AUTH0_SCOPE='openid profile email offline_access'
-# Langgraph API audience
+# Langgraph API audience. Only needed for Langgraph example.
 AUTH0_AUDIENCE="<auth0-audience>"
 NEXT_PUBLIC_URL="http://localhost:3000"
 
@@ -65,7 +65,7 @@ OPENAI_API_KEY=xx-xxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxx
 LANGGRAPH_API_URL=http://localhost:54367
 # Auth0 Resource Server Client Configuration (for token exchange with Token Vault)
 # These credentials belong to a special "resource_server" client that can perform token exchanges
-# on behalf of the user within your Langgraph API
+# on behalf of the user within your Langgraph API. Only needed for Langgraph example.
 RESOURCE_SERVER_CLIENT_ID="<your-resource-server-client-id>"
 RESOURCE_SERVER_CLIENT_SECRET="<your-resource-server-client-secret>"
 ```

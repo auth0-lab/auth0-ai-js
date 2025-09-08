@@ -128,9 +128,6 @@ const invokeToolsMessages = async ({
       throw new AISDKError({
         name: err.name,
         message: err.message,
-        // toolCallId: lastToolInvocation.toolCallId,
-        // toolName: lastToolInvocation.output?.toolName,
-        // toolArgs: lastToolInvocation.input as JSONValue,
         cause: err,
       });
     }
