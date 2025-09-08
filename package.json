@@ -24,6 +24,7 @@
     "semantic-release-unsquash": "^0.2.0",
     "terminal-link": "^3.0.0"
   },
+  "packageManager": "npm@9.8.0",
   "workspaces": [
     "packages/*",
     "examples/**/*"
