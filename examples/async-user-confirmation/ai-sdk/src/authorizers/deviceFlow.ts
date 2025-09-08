@@ -19,8 +19,7 @@ export const useDeviceFLow = new Auth0AI({
       type: "confirm",
       name: "answer",
       initial: true,
-      message:
-        "We need to authenticate you in a browser. Do you want to continue?",
+      message: `We need to authenticate you in a browser. You will be taken to a login page where this code will be prefilled: ${request.userCode}. Do you want to continue?`,
     });
     if (!answer) {
       process.exit(1);
