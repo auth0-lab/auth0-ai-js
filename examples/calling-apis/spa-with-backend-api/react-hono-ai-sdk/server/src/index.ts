@@ -1,19 +1,21 @@
 import "dotenv/config";
 
-import { convertToModelMessages, createUIMessageStream, createUIMessageStreamResponse, generateId, streamText } from "ai";
+import {
+  convertToModelMessages,
+  createUIMessageStream,
+  createUIMessageStreamResponse,
+  generateId,
+  streamText,
+} from "ai";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 
 import { openai } from "@ai-sdk/openai";
 import { setAIContext } from "@auth0/ai-vercel";
 import {
-  InterruptionPrefix,
+  errorSerializer,
   withInterruptions,
 } from "@auth0/ai-vercel/interrupts";
-import {
-  Auth0Interrupt,
-  FederatedConnectionInterrupt,
-} from "@auth0/ai/interrupts";
 import { serve } from "@hono/node-server";
 
 import { createGoogleCalendarTool } from "./lib/auth";
@@ -96,42 +98,48 @@ export const app = new Hono()
     // https://ai-sdk.dev/cookbook/api-servers/hono?utm_source=chatgpt.com#hono
 
     const stream = createUIMessageStream({
+      originalMessages: requestMessages,
       execute: withInterruptions(
-        async (dataStream) => {
+        async ({ writer }) => {
           const result = streamText({
             model: openai("gpt-4o-mini"),
             system:
-              "You are a helpful calendar assistant! You can help users with their calendar events and schedules. Keep your responses concise and helpful.",
+              "You are a helpful calendar assistant! You can help users with their calendar events and schedules. Keep your responses concise and helpful. Always format your responses as plain text. Do not use markdown formatting like **bold**, ##headers, or -bullet points. Use simple text formatting with line breaks and indentation only.",
             messages: convertToModelMessages(requestMessages),
             tools,
-          });
 
-          dataStream.writer.merge(result.toUIMessageStream({
-            sendReasoning: true,
-          }));
-        },
-        { messages: requestMessages, tools }
-      ),
-      onError: (error: any) => {
-        // Handle Auth0 AI interrupts
-        if (
-          error.cause instanceof Auth0Interrupt ||
-          error.cause instanceof FederatedConnectionInterrupt
-        ) {
-          const serializableError = {
-            ...error.cause.toJSON(),
-            toolCall: {
-              id: error.toolCallId,
-              args: error.toolArgs,
-              name: error.toolName,
+            onFinish: (output) => {
+              if (output.finishReason === "tool-calls") {
+                const lastMessage = output.content[output.content.length - 1];
+                if (lastMessage?.type === "tool-error") {
+                  const { toolName, toolCallId, error, input } = lastMessage;
+                  const serializableError = {
+                    cause: error,
+                    toolCallId: toolCallId,
+                    toolName: toolName,
+                    toolArgs: input,
+                  };
+
+                  throw serializableError;
+                }
+              }
             },
-          };
-
-          return `${InterruptionPrefix}${JSON.stringify(serializableError)}`;
+          });
+          writer.merge(
+            result.toUIMessageStream({
+              sendReasoning: true,
+            })
+          );
+        },
+        {
+          messages: requestMessages,
+          tools,
         }
-
-        return "Oops! An error occurred.";
-      },
+      ),
+      onError: errorSerializer((err) => {
+        console.error("react-hono-ai-sdk route: stream error", err);
+        return "Oops, an error occurred!";
+      }),
     });
 
     return createUIMessageStreamResponse({ stream });
