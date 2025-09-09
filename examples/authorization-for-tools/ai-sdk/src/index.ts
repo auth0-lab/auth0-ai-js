@@ -1,6 +1,6 @@
 import "dotenv/config";
 
-import { generateText, ModelMessage } from "ai";
+import { generateText, ModelMessage, stepCountIs } from "ai";
 import Enquirer from "enquirer";
 
 import { openai } from "@ai-sdk/openai";
@@ -14,6 +14,7 @@ async function generate(messages: ModelMessage[], context: Context) {
     model: openai("gpt-4o-mini"),
     system: systemPrompt,
     messages,
+    stopWhen: stepCountIs(2),
     tools: {
       buy: buy(context),
     },

@@ -1,4 +1,4 @@
-import { ModelMessage, generateText, AISDKError} from "ai";
+import { AISDKError, generateText, ModelMessage, stepCountIs } from "ai";
 import { Job } from "bullmq";
 
 import { queue } from "@/src/queue";
@@ -63,6 +63,7 @@ export const conditionalTrade = async (
       system:
         "You are a fictional stock trader bot. Please execute the trades of the user.",
       messages,
+      stopWhen: stepCountIs(5),
       tools,
       onStepFinish: async (step) => {
         const newMessages = [...messages, ...step.response.messages];
@@ -81,10 +82,7 @@ export const conditionalTrade = async (
     });
     console.log(`${r.text}`);
   } catch (err) {
-    if (
-      err instanceof AISDKError &&
-      Auth0Interrupt.isInterrupt(err.cause)
-    ) {
+    if (err instanceof AISDKError && Auth0Interrupt.isInterrupt(err.cause)) {
       console.log("Handling tool execution error");
       const newMessages = appendToolCall(messages, err);
       await job.updateData({

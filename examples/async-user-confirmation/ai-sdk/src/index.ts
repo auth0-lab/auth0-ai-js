@@ -1,6 +1,6 @@
 import "dotenv/config";
 
-import { ModelMessage, generateText } from "ai";
+import { generateText, ModelMessage, stepCountIs } from "ai";
 import Enquirer from "enquirer";
 import crypto from "node:crypto";
 
@@ -13,6 +13,7 @@ async function generate(messages: ModelMessage[]) {
   const result = await generateText({
     model: openai("gpt-4o-mini"),
     messages,
+    stopWhen: stepCountIs(2),
     tools: {
       buy,
     },
