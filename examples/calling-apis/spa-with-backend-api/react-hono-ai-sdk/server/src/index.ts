@@ -5,7 +5,6 @@ import {
   createUIMessageStream,
   createUIMessageStreamResponse,
   generateId,
-  stepCountIs,
   streamText,
 } from "ai";
 import { Hono } from "hono";
@@ -13,7 +12,10 @@ import { cors } from "hono/cors";
 
 import { openai } from "@ai-sdk/openai";
 import { setAIContext } from "@auth0/ai-vercel";
-import { errorSerializer, withInterruptions } from "@auth0/ai-vercel/interrupts";
+import {
+  errorSerializer,
+  withInterruptions,
+} from "@auth0/ai-vercel/interrupts";
 import { serve } from "@hono/node-server";
 
 import { createGoogleCalendarTool } from "./lib/auth";
@@ -104,7 +106,6 @@ export const app = new Hono()
             system:
               "You are a helpful calendar assistant! You can help users with their calendar events and schedules. Keep your responses concise and helpful. Always format your responses as plain text. Do not use markdown formatting like **bold**, ##headers, or -bullet points. Use simple text formatting with line breaks and indentation only.",
             messages: convertToModelMessages(requestMessages),
-            stopWhen: stepCountIs(5),
             tools,
 
             onFinish: (output) => {

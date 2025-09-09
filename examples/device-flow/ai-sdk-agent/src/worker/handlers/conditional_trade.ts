@@ -1,4 +1,4 @@
-import { AISDKError, generateText, ModelMessage, stepCountIs } from "ai";
+import { AISDKError, generateText, ModelMessage } from "ai";
 import { Job } from "bullmq";
 
 import { queue } from "@/src/queue";
@@ -9,7 +9,11 @@ import { notifyUser } from "@/src/tools/notifyUser";
 import { openai } from "@ai-sdk/openai";
 import { setAIContext } from "@auth0/ai-vercel";
 import { appendToolCall, invokeTools } from "@auth0/ai-vercel/interrupts";
-import { Auth0Interrupt, AuthorizationPendingInterrupt, AuthorizationPollingInterrupt } from "@auth0/ai/interrupts";
+import {
+  Auth0Interrupt,
+  AuthorizationPendingInterrupt,
+  AuthorizationPollingInterrupt,
+} from "@auth0/ai/interrupts";
 
 import { ConditionalTrade } from "../../ConditionalTrade";
 
@@ -63,7 +67,6 @@ export const conditionalTrade = async (
       system:
         "You are a fictional stock trader bot. Please execute the trades of the user.",
       messages,
-      stopWhen: stepCountIs(5),
       tools,
       onStepFinish: async (step) => {
         const newMessages = [...messages, ...step.response.messages];

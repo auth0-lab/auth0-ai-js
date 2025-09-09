@@ -2,15 +2,22 @@ import {
   convertToModelMessages,
   createUIMessageStream,
   createUIMessageStreamResponse,
-  stepCountIs,
   streamText,
   UIMessage,
 } from "ai";
 
-import { checkUsersCalendar, googleDriveTools, listChannels, listRepositories } from "@/app/(ai-sdk)/lib/tools/";
+import {
+  checkUsersCalendar,
+  googleDriveTools,
+  listChannels,
+  listRepositories,
+} from "@/app/(ai-sdk)/lib/tools/";
 import { openai } from "@ai-sdk/openai";
 import { setAIContext } from "@auth0/ai-vercel";
-import { errorSerializer, withInterruptions } from "@auth0/ai-vercel/interrupts";
+import {
+  errorSerializer,
+  withInterruptions,
+} from "@auth0/ai-vercel/interrupts";
 
 export async function POST(request: Request) {
   const {
@@ -37,7 +44,6 @@ export async function POST(request: Request) {
           system:
             "You are a friendly assistant! Keep your responses concise and helpful.",
           messages: convertToModelMessages(messages),
-          stopWhen: stepCountIs(5),
           tools,
 
           onFinish: (output) => {
