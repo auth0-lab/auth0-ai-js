@@ -7,7 +7,6 @@ export const useAgentChatInterruptions = <State>(
   options: Parameters<typeof useAgentChat<State>>[0]
 ): ReturnType<typeof useInterruptions> & ReturnType<typeof useAgentChat> => {
   const { agent } = options;
-  // @ts-expect-error ErrorHandler
   const result = useInterruptions((handler) => {
     const onError =
       options.onError ?? ((error) => console.error("Chat error:", error));
