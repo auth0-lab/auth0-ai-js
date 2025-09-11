@@ -97,7 +97,7 @@ export class CIBAAuthorizerBase<ToolExecuteArgs extends any[]> {
     const authParams: Record<string, any> = {
       scope: ensureOpenIdScope(this.params.scopes).join(" "),
       audience: this.params.audience || "",
-      request_expiry: (this.params.requestExpiry ?? 300).toString(),
+      requested_expiry: (this.params.requestedExpiry ?? 300).toString(),
       binding_message:
         (await resolveParameter(this.params.bindingMessage, toolContext)) ?? "",
       userId: (await resolveParameter(this.params.userID, toolContext)) ?? "",

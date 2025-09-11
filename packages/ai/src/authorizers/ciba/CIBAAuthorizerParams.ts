@@ -42,9 +42,9 @@ export type CIBAAuthorizerParams<ToolExecuteArgs extends any[]> = {
   /**
    * The time in seconds for the authorization request to expire.
    *
-   * Defaults to 5m.
+   * Defaults to 300 (5 minutes).
    */
-  requestExpiry?: number;
+  requestedExpiry?: number;
 
   /**
    * The behavior when the authorization request is made.
