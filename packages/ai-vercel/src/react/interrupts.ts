@@ -107,5 +107,7 @@ export function useInterruptions(
     ...chat,
     messages,
     toolInterrupt,
+    addToolResult,
+    regenerate,
   } as UseChatWithInterruptionsReturnType;
 }
