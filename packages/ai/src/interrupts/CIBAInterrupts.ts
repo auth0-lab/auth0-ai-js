@@ -89,6 +89,13 @@ export class AuthorizationPendingInterrupt
   ) {
     super(message, AuthorizationPendingInterrupt.code);
   }
+
+  /**
+   * Returns the interval in seconds to wait until the next polling attempt.
+   */
+  public nextRetryInterval(): number {
+    return this.request.interval;
+  }
 }
 
 /**
@@ -101,9 +108,17 @@ export class AuthorizationPollingInterrupt
   public static code: string = "CIBA_AUTHORIZATION_POLLING_ERROR" as const;
   constructor(
     message: string,
-    public readonly request: CIBAAuthorizationRequest
+    public readonly request: CIBAAuthorizationRequest,
+    public readonly retryAfter: number
   ) {
     super(message, AuthorizationPollingInterrupt.code);
+  }
+
+  /**
+   * Returns the interval in seconds to wait until the next polling attempt.
+   */
+  public nextRetryInterval(): number {
+    return this.retryAfter || this.request.interval;
   }
 }
 
@@ -119,6 +134,6 @@ export class InvalidGrantInterrupt
     message: string,
     public readonly request: CIBAAuthorizationRequest
   ) {
-    super(message, AuthorizationPollingInterrupt.code);
+    super(message, InvalidGrantInterrupt.code);
   }
 }
