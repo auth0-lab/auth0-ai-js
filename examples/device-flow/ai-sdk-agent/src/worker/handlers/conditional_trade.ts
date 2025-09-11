@@ -8,7 +8,7 @@ import { getStockMetric } from "@/src/tools/getStockMetric";
 import { notifyUser } from "@/src/tools/notifyUser";
 import { openai } from "@ai-sdk/openai";
 import { setAIContext } from "@auth0/ai-vercel";
-import { appendToolCall, invokeTools } from "@auth0/ai-vercel/interrupts";
+import { invokeTools } from "@auth0/ai-vercel/interrupts";
 import {
   Auth0Interrupt,
   AuthorizationPendingInterrupt,
@@ -86,11 +86,12 @@ export const conditionalTrade = async (
     console.log(`${r.text}`);
   } catch (err) {
     if (err instanceof AISDKError && Auth0Interrupt.isInterrupt(err.cause)) {
-      console.log("Handling tool execution error");
-      const newMessages = appendToolCall(messages, err);
+      console.log("Handling tool execution interruption (no synthetic append)");
+      // In SDK v5 the originating tool-call message already exists from the model output;
+      // we persist current messages without modification.
       await job.updateData({
         ...conditionalTrade,
-        messages: newMessages,
+        messages,
       });
 
       const authorizationPendingInterAuthorizationPendingInterrupt =
