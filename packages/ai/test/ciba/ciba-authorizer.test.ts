@@ -18,6 +18,7 @@ describe("CIBAAuthorizerBase", () => {
     userID: "user123",
     bindingMessage: "test-binding",
     scopes: ["read:users"],
+    requestedExpiry: 360,
     store: {
       get: vi.fn(),
       put: vi.fn(),
@@ -110,6 +111,16 @@ describe("CIBAAuthorizerBase", () => {
 
     it("should start the backchannel authorization", async () => {
       expect(mockAuth0.backchannel.authorize).toHaveBeenCalled();
+    });
+
+    it("should have passed the right arguments", async () => {
+      expect(mockAuth0.backchannel.authorize).toHaveBeenCalledWith({
+        audience: "",
+        binding_message: "test-binding",
+        requested_expiry: "360",
+        scope: "openid read:users",
+        userId: "user123",
+      });
     });
 
     it("should store the authorization response", async () => {
