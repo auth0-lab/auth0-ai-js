@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "zod/v3";
 
 import { getCredentialsForConnection } from "@auth0/ai-langchain";
 import { FederatedConnectionError } from "@auth0/ai/interrupts";

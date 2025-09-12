@@ -7,8 +7,8 @@
   "module": "./dist/esm/index.js",
   "scripts": {
     "build": "npm run clean && npm run build:esm && npm run build:cjs",
-    "build:esm": "tsc --outDir ./dist/esm",
-    "build:cjs": "tsc --module nodenext --moduleResolution nodenext --declaration false --declarationMap false --outDir ./dist/cjs",
+    "build:esm": "tsc --project ./tsconfig.build.json --outDir ./dist/esm",
+    "build:cjs": "tsc --project ./tsconfig.build.json --module nodenext --moduleResolution nodenext --declaration false --declarationMap false --outDir ./dist/cjs",
     "build:watch": "run-p 'build:esm -- --watch' 'build:cjs -- -watch'",
     "clean": "rm -rf dist",
     "lint": "eslint \"./**/*.ts*\"",
@@ -84,7 +84,7 @@
     "openid-client": "^6.1.7",
     "stable-hash": "^0.0.5",
     "tempbox": "^1.1.1",
-    "zod": "^3.24.2"
+    "zod": "^3.25.76"
   },
   "publishConfig": {
     "access": "public"

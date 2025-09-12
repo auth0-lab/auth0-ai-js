@@ -34,7 +34,7 @@
     "nanoid": "^5.1.0",
     "node-cron": "^3.0.3",
     "node-persist": "^4.0.4",
-    "zod": "^3.23.8"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@auth0/auth0-ai-js-tools-login-helper": "file:../../../tools/login-helper",
