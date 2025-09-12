@@ -30,7 +30,6 @@ Replace `useAgentChat` with `useAgentChatInterruptions` in your code to get acce
     toolInterrupt,
   } = useAgentChatInterruptions({
     agent,
-    maxSteps: 5,
     id: threadID,
   });
 ```

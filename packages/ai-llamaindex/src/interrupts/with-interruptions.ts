@@ -1,4 +1,4 @@
-import { Message } from "ai";
+import { UIMessage } from "ai";
 import { Settings } from "llamaindex";
 
 import { FederatedConnectionInterrupt } from "@auth0/ai/interrupts";
@@ -9,7 +9,7 @@ type ExecutionErrorType = new (...args: any[]) => any;
 export function withInterruptions(
   fn: ExecuteFN,
   config: {
-    messages: Message[];
+    messages: UIMessage[];
     errorType: ExecutionErrorType;
   }
 ) {

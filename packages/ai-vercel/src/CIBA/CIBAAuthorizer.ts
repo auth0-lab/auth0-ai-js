@@ -1,8 +1,6 @@
-import { ToolExecutionOptions } from "ai";
-
 import { CIBAAuthorizerBase } from "@auth0/ai/CIBA";
 
-import { ToolContext } from "../util/ToolContext";
+import { ToolContext, ToolExecutionOptions } from "../util/ToolContext";
 import { ToolWrapper } from "../util/ToolWrapper";
 
 /**

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { Tool, ToolExecutionOptions } from "ai";
+import { Tool } from "ai";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { z } from "zod";
+import { z } from "zod/v3";
 
 import { CIBAAuthorizerBase } from "@auth0/ai/CIBA";
 import {
@@ -42,7 +42,7 @@ describe("CIBAAuthorizer", () => {
 
     mockTool = {
       description: "A mock tool for testing",
-      parameters: z.object({
+      inputSchema: z.object({
         userID: z.string(),
         input: z.string(),
       }),
@@ -84,7 +84,7 @@ describe("CIBAAuthorizer", () => {
         setAIContext({ threadID: "123" });
         await protectedTool!.execute!(
           { userID: "user1", input: "input" },
-          {} as ToolExecutionOptions
+          { toolCallId: "test-call-id", messages: [] }
         );
       } catch (err) {
         error = err as CIBAInterrupt;
@@ -102,7 +102,17 @@ describe("CIBAAuthorizer", () => {
 
   describe("on authorization request expired error", () => {
     let error: CIBAInterrupt;
-    let result: any;
+    let result: {
+      name: string;
+      code: string;
+      message: string;
+      request: {
+        interval: number;
+        id: string;
+        requestedAt: number;
+        expiresIn: number;
+      };
+    };
     beforeEach(async () => {
       authorizerParameters.store.get.mockImplementation((ns, k) =>
         k === "authResponse"
@@ -132,7 +142,7 @@ describe("CIBAAuthorizer", () => {
         setAIContext({ threadID: "123" });
         result = await protectedTool!.execute!(
           { userID: "user1", input: "input" },
-          {} as ToolExecutionOptions
+          { toolCallId: "test-call-id", messages: [] }
         );
       } catch (err) {
         error = err as CIBAInterrupt;
@@ -189,7 +199,7 @@ describe("CIBAAuthorizer", () => {
         setAIContext({ threadID: "123" });
         await protectedTool!.execute!(
           { userID: "user1", input: "input" },
-          {} as ToolExecutionOptions
+          { toolCallId: "test-call-id", messages: [] }
         );
       } catch (err) {
         error = err as CIBAInterrupt;
