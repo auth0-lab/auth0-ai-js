@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import { initApiPassthrough } from "langgraph-nextjs-api-passthrough";
+import { NextRequest } from "next/server";
 
 import { auth0 } from "@/lib/auth0";
 
@@ -12,84 +13,20 @@ async function getAccessToken() {
   return tokenResult.token;
 }
 
-async function makeLangGraphRequest(
-  endpoint: string,
-  method: string = "GET",
-  accessToken: string,
-  body?: any,
-  additionalHeaders: Record<string, string> = {}
-) {
-  const langGraphUrl = `${process.env.LANGGRAPH_API_URL}${endpoint}`;
-  const requestHeaders: Record<string, string> = {
-    ...additionalHeaders,
-  };
-
-  // Pass Auth0 access token for the API in the Authorization header
-  requestHeaders["Authorization"] = `Bearer ${accessToken}`;
-
-  const requestOptions: RequestInit = {
-    method,
-    headers: requestHeaders,
-  };
-
-  if (body) {
-    requestOptions.body = JSON.stringify(body);
-    requestOptions.headers = {
-      ...requestOptions.headers,
-      "Content-Type": "application/json",
-    };
-  }
-
-  const response = await fetch(langGraphUrl, requestOptions);
-
-  if (!response.ok) {
-    throw new Error(
-      `LangGraph request failed: ${response.status} ${response.statusText}`
-    );
-  }
-
-  return response;
-}
-
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ _path: string[] }> }
-) {
-  try {
-    const accessToken = await getAccessToken();
-    const body = await request.json();
-
-    const { _path } = await params;
-    const path = _path || [];
-    const endpoint = path.length > 0 ? `/${path.join("/")}` : "/";
-
-    const response = await makeLangGraphRequest(
-      endpoint,
-      "POST",
-      accessToken,
-      body
-    );
-
-    if (endpoint.includes("/stream")) {
-      return new Response(response.body, {
-        headers: {
-          "Content-Type": "text/event-stream",
-          "Cache-Control": "no-cache",
-          Connection: "keep-alive",
-        },
+export const { GET, POST, PUT, PATCH, DELETE, OPTIONS, runtime } =
+  initApiPassthrough({
+    apiUrl: process.env.LANGGRAPH_API_URL,
+    apiKey: process.env.LANGSMITH_API_KEY,
+    runtime: "edge",
+    baseRoute: "langgraph/",
+    headers: async (req: NextRequest) => {
+      const headers: Record<string, string> = {};
+      req.headers.forEach((value, key) => {
+        headers[key] = value;
       });
-    }
 
-    const responseData = await response.json();
-    return NextResponse.json(responseData);
-  } catch (error) {
-    console.error("Error in LangGraph POST:", error);
-    if (error instanceof Error && error.message === "Unauthorized") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
-  }
-}
+      const accessToken = await getAccessToken();
+      headers["Authorization"] = `Bearer ${accessToken}`;
+      return headers;
+    },
+  });
