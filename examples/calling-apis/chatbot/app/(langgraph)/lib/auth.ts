@@ -22,8 +22,8 @@ const auth = new Auth();
 
 // Register the authentication handler
 auth.authenticate(async (request: Request) => {
-  const authHeader = request.headers.get("Authorization");
-  const xApiKeyHeader = request.headers.get("x-api-key");
+  const authHeader = request.headers.get("Authorization") || undefined;
+  const xApiKeyHeader = request.headers.get("x-api-key") || undefined;
   try {
     /**
      * LangGraph Platform will convert the `Authorization` header from the client to an `x-api-key` header automatically
