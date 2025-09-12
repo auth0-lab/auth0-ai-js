@@ -97,7 +97,7 @@ export class CIBAAuthorizerBase<ToolExecuteArgs extends any[]> {
     const authParams: Record<string, any> = {
       scope: ensureOpenIdScope(this.params.scopes).join(" "),
       audience: this.params.audience || "",
-      request_expiry: (this.params.requestExpiry ?? 300).toString(),
+      requested_expiry: (this.params.requestedExpiry ?? 300).toString(),
       binding_message:
         (await resolveParameter(this.params.bindingMessage, toolContext)) ?? "",
       userId: (await resolveParameter(this.params.userID, toolContext)) ?? "",
@@ -151,7 +151,8 @@ export class CIBAAuthorizerBase<ToolExecuteArgs extends any[]> {
       if (e.error === "slow_down") {
         throw new AuthorizationPollingInterrupt(
           e.error_description,
-          authRequest
+          authRequest,
+          Number(e.headers.get('retry-after'))
         );
       }
 
@@ -190,7 +191,7 @@ export class CIBAAuthorizerBase<ToolExecuteArgs extends any[]> {
           err instanceof AuthorizationPendingInterrupt ||
           err instanceof AuthorizationPollingInterrupt
         ) {
-          await sleep(err.request.interval * 1000);
+          await sleep(err.nextRetryInterval() * 1000);
         } else {
           throw err;
         }
