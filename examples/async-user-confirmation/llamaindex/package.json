@@ -16,11 +16,11 @@
   "dependencies": {
     "@auth0/ai": "*",
     "@auth0/ai-llamaindex": "*",
-    "@llamaindex/openai": "^0.4.18",
+    "@llamaindex/openai": "^0.4.20",
     "dotenv": "^16.4.7",
     "enquirer": "^2.4.1",
     "jwt-decode": "^4.0.0",
-    "llamaindex": "^0.11.28",
+    "llamaindex": "^0.11.29",
     "open": "^10.1.0",
     "zod": "^3.25.76"
   }
