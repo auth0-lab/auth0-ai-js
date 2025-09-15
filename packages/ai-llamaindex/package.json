@@ -46,9 +46,9 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@auth0/ai": "*",
-    "@llamaindex/openai": "^0.4.18",
+    "@llamaindex/openai": "^0.4.20",
     "html-to-text": "^9.0.5",
-    "llamaindex": "^0.11.28",
+    "llamaindex": "^0.11.29",
     "lodash": "^4.17.21",
     "magic-bytes.js": "^1.10.0"
   },
