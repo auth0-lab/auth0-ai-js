@@ -8,6 +8,17 @@ This project was generated using the public [`langchain-ai/create-agent-chat-app
   <img src="public/create-agent-chat-app.gif" alt="View the Memory Agent demo" />
 </div>
 
+<br/>
+
+This app was generated with the following options:
+<div align="center">
+  <img src="public/generation-options.png" alt="create-agent-chat-app generation options" width="600" />
+</div>
+
+<br/>
+
+You can read further about all Auth0 integration steps after in [AUTH0_INTEGRATION.md](./AUTH0_INTEGRATION.md).
+
 ## What is the Memory Agent?
 
 The Memory Agent is an intelligent conversational assistant that:
@@ -102,37 +113,12 @@ Auth0's Token Vault enables the LangGraph API to exchange a SPA's access token f
    - Enable "Allow Offline Access" in Access Settings
    - Note down the API identifier for your environment variables
 
-3. **Create a Resource Server Client** (for Token Vault Token Exchange):
-   - This is a special client that allows your API server to perform token exchanges
-   - Create this client programmatically via the Auth0 Management API:
-   ```json
-   {
-     "name": "LangGraph API Resource Server Client",
-     "app_type": "resource_server",
-     "resource_server_identifier": "YOUR_API_IDENTIFIER"
-   }
-   ```
-
-   A sample curl to create this Resource Server Client:
-  ```bash
-    curl -L 'https://{tenant}.auth0.com/api/v2/clients' \
-      -H 'Content-Type: application/json' \
-      -H 'Accept: application/json' \
-      -H 'Authorization: Bearer {MANAGEMENT_API_TOKEN}' \
-      -d '{
-        "name": "LangGraph API Resource Server Client",
-        "app_type": "resource_server",
-        "grant_types": ["urn:auth0:params:oauth:grant-type:token-exchange:federated-connection-access-token"],
-        "resource_server_identifier": "YOUR_API_IDENTIFIER"
-      }'
-  ```
-   - Note that your `MANAGEMENT_API_TOKEN` above must have the `create:clients` scope in order to work. One way you can retrieve
-   a token with this access is by doing the following:
-      - Navigate to APIs -> Auth0 Management API -> API Explorer tab in your tenant
-      - Hit the "Create & Authorize Test Application" button
-      - Copy the jwt access token shown and provide it as the `MANAGEMENT_API_TOKEN`
-   - Note down the `client_id` and `client_secret` for your environment variables after running curl successfully.
-   - This client enables Token Vault to exchange an access token for an external API access token (e.g., Google Calendar API)
+3. **Create a Custom API Client** (for Token Vault Token Exchange):
+   - The Custom API Client allows your API server to perform token exchanges using **access tokens** instead of **refresh tokens**. This client enables Token Vault to exchange an access token for an external API access token (e.g., Google Calendar API).
+   - Setup steps:
+      - Go to the API you created in Step #2 and click the **Add Application** button in the right top corner.
+      - After that click the **Configure Application** button in the right top corner.
+      - Note down the <code>client id</code> and <code>client secret</code> for your environment variables.
 
 4. **Configure a Social Connection for Google in Auth0**:
    - Make sure to enable all `Calendar` scopes from the Permissions options
@@ -159,8 +145,8 @@ OPENAI_API_KEY=your-openai-key
 # Auth0 Configuration
 AUTH0_DOMAIN=your-auth0-domain.auth0.com
 AUTH0_AUDIENCE=your-api-identifier
-AUTH0_RESOURCE_SERVER_CLIENT_ID=your-resource-server-client-id
-AUTH0_RESOURCE_SERVER_CLIENT_SECRET=your-resource-server-client-secret
+AUTH0_CUSTOM_API_CLIENT_ID=your-custom-api-client-id
+AUTH0_CUSTOM_API_CLIENT_SECRET=your-custom-api-client-secret
 
 # Development only (not for production)
 NODE_TLS_REJECT_UNAUTHORIZED=0
@@ -235,8 +221,8 @@ The agents use Auth0 AI's Token Vault for secure third-party API access:
 const auth0AI = new Auth0AI({
   auth0: {
     domain: process.env.AUTH0_DOMAIN!,
-    clientId: process.env.AUTH0_RESOURCE_SERVER_CLIENT_ID!,
-    clientSecret: process.env.AUTH0_RESOURCE_SERVER_CLIENT_SECRET!,
+    clientId: process.env.AUTH0_CUSTOM_API_CLIENT_ID!,
+    clientSecret: process.env.AUTH0_CUSTOM_API_CLIENT_SECRET!,
   },
 });
 
