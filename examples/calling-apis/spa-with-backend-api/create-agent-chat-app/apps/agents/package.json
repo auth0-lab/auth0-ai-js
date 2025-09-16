@@ -4,8 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "npx @langchain/langgraph-cli dev --port 2024 --config langgraph.json",
-    "build": "turbo build:internal --filter=@auth0/auth0-ai-js-examples-create-agent-chat-app-agents",
-    "build:internal": "npm run clean && tsc",
+    "build": "npm run clean && tsc",
     "clean": "rm -rf ./dist .turbo || true",
     "format": "prettier --config .prettierrc --write \"src\"",
     "lint": "eslint src",

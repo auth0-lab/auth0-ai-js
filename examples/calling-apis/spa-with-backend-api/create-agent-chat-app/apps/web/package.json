@@ -5,8 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "turbo build:internal --filter=@auth0/auth0-ai-js-examples-create-agent-chat-app-web",
-    "build:internal": "tsc -b && vite build",
+    "build": "tsc -b && vite build",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
