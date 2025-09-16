@@ -6,7 +6,10 @@ import {
   CIBAAuthorizerBase,
 } from "../../src/authorizers/ciba";
 import { ContextGetter } from "../../src/authorizers/context";
-import { AuthorizationPendingInterrupt } from "../../src/interrupts";
+import {
+  AuthorizationPendingInterrupt,
+  AuthorizationPollingInterrupt,
+} from "../../src/interrupts";
 
 vi.mock("auth0");
 
@@ -18,6 +21,7 @@ describe("CIBAAuthorizerBase", () => {
     userID: "user123",
     bindingMessage: "test-binding",
     scopes: ["read:users"],
+    requestedExpiry: 360,
     store: {
       get: vi.fn(),
       put: vi.fn(),
@@ -52,7 +56,7 @@ describe("CIBAAuthorizerBase", () => {
         clientId: "test-client",
         clientSecret: "test-secret",
       },
-      mockParams
+      mockParams,
     );
   });
 
@@ -64,7 +68,7 @@ describe("CIBAAuthorizerBase", () => {
           clientId: "custom-client",
           clientSecret: "custom-secret",
         },
-        mockParams
+        mockParams,
       );
       expect(auth).toBeInstanceOf(CIBAAuthorizerBase);
     });
@@ -112,6 +116,16 @@ describe("CIBAAuthorizerBase", () => {
       expect(mockAuth0.backchannel.authorize).toHaveBeenCalled();
     });
 
+    it("should have passed the right arguments", async () => {
+      expect(mockAuth0.backchannel.authorize).toHaveBeenCalledWith({
+        audience: "",
+        binding_message: "test-binding",
+        requested_expiry: "360",
+        scope: "openid read:users",
+        userId: "user123",
+      });
+    });
+
     it("should store the authorization response", async () => {
       expect(mockParams.store.put).toHaveBeenCalledOnce();
       expect(mockParams.store.put.mock.calls[0]).toEqual([
@@ -157,7 +171,7 @@ describe("CIBAAuthorizerBase", () => {
       interval: 5,
     };
     const execute = vi.fn();
-    let err: Error;
+    let err: AuthorizationPendingInterrupt;
 
     beforeEach(async () => {
       mockParams.store.get.mockResolvedValue(undefined);
@@ -168,7 +182,7 @@ describe("CIBAAuthorizerBase", () => {
       try {
         await authorizer.protect(getContext, execute)("test-context");
       } catch (er) {
-        err = er as Error;
+        err = er as AuthorizationPendingInterrupt;
       }
     });
 
@@ -197,12 +211,16 @@ describe("CIBAAuthorizerBase", () => {
         },
         {
           expiresIn: 3600000,
-        }
+        },
       );
     });
 
     it('should throw "AuthorizationPendingInterrupt" error', async () => {
       expect(err).toBeInstanceOf(AuthorizationPendingInterrupt);
+    });
+
+    it("should expose a retry interval equal to the request interval", async () => {
+      expect(err.nextRetryInterval()).to.equal(5);
     });
 
     it("should not execute the protected function", async () => {
@@ -211,7 +229,7 @@ describe("CIBAAuthorizerBase", () => {
   });
 
   /**
-   * During sucesive calls, and before the request is expired and the user taken an action
+   * During successive calls, and before the request is expired and the user taken an action
    * the getAuthorizationResponse should return the stored response and the backchannelGrant
    * should be called throwing an authorization_pending error.
    *
@@ -226,11 +244,11 @@ describe("CIBAAuthorizerBase", () => {
       interval: 5,
     };
     const execute = vi.fn();
-    let err: Error;
+    let err: AuthorizationPendingInterrupt;
 
     beforeEach(async () => {
       mockParams.store.get.mockImplementation((ns, key) =>
-        key === "authResponse" ? storedAuthorizationResponse : undefined
+        key === "authResponse" ? storedAuthorizationResponse : undefined,
       );
       mockAuth0.backchannel.backchannelGrant.mockImplementation(() => {
         throw { error: "authorization_pending" };
@@ -238,7 +256,7 @@ describe("CIBAAuthorizerBase", () => {
       try {
         await authorizer.protect(getContext, execute)("test-context");
       } catch (er) {
-        err = er as Error;
+        err = er as AuthorizationPendingInterrupt;
       }
     });
 
@@ -256,6 +274,71 @@ describe("CIBAAuthorizerBase", () => {
 
     it('should throw "AuthorizationPendingInterrupt" error', async () => {
       expect(err).toBeInstanceOf(AuthorizationPendingInterrupt);
+    });
+
+    it("should expose a retry interval equal to the request interval", async () => {
+      expect(err.nextRetryInterval()).to.equal(5);
+    });
+  });
+
+  /**
+   * If the back-end server returns a `slow_down` error, this client should handle it similarly to the
+   * authorization_pending error case, but taking into account the `Retry-After` response header.
+   *
+   * This case is expected to throw an AuthorizationPollingInterrupt error.
+   */
+  describe("slow_down response", () => {
+    const storedAuthorizationResponse = {
+      requestedAt: Date.now(),
+      authReqId: "test-id",
+      expiresIn: 3600,
+      interval: 5,
+    };
+    const execute = vi.fn();
+    let err: AuthorizationPollingInterrupt;
+
+    beforeEach(async () => {
+      mockParams.store.get.mockImplementation((ns, key) =>
+        key === "authResponse" ? storedAuthorizationResponse : undefined,
+      );
+      mockAuth0.backchannel.backchannelGrant.mockImplementation(() => {
+        throw {
+          error: "slow_down",
+          headers: {
+            get(headerName: string): string {
+              if (headerName.toLowerCase() === "retry-after") {
+                return "60";
+              }
+              return "";
+            },
+          },
+        };
+      });
+      try {
+        await authorizer.protect(getContext, execute)("test-context");
+      } catch (er) {
+        err = er as AuthorizationPollingInterrupt;
+      }
+    });
+
+    it("should not call the store function", async () => {
+      expect(mockParams.store.put).not.toHaveBeenCalled();
+    });
+
+    it("should not start the backchannel authorization again", async () => {
+      expect(mockAuth0.backchannel.authorize).not.toHaveBeenCalled();
+    });
+
+    it("should not execute the protected function", async () => {
+      expect(execute).not.toHaveBeenCalled();
+    });
+
+    it('should throw "AuthorizationPollingInterrupt" error', async () => {
+      expect(err).toBeInstanceOf(AuthorizationPollingInterrupt);
+    });
+
+    it("should expose a retry interval equal to the Retry-After http response header", async () => {
+      expect(err.nextRetryInterval()).to.equal(60);
     });
   });
 
@@ -278,7 +361,7 @@ describe("CIBAAuthorizerBase", () => {
 
     beforeEach(async () => {
       mockParams.store.get.mockImplementation((ns, key) =>
-        key === "authResponse" ? storedAuthorizationResponse : undefined
+        key === "authResponse" ? storedAuthorizationResponse : undefined,
       );
       mockAuth0.backchannel.backchannelGrant.mockResolvedValue({
         token_type: "bearer",
@@ -364,7 +447,7 @@ describe("CIBAAuthorizerBase", () => {
     let result: any;
     beforeEach(async () => {
       mockParams.store.get.mockImplementation((ns, key) =>
-        key === "authResponse" ? storedAuthorizationResponse : undefined
+        key === "authResponse" ? storedAuthorizationResponse : undefined,
       );
       mockAuth0.backchannel.backchannelGrant.mockImplementation(() => {
         throw {
@@ -391,7 +474,7 @@ describe("CIBAAuthorizerBase", () => {
           "ToolCalls",
           "test-tool-call",
         ],
-        "authResponse"
+        "authResponse",
       );
     });
 
@@ -399,7 +482,7 @@ describe("CIBAAuthorizerBase", () => {
       expect(result.name).toEqual("AUTH0_AI_INTERRUPT");
       expect(result.code).toEqual("CIBA_ACCESS_DENIED");
       expect(result.message).toEqual(
-        "the user rejected the authorization request"
+        "the user rejected the authorization request",
       );
     });
 
@@ -449,7 +532,7 @@ describe("CIBAAuthorizerBase", () => {
     let result: any;
     beforeEach(async () => {
       mockParams.store.get.mockImplementation((ns, key) =>
-        key === "authResponse" ? storedAuthorizationResponse : undefined
+        key === "authResponse" ? storedAuthorizationResponse : undefined,
       );
       try {
         result = await authorizer.protect(getContext, execute)("test-context");
@@ -470,7 +553,7 @@ describe("CIBAAuthorizerBase", () => {
           "ToolCalls",
           "test-tool-call",
         ],
-        "authResponse"
+        "authResponse",
       );
     });
 
@@ -539,18 +622,21 @@ describe("CIBAAuthorizerBase", () => {
         },
         {
           ...mockParams,
-          onAuthorizationInterrupt
-        }
+          onAuthorizationInterrupt,
+        },
       );
 
       mockParams.store.get.mockImplementation((ns, key) =>
-        key === "authResponse" ? storedAuthorizationResponse : undefined
+        key === "authResponse" ? storedAuthorizationResponse : undefined,
       );
       mockAuth0.backchannel.backchannelGrant.mockImplementation(() => {
         throw { error: "authorization_pending" };
       });
       try {
-        await authorizerWithInterruptCallback.protect(getContext, execute)("test-context");
+        await authorizerWithInterruptCallback.protect(
+          getContext,
+          execute,
+        )("test-context");
       } catch (er) {
         err = er as Error;
       }
@@ -567,7 +653,7 @@ describe("CIBAAuthorizerBase", () => {
           threadID: "test-thread",
           toolCallID: "test-tool-call",
           toolName: "test-tool",
-        }
+        },
       );
     });
 
@@ -593,7 +679,7 @@ describe("CIBAAuthorizerBase", () => {
               tokenType: "bearer",
               accessToken: "test-token",
             }
-          : undefined
+          : undefined,
       );
       execute.mockImplementation(() => {
         const store = asyncLocalStorage.getStore();
