@@ -1,5 +1,5 @@
 {
-  "name": "@auth0/auth0-ai-js-examples-create-agent-chat-app-agents",
+  "name": "@auth0/auth0-ai-js-examples-react-langgraph-api-agents",
   "version": "0.0.1",
   "private": true,
   "scripts": {

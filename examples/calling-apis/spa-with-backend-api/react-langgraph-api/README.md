@@ -1,4 +1,4 @@
-# LangGraph Memory Agent with Auth0 AI and Token Vault
+# React.js Single Page Application with LangGraph API, Auth0 AI, AI SDK, and Token Vault
 
 This example demonstrates a **Memory Agent** chat application built with [LangGraph](https://langchain-ai.github.io/langgraph/) that integrates [Auth0 AI](https://auth0.ai) for authentication and third-party API access through Token Vault. The agent maintains conversation history, remembers user preferences, and can access external APIs like Google Calendar on behalf of authenticated users.
 
