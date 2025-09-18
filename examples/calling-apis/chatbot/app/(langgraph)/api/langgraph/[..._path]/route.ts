@@ -21,12 +21,28 @@ export const { GET, POST, PUT, PATCH, DELETE, OPTIONS, runtime } =
     runtime: "edge",
     baseRoute: "langgraph/",
     headers: async (req: NextRequest) => {
-      const headers: Record<string, string> = {
-        ...Object.fromEntries(req.headers.entries()),
-      };
+      const headers: Record<string, string> = {};
 
-      // Remove Next.js session cookie header
-      delete headers.Cookie;
+      // Only pass through essential headers for the LangGraph API
+      const allowedHeaders = [
+        "content-type",
+        "content-length",
+        "accept",
+        "accept-encoding",
+        "user-agent",
+        "origin",
+        "x-forwarded-for",
+        "x-forwarded-host",
+        "x-forwarded-port",
+        "x-forwarded-proto",
+      ];
+
+      allowedHeaders.forEach((headerName) => {
+        const value = req.headers.get(headerName);
+        if (value) {
+          headers[headerName] = value;
+        }
+      });
 
       const accessToken = await getAccessToken();
       headers["Authorization"] = `Bearer ${accessToken}`;
