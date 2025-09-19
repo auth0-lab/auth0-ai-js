@@ -1,5 +1,4 @@
 import { initApiPassthrough } from "langgraph-nextjs-api-passthrough";
-import { NextRequest } from "next/server";
 
 import { auth0 } from "@/lib/auth0";
 
@@ -19,14 +18,10 @@ export const { GET, POST, PUT, PATCH, DELETE, OPTIONS, runtime } =
     apiKey: process.env.LANGSMITH_API_KEY,
     runtime: "edge",
     baseRoute: "langgraph/",
-    headers: async (req: NextRequest) => {
-      const headers: Record<string, string> = {};
-      req.headers.forEach((value, key) => {
-        headers[key] = value;
-      });
-
+    headers: async () => {
       const accessToken = await getAccessToken();
-      headers["Authorization"] = `Bearer ${accessToken}`;
-      return headers;
+      return {
+        Authorization: `Bearer ${accessToken}`,
+      };
     },
   });
