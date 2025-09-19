@@ -15,6 +15,11 @@ import { FederatedConnectionInterrupt } from "@auth0/ai/interrupts";
 import { HITL_APPROVAL } from "@auth0/auth0-ai-js-examples-react-hono-ai-sdk-shared";
 
 import { useAuth0 } from "../hooks/useAuth0";
+import {
+  AddToolResultFn,
+  PendingToolInputPart,
+  ToolPartWithOutput,
+} from "../types/tool-parts";
 import { FederatedConnectionPopup } from "./FederatedConnectionPopup";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
@@ -151,19 +156,12 @@ export function Chat() {
 function MessageBubble({ message }: { message: UIMessage }) {
   const isUser = message.role === "user";
 
-  type ToolPartWithOutput = {
-    type: `tool-${string}`;
-    state: string;
-    output?: unknown;
-    toolName?: string;
-  } & Record<string, unknown>;
-
   const combinedContent = (message.parts || [])
     .map((part) => {
       if (part.type === "text") return (part as TextUIPart).text;
       if (isToolUIPart(part)) {
         const toolName = getToolName(part);
-        const p = part as ToolPartWithOutput;
+        const p = part as ToolPartWithOutput; // narrowed custom type
         if (
           toolName === "callProtectedApi" &&
           p.state === "output-available" &&
@@ -196,21 +194,10 @@ function ApprovalPrompt({
   sendMessage,
 }: {
   messages: UIMessage[];
-  addToolResult: (payload: {
-    tool: string;
-    toolCallId: string;
-    output: string;
-  }) => Promise<unknown> | void;
+  addToolResult: AddToolResultFn;
   sendMessage: () => Promise<unknown> | void;
 }) {
-  // Minimal shape we rely on for a pending tool call
-  type PendingPart = {
-    type: `tool-${string}`;
-    toolCallId: string;
-    state: "input-available";
-    input?: Record<string, unknown>;
-  };
-  let pending: PendingPart | null = null;
+  let pending: PendingToolInputPart | null = null;
   outer: for (let i = messages.length - 1; i >= 0; i--) {
     const m = messages[i];
     for (const part of m.parts || []) {
@@ -220,7 +207,7 @@ function ApprovalPrompt({
           toolName === "callProtectedApi" &&
           part.state === "input-available"
         ) {
-          pending = part as unknown as PendingPart;
+          pending = part as unknown as PendingToolInputPart;
           break outer;
         }
       }

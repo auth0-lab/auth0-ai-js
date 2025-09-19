@@ -17,6 +17,8 @@ async function executeCallProtectedApi(
  * Processes the last message for a confirmed or denied callProtectedApi tool invocation.
  * Mirrors the AI SDK v5 HITL cookbook: checks last message parts, and when a tool
  * result contains an approval token, executes (or denies) and streams updated output.
+ *
+ * https://ai-sdk.dev/cookbook/next/human-in-the-loop#handle-confirmation-response
  */
 export async function processProtectedApprovals(options: {
   messages: UIMessage[];
