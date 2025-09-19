@@ -31,3 +31,10 @@ export type ChatRequest = {
 export type StreamDataRequest = {
   prompt: string;
 };
+
+export const HITL_APPROVAL = {
+  YES: "Yes, confirmed.",
+  NO: "No, denied.",
+} as const;
+export type HitlApprovalValue =
+  (typeof HITL_APPROVAL)[keyof typeof HITL_APPROVAL];
