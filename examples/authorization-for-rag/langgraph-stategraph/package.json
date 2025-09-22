@@ -16,13 +16,13 @@
   },
   "dependencies": {
     "@auth0/ai-langchain": "*",
-    "@langchain/core": "^0.3.72",
+    "@langchain/core": "^0.3.77",
     "@langchain/langgraph": "^0.4.6",
     "@langchain/langgraph-sdk": "^0.0.109",
     "@langchain/openai": "^0.3.14",
     "@openfga/sdk": "0.8.0",
     "dotenv": "^16.4.7",
-    "langchain": "^0.3.12",
+    "langchain": "^0.3.34",
     "zod": "^3.25.76"
   },
   "devDependencies": {
