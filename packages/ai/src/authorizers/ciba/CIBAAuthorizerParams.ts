@@ -1,4 +1,4 @@
-import { TokenSet } from "../../credentials";
+import { AuthorizationDetails, TokenSet } from "../../credentials";
 import {
   AuthorizationPendingInterrupt,
   AuthorizationPollingInterrupt,
@@ -31,7 +31,7 @@ export type CIBAAuthorizerParams<ToolExecuteArgs extends any[]> = {
    */
   authorizationDetails?: AuthorizerToolParameter<
     ToolExecuteArgs,
-    Record<string, any>[]
+    AuthorizationDetails[]
   >;
 
   /**
@@ -60,7 +60,7 @@ export type CIBAAuthorizerParams<ToolExecuteArgs extends any[]> = {
     | OnAuthorizationRequest
     | ((
         authReq: CIBAAuthorizationRequest,
-        poll: Promise<TokenSet | undefined>
+        poll: Promise<TokenSet | undefined>,
       ) => Promise<void>);
 
   /**
@@ -97,7 +97,7 @@ export type CIBAAuthorizerParams<ToolExecuteArgs extends any[]> = {
    */
   onAuthorizationInterrupt?: (
     interrupt: AuthorizationPendingInterrupt | AuthorizationPollingInterrupt,
-    context: ToolCallContext
+    context: ToolCallContext,
   ) => void | Promise<void>;
 
   /**

@@ -1,6 +1,7 @@
 import { AuthenticationClient } from "auth0";
 import { afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
 
+import { TokenSet } from "../../src";
 import {
   asyncLocalStorage,
   CIBAAuthorizerBase,
@@ -22,6 +23,12 @@ describe("CIBAAuthorizerBase", () => {
     bindingMessage: "test-binding",
     scopes: ["read:users"],
     requestedExpiry: 360,
+    authorizationDetails: [
+      {
+        type: "payment_initiation",
+        amount: 100,
+      },
+    ],
     store: {
       get: vi.fn(),
       put: vi.fn(),
@@ -123,6 +130,7 @@ describe("CIBAAuthorizerBase", () => {
         requested_expiry: "360",
         scope: "openid read:users",
         userId: "user123",
+        authorization_details: '[{"type":"payment_initiation","amount":100}]',
       });
     });
 
@@ -357,7 +365,7 @@ describe("CIBAAuthorizerBase", () => {
     };
     const execute = vi.fn();
     let err: Error;
-    let accessTokenFromAsyncLocalStore: string | undefined;
+    let credentialsFromAsyncLocalStore: TokenSet | undefined;
 
     beforeEach(async () => {
       mockParams.store.get.mockImplementation((ns, key) =>
@@ -366,10 +374,16 @@ describe("CIBAAuthorizerBase", () => {
       mockAuth0.backchannel.backchannelGrant.mockResolvedValue({
         token_type: "bearer",
         access_token: "test-token",
+        authorization_details: [
+          {
+            type: "payment_initiation",
+            amount: 100,
+          },
+        ],
       });
       execute.mockImplementation(() => {
         const store = asyncLocalStorage.getStore();
-        accessTokenFromAsyncLocalStore = store?.credentials?.accessToken;
+        credentialsFromAsyncLocalStore = store?.credentials;
       });
       try {
         await authorizer.protect(getContext, execute)("test-context");
@@ -395,8 +409,17 @@ describe("CIBAAuthorizerBase", () => {
       ]);
     });
 
-    it('should store the "access_token" in the asyncLocalStorage', async () => {
-      expect(accessTokenFromAsyncLocalStore).toEqual("test-token");
+    it("should store the credentials in the asyncLocalStorage", async () => {
+      expect(credentialsFromAsyncLocalStore).toEqual({
+        tokenType: "bearer",
+        accessToken: "test-token",
+        authorizationDetails: [
+          {
+            type: "payment_initiation",
+            amount: 100,
+          },
+        ],
+      });
     });
 
     it("should not start the backchannel authorization again", async () => {
