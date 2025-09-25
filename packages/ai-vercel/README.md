@@ -140,8 +140,11 @@ export const buyStockAuthorizer = auth0AI.withAsyncUserConfirmation({
   userID: (params: { userID: string }, ctx) => params.userID,
 
   // The message the user will see on the notification
-  bindingMessage: "Confirm the purchase",
-
+  bindingMessage: async ({ qty , ticker }) => {
+    return `Confirm the purchase of ${qty} ${ticker}`;
+  },
+  // Expiration for this request in seconds (default=300s)
+  requestedExpiry: 300,
   // The scopes and audience to request
   scope: "openid stock:trade",
   audience: "http://localhost:8081",
@@ -198,6 +201,8 @@ const buyStockAuthorizer = auth0AI.withAsyncUserConfirmation({
   bindingMessage: async ({ qty , ticker }) => {
     return `Confirm the purchase of ${qty} ${ticker}`;
   },
+  // Expiration for this request in seconds (default=300s)
+  requestedExpiry: 300,
   authorizationDetails: async ({ qty, ticker }) => {
     return [{ type: "trade_authorization", qty, ticker, action: "buy" }];
   },
