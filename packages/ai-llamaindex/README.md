@@ -144,6 +144,8 @@ export const buyStockAuthorizer = auth0AI.withAsyncAuthorization({
   bindingMessage: async ({ qty , ticker }) => {
     return `Confirm the purchase of ${qty} ${ticker}`;
   },
+  // Expiration for this request in seconds (default=300s)
+  requestedExpiry: 300,
   // The scopes and audience to request
   audience: process.env["AUDIENCE"],
   scopes: ["stock:trade"]
@@ -205,6 +207,8 @@ const buyStockAuthorizer = auth0AI.withAsyncAuthorization({
   bindingMessage: async ({ qty , ticker }) => {
     return `Confirm the purchase of ${qty} ${ticker}`;
   },
+  // Expiration for this request in seconds (default=300s)
+  requestedExpiry: 300,
   authorizationDetails: async ({ qty, ticker }) => {
     return [{ type: "trade_authorization", qty, ticker, action: "buy" }];
   },

@@ -1,4 +1,4 @@
-import { TokenSet } from "../../credentials";
+import { AuthorizationDetails, TokenSet } from "../../credentials";
 import {
   AsyncAuthorizationInterrupt,
   AuthorizationPendingInterrupt,
@@ -31,7 +31,7 @@ export type AsyncAuthorizerParams<ToolExecuteArgs extends any[]> = {
    */
   authorizationDetails?: AuthorizerToolParameter<
     ToolExecuteArgs,
-    Record<string, any>[]
+    AuthorizationDetails[]
   >;
 
   /**
@@ -97,7 +97,7 @@ export type AsyncAuthorizerParams<ToolExecuteArgs extends any[]> = {
    */
   onAuthorizationInterrupt?: (
     interrupt: AuthorizationPendingInterrupt | AuthorizationPollingInterrupt,
-    context: ToolCallContext
+    context: ToolCallContext,
   ) => void | Promise<void>;
 
   /**
