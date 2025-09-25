@@ -10,7 +10,7 @@ import {
   AuthorizationRequestExpiredInterrupt,
 } from "@auth0/ai/interrupts";
 
-import { AsyncAuthorizer } from "../src/AsyncAuthorization/AsyncAuthorizer";
+import { AsyncAuthorizer } from "../src/AsyncAuthorization";
 import { setAIContext } from "../src/context";
 
 describe("AsyncAuthorizer", () => {
@@ -31,7 +31,7 @@ describe("AsyncAuthorizer", () => {
   };
 
   beforeEach(() => {
-    authorizer = new AsyncAuthorizerBase(
+    authorizer = new AsyncAuthorizer(
       {
         clientId: "client-id",
         clientSecret: "client",
