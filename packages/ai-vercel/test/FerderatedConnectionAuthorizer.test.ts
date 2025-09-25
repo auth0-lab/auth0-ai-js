@@ -3,16 +3,13 @@ import { Tool } from "ai";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod/v3";
 
-import { FederatedConnectionAuthorizerBase } from "@auth0/ai/FederatedConnections";
-import { FederatedConnectionInterrupt } from "@auth0/ai/interrupts";
+import { TokenVaultInterrupt } from "@auth0/ai/interrupts";
+import { TokenVaultAuthorizerBase } from "@auth0/ai/TokenVault";
 
 import { setAIContext } from "../src/context";
-import {
-  FederatedConnectionAuthorizer,
-  getCredentialsForConnection,
-} from "../src/FederatedConnections";
+import { getCredentialsFromTokenVault, TokenVaultAuthorizer } from "../src/TokenVault";
 
-describe("FederatedConnectionAuthorizer", () => {
+describe("TokenVaultAuthorizer", () => {
   const mockTool = {
     description: "A mock tool for testing",
     inputSchema: z.object({
@@ -31,11 +28,11 @@ describe("FederatedConnectionAuthorizer", () => {
       delete: vi.fn(),
     },
   };
-  let authorizer: FederatedConnectionAuthorizer;
+  let authorizer: TokenVaultAuthorizer;
   let protectedTool: Tool;
 
   beforeEach(() => {
-    authorizer = new FederatedConnectionAuthorizer(
+    authorizer = new TokenVaultAuthorizer(
       {
         clientId: "client-id",
         clientSecret: "client",
@@ -51,15 +48,15 @@ describe("FederatedConnectionAuthorizer", () => {
     vi.clearAllMocks();
   });
 
-  describe("on FederatedConnectionInterrupt error", () => {
-    let error: FederatedConnectionInterrupt;
+  describe("on TokenVaultInterrupt error", () => {
+    let error: TokenVaultInterrupt;
     beforeEach(async () => {
       vi.spyOn(
-        FederatedConnectionAuthorizerBase.prototype,
+        TokenVaultAuthorizerBase.prototype,
         //@ts-ignore
         "getAccessToken"
       ).mockImplementation(() => {
-        throw new FederatedConnectionInterrupt(
+        throw new TokenVaultInterrupt(
           "Authorization required",
           "test",
           ["test"],
@@ -74,12 +71,12 @@ describe("FederatedConnectionAuthorizer", () => {
           { toolCallId: "test-call-id", messages: [] }
         );
       } catch (err) {
-        error = err as FederatedConnectionInterrupt;
+        error = err as TokenVaultInterrupt;
       }
     });
 
-    it("should throw a federated connection error", () => {
-      expect(error).toBeInstanceOf(FederatedConnectionInterrupt);
+    it("should throw a token vault error", () => {
+      expect(error).toBeInstanceOf(TokenVaultInterrupt);
     });
 
     it("should not call the tool execute", () => {
@@ -88,12 +85,12 @@ describe("FederatedConnectionAuthorizer", () => {
   });
 
   describe("on authorization success", () => {
-    let error: FederatedConnectionInterrupt;
+    let error: TokenVaultInterrupt;
     let accessToken: string | undefined;
 
     beforeEach(async () => {
       vi.spyOn(
-        FederatedConnectionAuthorizerBase.prototype,
+        TokenVaultAuthorizerBase.prototype,
         //@ts-ignore
         "getAccessToken"
         //@ts-ignore
@@ -108,7 +105,7 @@ describe("FederatedConnectionAuthorizer", () => {
       try {
         setAIContext({ threadID: "123" });
         mockTool.execute.mockImplementation(() => {
-          const credentials = getCredentialsForConnection();
+          const credentials = getCredentialsFromTokenVault();
           accessToken = credentials?.accessToken;
           return { result: "success" };
         });
@@ -117,7 +114,7 @@ describe("FederatedConnectionAuthorizer", () => {
           { toolCallId: "test-call-id", messages: [] }
         );
       } catch (err) {
-        error = err as FederatedConnectionInterrupt;
+        error = err as TokenVaultInterrupt;
       }
     });
 

@@ -46,20 +46,20 @@
       "import": "./dist/esm/authorizers/index.js",
       "require": "./dist/cjs/authorizers/index.js"
     },
-    "./FederatedConnections": {
-      "types": "./dist/esm/authorizers/federated-connections/index.d.ts",
-      "import": "./dist/esm/authorizers/federated-connections/index.js",
-      "require": "./dist/cjs/authorizers/federated-connections/index.js"
+    "./TokenVault": {
+      "types": "./dist/esm/authorizers/token-vault/index.d.ts",
+      "import": "./dist/esm/authorizers/token-vault/index.js",
+      "require": "./dist/cjs/authorizers/token-vault/index.js"
     },
     "./Device": {
       "types": "./dist/esm/authorizers/device-authorizer/index.d.ts",
       "import": "./dist/esm/authorizers/device-authorizer/index.js",
       "require": "./dist/cjs/authorizers/device-authorizer/index.js"
     },
-    "./CIBA": {
-      "types": "./dist/esm/authorizers/ciba/index.d.ts",
-      "import": "./dist/esm/authorizers/ciba/index.js",
-      "require": "./dist/cjs/authorizers/ciba/index.js"
+    "./AsyncAuthorization": {
+      "types": "./dist/esm/authorizers/asyncAuthorization/index.d.ts",
+      "import": "./dist/esm/authorizers/asyncAuthorization/index.js",
+      "require": "./dist/cjs/authorizers/asyncAuthorization/index.js"
     },
     "./FGA": {
       "types": "./dist/esm/authorizers/fga/index.d.ts",

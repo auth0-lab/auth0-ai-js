@@ -3,7 +3,7 @@ import { z } from "zod/v3";
 
 import { withSlack } from "@/app/(ai-sdk)/lib/auth0-ai";
 import { getAccessTokenForConnection } from "@auth0/ai-vercel";
-import { FederatedConnectionError } from "@auth0/ai/interrupts";
+import { TokenVaultError } from "@auth0/ai/interrupts";
 import { ErrorCode, WebClient } from "@slack/web-api";
 
 export const listChannels = withSlack(
@@ -28,8 +28,8 @@ export const listChannels = withSlack(
       } catch (error) {
         if (error && typeof error === "object" && "code" in error) {
           if (error.code === ErrorCode.HTTPError) {
-            throw new FederatedConnectionError(
-              `Authorization required to access the Federated Connection`
+            throw new TokenVaultError(
+              `Authorization required to access the Token Vault`
             );
           }
         }

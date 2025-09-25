@@ -4,13 +4,13 @@ import { tool } from "ai";
 import Enquirer from "enquirer";
 import { z } from "zod/v3";
 
-import { getCIBACredentials } from "@auth0/ai-vercel";
+import { getAsyncAuthorizationCredentials } from "@auth0/ai-vercel";
 
-import { useCIBA } from "../authorizers/ciba";
+import { useAsyncAuthz } from "../authorizers/asyncAuthorization";
 import { useDeviceFLow } from "../authorizers/deviceFlow";
 
 export const buy = useDeviceFLow(
-  useCIBA(
+  useAsyncAuthz(
     tool({
       description: "Use this function to buy stock",
       inputSchema: z.object({
@@ -26,7 +26,7 @@ export const buy = useDeviceFLow(
           qty: qty,
         };
 
-        const credentials = getCIBACredentials();
+        const credentials = getAsyncAuthorizationCredentials();
         const accessToken = credentials?.accessToken;
 
         if (accessToken) {

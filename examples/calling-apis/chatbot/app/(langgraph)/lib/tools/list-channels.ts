@@ -1,7 +1,7 @@
 import { z } from "zod/v3";
 
 import { getAccessTokenForConnection } from "@auth0/ai-langchain";
-import { FederatedConnectionError } from "@auth0/ai/interrupts";
+import { TokenVaultError } from "@auth0/ai/interrupts";
 import { tool } from "@langchain/core/tools";
 import { ErrorCode, WebClient } from "@slack/web-api";
 
@@ -27,8 +27,8 @@ export const listChannels = withSlack(
       } catch (error) {
         if (error && typeof error === "object" && "code" in error) {
           if (error.code === ErrorCode.HTTPError) {
-            throw new FederatedConnectionError(
-              `Authorization required to access the Federated Connection`
+            throw new TokenVaultError(
+              `Authorization required to access the Token Vault`
             );
           }
         }

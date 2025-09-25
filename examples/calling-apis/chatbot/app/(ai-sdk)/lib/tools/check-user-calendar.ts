@@ -6,7 +6,7 @@ import { z } from "zod/v3";
 
 import { withGoogleCalendar } from "@/app/(ai-sdk)/lib/auth0-ai";
 import { getAccessTokenForConnection } from "@auth0/ai-vercel";
-import { FederatedConnectionError } from "@auth0/ai/interrupts";
+import { TokenVaultError } from "@auth0/ai/interrupts";
 
 export const checkUsersCalendar = withGoogleCalendar(
   tool({
@@ -44,8 +44,8 @@ export const checkUsersCalendar = withGoogleCalendar(
       } catch (error) {
         if (error instanceof GaxiosError) {
           if (error.status === 401) {
-            throw new FederatedConnectionError(
-              `Authorization required to access the Federated Connection`
+            throw new TokenVaultError(
+              `Authorization required to access the Token Vault`
             );
           }
         }

@@ -8,7 +8,7 @@ This library helps to setup the React components for auth0-ai.
 ## Run
 
 ```
-npx @auth0/ai-components add FederatedConnections
+npx @auth0/ai-components add TokenVault
 ```
 
 This will create a folder called `components/auth0-ai` with the desired components.

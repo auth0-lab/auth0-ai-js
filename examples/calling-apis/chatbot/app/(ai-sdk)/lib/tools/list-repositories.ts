@@ -4,7 +4,7 @@ import { z } from "zod/v3";
 
 import { withGitHub } from "@/app/(ai-sdk)/lib/auth0-ai";
 import { getAccessTokenForConnection } from "@auth0/ai-vercel";
-import { FederatedConnectionError } from "@auth0/ai/interrupts";
+import { TokenVaultError } from "@auth0/ai/interrupts";
 
 export const listRepositories = withGitHub(
   tool({
@@ -25,8 +25,8 @@ export const listRepositories = withGitHub(
       } catch (error) {
         if (error instanceof RequestError) {
           if (error.status === 401) {
-            throw new FederatedConnectionError(
-              `Authorization required to access the Federated Connection`
+            throw new TokenVaultError(
+              `Authorization required to access the Token Vault`
             );
           }
         }

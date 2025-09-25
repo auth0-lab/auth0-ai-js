@@ -20,9 +20,9 @@ resumer
 
 export const main = async () => {
   resumer.start();
-  console.log("Started CIBA Graph Poller");
+  console.log("Started Async Authorization Graph Poller");
   console.log(
-    "The purpose of this service is to monitor interrupted threads by CIBA and resume them."
+    "The purpose of this service is to monitor interrupted threads by Async Authorization and resume them."
   );
 };
 

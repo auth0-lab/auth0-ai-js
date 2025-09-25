@@ -10,7 +10,7 @@
   - An application for Device flow with the following settings:
     - **Application Type**: `Native`
     - **Grant Type**: `Device Code` (or `urn:ietf:params:oauth:grant-type:device_code`)
-  - An additional application for CIBA with the following settings:
+  - An additional application for Async Authorization with the following settings:
     - **Application Type**: `Web Application`
     - **Grant Type**: `CIBA` (or `urn:openid:params:grant-type:ciba`)
   - An API with the following settings:
@@ -27,7 +27,7 @@ Copy the `.env.example` file to `.env` and fill in the values for the following 
 ```sh
 # Auth0
 AUTH0_DOMAIN="<auth0-domain>"
-# Client for CIBA
+# Client for Async Authorization
 AUTH0_CLIENT_ID="<auth0-client-id>"
 AUTH0_CLIENT_SECRET="<auth0-client-secret>"
 # Client for Device Flow / Native

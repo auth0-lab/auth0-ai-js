@@ -46,16 +46,16 @@ const auth0AI = new Auth0AI({
 
 ## Calling APIs
 
-The "Tokens for API" feature of Auth0 allows you to exchange refresh tokens for access tokens for third-party APIs. This is useful when you want to use a federated connection (like Google, Facebook, etc.) to authenticate users and then use the access token to call the API on behalf of the user.
+The "Tokens for API" feature of Auth0 allows you to exchange refresh tokens for access tokens for third-party APIs. This is useful when you want to use a token vault (like Google, Facebook, etc.) to authenticate users and then use the access token to call the API on behalf of the user.
 
-First initialize the Federated Connection Authorizer as follows:
+First initialize the Token Vault Authorizer as follows:
 
 ```js
 import { Auth0AI } from '@auth0/ai-langchain';
 
 const auth0AI = new Auth0AI();
 
-const withGoogleAccess = auth0AI.withTokenForConnection({
+const withGoogleAccess = auth0AI.withTokenVault({
     //an optional function to specify were to retrieve the token
   //this is the defaults:
   refreshToken: async (params, config) => {
@@ -73,7 +73,7 @@ Then use the `withGoogleAccess` to wrap the tool and use `getAccessTokenForConne
 ```javascript
 import { tool } from "@langchain/core/tools";
 import { getAccessTokenForConnection } from "@auth0/ai-langchain";
-import { FederatedConnectionError } from "@auth0/ai/interrupts";
+import { TokenVaultError } from "@auth0/ai/interrupts";
 import { addHours } from "date-fns";
 
 export const checkCalendarTool = withGoogleAccess(
@@ -98,8 +98,8 @@ export const checkCalendarTool = withGoogleAccess(
 
       if (!response.ok) {
         if (response.status === 401) {
-          throw new FederatedConnectionError(
-            `Authorization required to access the Federated Connection`
+          throw new TokenVaultError(
+            `Authorization required to access the Token Vault`
           );
         }
         throw new Error(
@@ -125,14 +125,14 @@ export const checkCalendarTool = withGoogleAccess(
 
 ### Using community tools
 
-First initialize the Federated Connection Authorizer as follows:
+First initialize the Token Vault Authorizer as follows:
 
 ```ts
 import { Auth0AI } from "@auth0/ai-langchain";
 
 const auth0AI = new Auth0AI();
 
-export const withGmailCommunity = auth0AI.withTokenForConnection({
+export const withGmailCommunity = auth0AI.withTokenVault({
   connection: "google-oauth2",
   scopes: ["https://mail.google.com/"],
 });
@@ -162,7 +162,7 @@ export const gmailCommunityTool = withGmailCommunity(
 CIBA (Client-Initiated Backchannel Authentication) enables secure, user-in-the-loop authentication for sensitive operations. This flow allows you to request user authorization asynchronously and resume execution once authorization is granted.
 
 ```js
-const buyStockAuthorizer = auth0AI.withAsyncUserConfirmation({
+const buyStockAuthorizer = auth0AI.withAsyncAuthorization({
   // A callback to retrieve the userID from tool context.
   userID: (_params, config) => {
     return config.configurable?.user_id;
@@ -182,11 +182,11 @@ Then wrap the tool as follows:
 ```javascript
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
-import { getCIBACredentials } from "@auth0/ai-langchain";
+import { getAsyncAuthorizationCredentials } from "@auth0/ai-langchain";
 
 export const buyTool = buyStockAuthorizer(
   tool(async ({ ticker, qty }) => {
-    const { accessToken } = getCIBACredentials();
+    const { accessToken } = getAsyncAuthorizationCredentials();
     fetch("http://yourapi.com/buy", {
       method: "POST",
       headers: {
@@ -224,7 +224,7 @@ Auth0 supports RAR (Rich Authorization Requests) for CIBA. This allows you to pr
 When defining the tool authorizer, you can specify the `authorizationDetails` parameter to include detailed information about the authorization being requested:
 
 ```js
-const buyStockAuthorizer = auth0AI.withAsyncUserConfirmation({
+const buyStockAuthorizer = auth0AI.withAsyncAuthorization({
   // A callback to retrieve the userID from tool context.
   userID: (_params, config) => {
     return config.configurable?.user_id;
