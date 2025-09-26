@@ -9,7 +9,7 @@ export { getAsyncAuthorizationCredentials } from "./AsyncAuthorization";
 export { getDeviceAuthorizerCredentials } from "./Device";
 export {
   getCredentialsFromTokenVault,
-  getAccessTokenForConnection,
+  getAccessTokenFromTokenVault,
 } from "./TokenVault";
 
 export { setAIContext } from "./lib/index";

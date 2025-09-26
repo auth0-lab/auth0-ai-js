@@ -36,7 +36,7 @@ export const asyncLocalStorage = new AsyncLocalStorage<AsyncStorageValue>();
 /**
  * Returns the entire tokenset for the current connection.
  *
- * Use `getAccessTokenForConnection` if you only need the access token.
+ * Use `getAccessTokenFromTokenVault` if you only need the access token.
  *
  * @returns {TokenSet} The current token set.
  */
@@ -56,7 +56,7 @@ export const getCredentialsFromTokenVault = () => {
  *
  * @returns The access token for the current connection.
  */
-export const getAccessTokenForConnection = () => {
+export const getAccessTokenFromTokenVault = () => {
   const credentials = getCredentialsFromTokenVault();
   if (!credentials || !credentials.accessToken) {
     throw new TokenVaultError("No credentials found");

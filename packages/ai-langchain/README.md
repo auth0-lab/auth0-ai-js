@@ -68,18 +68,18 @@ const withGoogleAccess = auth0AI.withTokenVault({
 });
 ```
 
-Then use the `withGoogleAccess` to wrap the tool and use `getAccessTokenForConnection` from the SDK to get the access token.
+Then use the `withGoogleAccess` to wrap the tool and use `getAccessTokenFromTokenVault` from the SDK to get the access token.
 
 ```javascript
 import { tool } from "@langchain/core/tools";
-import { getAccessTokenForConnection } from "@auth0/ai-langchain";
+import { getAccessTokenFromTokenVault } from "@auth0/ai-langchain";
 import { TokenVaultError } from "@auth0/ai/interrupts";
 import { addHours } from "date-fns";
 
 export const checkCalendarTool = withGoogleAccess(
   tool(
     async ({ date }) => {
-      const accessToken = getAccessTokenForConnection();
+      const accessToken = getAccessTokenFromTokenVault();
       const body = JSON.stringify({
         timeMin: date,
         timeMax: addHours(date, 1),
@@ -139,11 +139,11 @@ export const withGmailCommunity = auth0AI.withTokenVault({
 
 ```
 
-Then use the `withGmailCommunity` to create an instance of the community tool and use `getAccessTokenForConnection` from the SDK to get the access token.
+Then use the `withGmailCommunity` to create an instance of the community tool and use `getAccessTokenFromTokenVault` from the SDK to get the access token.
 
 
 ```ts
-import { getAccessTokenForConnection } from "@auth0/ai-langchain";
+import { getAccessTokenFromTokenVault } from "@auth0/ai-langchain";
 import { GmailSearch } from "@langchain/community/tools/gmail";
 
 import { withGmailCommunity } from "../../lib/auth0-ai";
@@ -151,7 +151,7 @@ import { withGmailCommunity } from "../../lib/auth0-ai";
 export const gmailCommunityTool = withGmailCommunity(
   new GmailSearch({
     credentials: {
-      accessToken: async () => getAccessTokenForConnection(),
+      accessToken: async () => getAccessTokenFromTokenVault(),
     },
   })
 );

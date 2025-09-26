@@ -1,6 +1,6 @@
 import { z } from "zod/v3";
 
-import { getAccessTokenForConnection } from "@auth0/ai-langchain";
+import { getAccessTokenFromTokenVault } from "@auth0/ai-langchain";
 import { TokenVaultError } from "@auth0/ai/interrupts";
 import { tool } from "@langchain/core/tools";
 import { ErrorCode, WebClient } from "@slack/web-api";
@@ -11,7 +11,7 @@ export const listChannels = withSlack(
   tool(
     async () => {
       // Get the access token from Auth0 AI
-      const accessToken = getAccessTokenForConnection();
+      const accessToken = getAccessTokenFromTokenVault();
 
       // Slack SDK
       try {

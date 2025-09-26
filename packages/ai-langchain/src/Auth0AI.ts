@@ -111,7 +111,7 @@ export class Auth0AI {
     options: TokenVaultAuthorizerParams,
     tool?: ToolType
   ) {
-    const store = this.store.createSubStore("AUTH0_AI_FEDERATED_CONNECTION");
+    const store = this.store.createSubStore("AUTH0_AI_TOKEN_VAULT");
     const authorizer = new TokenVaultAuthorizer(this.config, {
       store,
       ...options,

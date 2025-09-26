@@ -3,7 +3,7 @@ export { getAsyncAuthorizationCredentials } from "./asyncAuthorization";
 export { getDeviceAuthorizerCredentials } from "./Device";
 export {
   getCredentialsFromTokenVault,
-  getAccessTokenForConnection,
+  getAccessTokenFromTokenVault,
 } from "./TokenVault";
 export { GraphResumer } from "./asyncAuthorization/GraphResumer";
 

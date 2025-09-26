@@ -25,7 +25,7 @@ export class TokenVaultInterrupt extends Auth0Interrupt {
    */
   public readonly requiredScopes: string[];
 
-  public static code = "FEDERATED_CONNECTION_ERROR" as const;
+  public static code = "TokenVaultError" as const;
 
   constructor(
     message: string,

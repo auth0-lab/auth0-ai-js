@@ -35,7 +35,7 @@ describe("interrupts", () => {
       expect(serialized).toMatchInlineSnapshot(`
         {
           "behavior": "resume",
-          "code": "FEDERATED_CONNECTION_ERROR",
+          "code": "TokenVaultError",
           "connection": "google-oauth2",
           "message": "this is a message",
           "name": "AUTH0_AI_INTERRUPT",

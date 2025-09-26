@@ -106,7 +106,7 @@ export class Auth0AI {
     params: TokenVaultParams,
     tool?: FunctionTool<T, R, AdditionalToolArgument>
   ) {
-    const store = this.store.createSubStore("AUTH0_AI_FEDERATED_CONNECTION");
+    const store = this.store.createSubStore("AUTH0_AI_TOKEN_VAULT");
     const fc = new TokenVaultAuthorizer(this.config, {
       store,
       ...params,

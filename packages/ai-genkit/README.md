@@ -74,10 +74,10 @@ const withGoogleAccess = auth0AI.withTokenVault({
 });
 ```
 
-Then use the `withGoogleAccess` to wrap the tool and use `getAccessTokenForConnection` from the SDK to get the access token.
+Then use the `withGoogleAccess` to wrap the tool and use `getAccessTokenFromTokenVault` from the SDK to get the access token.
 
 ```javascript
-import { getAccessTokenForConnection } from "@auth0/ai-genkit";
+import { getAccessTokenFromTokenVault } from "@auth0/ai-genkit";
 import { TokenVaultError } from "@auth0/ai/interrupts";
 import { addHours } from "date-fns";
 import { z } from "zod";
@@ -95,7 +95,7 @@ export const checkCalendarTool = ai.defineTool(
     }),
   },
   async ({ date }) => {
-    const accessToken = getAccessTokenForConnection();
+    const accessToken = getAccessTokenFromTokenVault();
     const body = JSON.stringify({
       timeMin: date,
       timeMax: addHours(date, 1),

@@ -5,5 +5,5 @@ export { getAsyncAuthorizationCredentials } from "./AsyncAuthorization";
 export { getAuth0Confirmations, resumeAuth0Interrupts } from "./lib";
 export {
   getCredentialsFromTokenVault,
-  getAccessTokenForConnection,
+  getAccessTokenFromTokenVault,
 } from "./TokenVault";

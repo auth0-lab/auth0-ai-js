@@ -3,7 +3,7 @@ import { GaxiosError } from "gaxios";
 import { google } from "googleapis";
 import { z } from "zod/v3";
 
-import { getAccessTokenForConnection } from "@auth0/ai-langchain";
+import { getAccessTokenFromTokenVault } from "@auth0/ai-langchain";
 import { TokenVaultError } from "@auth0/ai/interrupts";
 import { tool } from "@langchain/core/tools";
 
@@ -14,7 +14,7 @@ export const checkUsersCalendar = withGoogleCalendar(
     async ({ date }) => {
       // Google SDK
       try {
-        const accessToken = getAccessTokenForConnection();
+        const accessToken = getAccessTokenFromTokenVault();
 
         const calendar = google.calendar("v3");
         const auth = new google.auth.OAuth2();

@@ -170,7 +170,7 @@ export class Auth0AI {
     toolConfig?: ToolDefinition<I, O>[0],
     toolFn?: ToolDefinition<I, O>[1]
   ) {
-    const store = this.store.createSubStore("AUTH0_AI_FEDERATED_CONNECTION");
+    const store = this.store.createSubStore("AUTH0_AI_TOKEN_VAULT");
     const fc = new TokenVaultAuthorizer(this.genkit, this.config, {
       store,
       ...params,

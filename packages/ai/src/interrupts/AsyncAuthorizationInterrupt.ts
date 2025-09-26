@@ -1,4 +1,4 @@
-import { AsyncAuthorizationRequest } from "../authorizers/asyncAuthorization/AsyncAuthorizationRequest";
+import { AsyncAuthorizationRequest } from "../authorizers/async-authorization/AsyncAuthorizationRequest";
 import { Auth0Interrupt, Auth0InterruptData } from "./Auth0Interrupt";
 
 export interface WithRequestData {

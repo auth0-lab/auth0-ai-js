@@ -3,7 +3,7 @@ export type { AsyncStorageValue } from "./asyncLocalStorage";
 export {
   asyncLocalStorage,
   getCredentialsFromTokenVault,
-  getAccessTokenForConnection,
+  getAccessTokenFromTokenVault,
 } from "./asyncLocalStorage";
 
 export { TokenVaultAuthorizerBase } from "./TokenVaultAuthorizerBase";

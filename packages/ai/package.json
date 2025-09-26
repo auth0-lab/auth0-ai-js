@@ -57,9 +57,9 @@
       "require": "./dist/cjs/authorizers/device-authorizer/index.js"
     },
     "./AsyncAuthorization": {
-      "types": "./dist/esm/authorizers/asyncAuthorization/index.d.ts",
-      "import": "./dist/esm/authorizers/asyncAuthorization/index.js",
-      "require": "./dist/cjs/authorizers/asyncAuthorization/index.js"
+      "types": "./dist/esm/authorizers/async-authorization/index.d.ts",
+      "import": "./dist/esm/authorizers/async-authorization/index.js",
+      "require": "./dist/cjs/authorizers/async-authorization/index.js"
     },
     "./FGA": {
       "types": "./dist/esm/authorizers/fga/index.d.ts",

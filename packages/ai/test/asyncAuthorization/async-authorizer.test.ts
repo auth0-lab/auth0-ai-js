@@ -2,7 +2,7 @@ import { AuthenticationClient } from "auth0";
 import { afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
 
 import { TokenSet } from "../../src";
-import { AsyncAuthorizerBase, asyncLocalStorage } from "../../src/authorizers/asyncAuthorization";
+import { AsyncAuthorizerBase, asyncLocalStorage } from "../../src/authorizers/async-authorization";
 import { ContextGetter } from "../../src/authorizers/context";
 import { AuthorizationPendingInterrupt, AuthorizationPollingInterrupt } from "../../src/interrupts";
 

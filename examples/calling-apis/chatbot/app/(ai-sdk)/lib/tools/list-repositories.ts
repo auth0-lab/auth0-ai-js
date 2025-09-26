@@ -3,7 +3,7 @@ import { Octokit, RequestError } from "octokit";
 import { z } from "zod/v3";
 
 import { withGitHub } from "@/app/(ai-sdk)/lib/auth0-ai";
-import { getAccessTokenForConnection } from "@auth0/ai-vercel";
+import { getAccessTokenFromTokenVault } from "@auth0/ai-vercel";
 import { TokenVaultError } from "@auth0/ai/interrupts";
 
 export const listRepositories = withGitHub(
@@ -12,7 +12,7 @@ export const listRepositories = withGitHub(
     inputSchema: z.object({}),
     execute: async () => {
       // Get the access token from Auth0 AI
-      const accessToken = getAccessTokenForConnection();
+      const accessToken = getAccessTokenFromTokenVault();
 
       // GitHub SDK
       try {

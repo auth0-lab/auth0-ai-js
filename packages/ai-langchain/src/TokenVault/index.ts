@@ -1,5 +1,5 @@
 export { TokenVaultAuthorizer } from "./TokenVaultAuthorizer";
 export {
   getCredentialsFromTokenVault,
-  getAccessTokenForConnection,
+  getAccessTokenFromTokenVault,
 } from "@auth0/ai/TokenVault";

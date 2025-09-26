@@ -74,11 +74,11 @@ export const withGoogleAccess = auth0AI.withTokenVault({
 });
 ```
 
-Then use the `withGoogleAccess` to wrap the tool and use `getAccessTokenForConnection` from the SDK to get the access token.
+Then use the `withGoogleAccess` to wrap the tool and use `getAccessTokenFromTokenVault` from the SDK to get the access token.
 
 ```javascript
 import { tool } from "ai";
-import { getAccessTokenForConnection } from "@auth0/ai-vercel";
+import { getAccessTokenFromTokenVault } from "@auth0/ai-vercel";
 import { TokenVaultError } from "@auth0/ai/interrupts";
 import { addHours } from "date-fns";
 
@@ -90,7 +90,7 @@ export const checkUsersCalendar = withGoogleAccess(
       date: z.coerce.date(),
     }),
     execute: async ({ date }) => {
-      const accessToken = getAccessTokenForConnection();
+      const accessToken = getAccessTokenFromTokenVault();
       const url = "https://www.googleapis.com/calendar/v3/freeBusy";
       const body = JSON.stringify({
         timeMin: date,
