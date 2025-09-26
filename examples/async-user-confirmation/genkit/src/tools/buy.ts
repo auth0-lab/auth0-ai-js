@@ -1,15 +1,15 @@
 import { z } from "genkit";
 import { GenkitBeta } from "genkit/beta";
 
-import { getCIBACredentials } from "@auth0/ai-genkit";
+import { getAsyncAuthorizationCredentials } from "@auth0/ai-genkit";
 
-import { useCIBA } from "../authorizers/ciba";
+import { useAsyncAuthz } from "../authorizers/asyncAuthorization";
 import { useDeviceFLow } from "../authorizers/deviceFlow";
 
 export function buyTool(ai: GenkitBeta) {
   return ai.defineTool(
     ...useDeviceFLow(
-      ...useCIBA(
+      ...useAsyncAuthz(
         {
           name: "buy",
           description: "Use this function to buy stock",
@@ -29,7 +29,7 @@ export function buyTool(ai: GenkitBeta) {
             qty: qty,
           };
 
-          const credentials = getCIBACredentials();
+          const credentials = getAsyncAuthorizationCredentials();
           const accessToken = credentials?.accessToken;
 
           if (accessToken) {

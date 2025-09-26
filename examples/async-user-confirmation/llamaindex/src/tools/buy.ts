@@ -3,14 +3,14 @@ import "dotenv/config";
 import { tool } from "llamaindex";
 import { z } from "zod/v3";
 
-import { getCIBACredentials } from "@auth0/ai-llamaindex";
+import { getAsyncAuthorizationCredentials } from "@auth0/ai-llamaindex";
 
-import { useCIBA } from "../authorizers/ciba";
+import { useAsyncAuthz } from "../authorizers/asyncAuthorization";
 import { useDeviceFlow } from "../authorizers/deviceFlow";
 
 export const buyTool = () => {
   return useDeviceFlow(
-    useCIBA(
+    useAsyncAuthz(
       tool(
         async ({ ticker, qty }) => {
           const headers = {
@@ -20,7 +20,7 @@ export const buyTool = () => {
             ticker: ticker,
             qty: qty,
           };
-          const credentials = getCIBACredentials();
+          const credentials = getAsyncAuthorizationCredentials();
           const accessToken = credentials?.accessToken;
 
           if (accessToken) {

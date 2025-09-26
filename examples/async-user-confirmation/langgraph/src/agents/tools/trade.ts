@@ -1,6 +1,6 @@
 import { z } from "zod/v3";
 
-import { getCIBACredentials } from "@auth0/ai-langchain";
+import { getAsyncAuthorizationCredentials } from "@auth0/ai-langchain";
 import { tool } from "@langchain/core/tools";
 import { LangGraphRunnableConfig } from "@langchain/langgraph";
 
@@ -15,7 +15,7 @@ import { LangGraphRunnableConfig } from "@langchain/langgraph";
  * is attached to the configuration object.
  *
  * In the case is used in the "conditional purchase" agent, the access token is
- * requested using CIBA (Client Initiated Backchannel Authentication) by the
+ * requested using Async Authorization (Client Initiated Backchannel Authentication) by the
  * wrapping authorizer.
  */
 export const tradeTool = tool(
@@ -26,7 +26,7 @@ export const tradeTool = tool(
     if (config.configurable?.accessToken) {
       accessToken = config.configurable.accessToken;
     } else {
-      const credentials = getCIBACredentials();
+      const credentials = getAsyncAuthorizationCredentials();
       accessToken = credentials?.accessToken;
     }
 

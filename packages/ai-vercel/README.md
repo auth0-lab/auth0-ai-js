@@ -53,14 +53,14 @@ setAIContext({
 
 ## Calling APIs
 
-The "Tokens for API" feature of Auth0 allows you to exchange refresh tokens for access tokens for third-party APIs. This is useful when you want to use a federated connection (like Google, Facebook, etc.) to authenticate users and then use the access token to call the API on behalf of the user.
+The "Tokens for API" feature of Auth0 allows you to exchange refresh tokens for access tokens for third-party APIs. This is useful when you want to use a token vault (like Google, Facebook, etc.) to authenticate users and then use the access token to call the API on behalf of the user.
 
-First initialize the Federated Connection Authorizer as follows:
+First initialize the Token Vault Authorizer as follows:
 
 ```javascript
 import { auth0 } from "./auth0";
 
-export const withGoogleAccess = auth0AI.withTokenForConnection({
+export const withGoogleAccess = auth0AI.withTokenVault({
   // A function to retrieve the refresh token of the context.
   refreshToken: async () => {
     const session = await auth0.getSession();
@@ -74,12 +74,12 @@ export const withGoogleAccess = auth0AI.withTokenForConnection({
 });
 ```
 
-Then use the `withGoogleAccess` to wrap the tool and use `getAccessTokenForConnection` from the SDK to get the access token.
+Then use the `withGoogleAccess` to wrap the tool and use `getAccessTokenFromTokenVault` from the SDK to get the access token.
 
 ```javascript
 import { tool } from "ai";
-import { getAccessTokenForConnection } from "@auth0/ai-vercel";
-import { FederatedConnectionError } from "@auth0/ai/interrupts";
+import { getAccessTokenFromTokenVault } from "@auth0/ai-vercel";
+import { TokenVaultError } from "@auth0/ai/interrupts";
 import { addHours } from "date-fns";
 
 export const checkUsersCalendar = withGoogleAccess(
@@ -90,7 +90,7 @@ export const checkUsersCalendar = withGoogleAccess(
       date: z.coerce.date(),
     }),
     execute: async ({ date }) => {
-      const accessToken = getAccessTokenForConnection();
+      const accessToken = getAccessTokenFromTokenVault();
       const url = "https://www.googleapis.com/calendar/v3/freeBusy";
       const body = JSON.stringify({
         timeMin: date,
@@ -110,8 +110,8 @@ export const checkUsersCalendar = withGoogleAccess(
 
       if (!response.ok) {
         if (response.status === 401) {
-          throw new FederatedConnectionError(
-            `Authorization required to access the Federated Connection`
+          throw new TokenVaultError(
+            `Authorization required to access the Token Vault`
           );
         }
         throw new Error(
@@ -135,7 +135,7 @@ CIBA (Client-Initiated Backchannel Authentication) enables secure, user-in-the-l
 ```javascript
 import { auth0 } from "./auth0";
 
-export const buyStockAuthorizer = auth0AI.withAsyncUserConfirmation({
+export const buyStockAuthorizer = auth0AI.withAsyncAuthorization({
   // Same parameters passed to the tool execute function
   userID: (params: { userID: string }, ctx) => params.userID,
 
@@ -180,7 +180,7 @@ export const purchaseStock = buyStockAuthorizer({
     ticker: string;
     qty: number;
   }): Promise<string> => {
-    const credentials = getCIBACredentials();
+    const credentials = getAsyncAuthorizationCredentials();
     // Use credentials.accessToken to call the stock API.
     return `Just bought ${qty} shares of ${ticker} for ${userID}`;
   },
@@ -193,7 +193,7 @@ Auth0 supports RAR (Rich Authorization Requests) for CIBA. This allows you to pr
 When defining the tool authorizer, you can specify the `authorizationDetails` parameter to include detailed information about the authorization being requested:
 
 ```js
-const buyStockAuthorizer = auth0AI.withAsyncUserConfirmation({
+const buyStockAuthorizer = auth0AI.withAsyncAuthorization({
   // A callback to retrieve the userID from tool context.
   userID: (params: { userID: string }, ctx) => params.userID,
 

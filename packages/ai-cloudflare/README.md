@@ -38,7 +38,7 @@ Replace `useAgentChat` with `useAgentChatInterruptions` in your code to get acce
 
 This module provides the `AsyncUserConfirmationResumer` mixin that can extend `AIChatAgent` to handle user confirmations asynchronously. 
 
-This work with the `withAsyncUserConfirmation` authorizer and allow the agent to continue processing after the user has confirmed the action.
+This work with the `withAsyncAuthorization` authorizer and allow the agent to continue processing after the user has confirmed the action.
 
 ```js
 import { AsyncUserConfirmationResumer } from '@auth0/ai-cloudflare';
@@ -51,7 +51,7 @@ export class Chat extends AsyncUserConfirmationResumer(AIChatAgent) {
 Then when defining the authorizer:
 
 ```js
-export const withAsyncUserConfirmation = auth0AI.withAsyncUserConfirmation({
+export const withAsyncAuthorization = auth0AI.withAsyncAuthorization({
   // The authorizer configuration
   onAuthorizationInterrupt: async (interrupt, context) => {
     const { agent } = getCurrentAgent<Chat>();

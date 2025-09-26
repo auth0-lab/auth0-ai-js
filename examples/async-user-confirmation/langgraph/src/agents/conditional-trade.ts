@@ -95,7 +95,7 @@ function notifyUser(state) {
 
 const auth0AI = new Auth0AI();
 
-const protectTool = auth0AI.withAsyncUserConfirmation({
+const protectTool = auth0AI.withAsyncAuthorization({
   audience: process.env["AUDIENCE"]! as string,
   scopes: ["stock:trade"],
   bindingMessage: async (_) => {
