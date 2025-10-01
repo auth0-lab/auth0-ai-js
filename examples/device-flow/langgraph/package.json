@@ -9,7 +9,7 @@
     "chatbot": "npx tsx ./src/chatbot/index.ts",
     "dev": "run-p -n -l langgraph api",
     "langgraph": "npx @langchain/langgraph-cli dev --port 54367 --no-browser",
-    "api": "npx tsx watch ../../async-user-confirmation/sample-api/app.ts"
+    "api": "npx tsx watch ../../async-authorization/sample-api/app.ts"
   },
   "author": {
     "name": "Auth0 Inc.",

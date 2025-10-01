@@ -1,6 +1,6 @@
 ## Async User Confirmation
 
-Async User Confirmation enables background agents to perform tasks that require user approval before completion. This ensures that important actions are executed only with the user's consent, enhancing security and user control. For more information, refer to the [documentation](https://demo.auth0.ai/docs/async-user-confirmation).
+Async User Confirmation enables background agents to perform tasks that require user approval before completion. This ensures that important actions are executed only with the user's consent, enhancing security and user control. For more information, refer to the [documentation](https://demo.auth0.ai/docs/async-authorization).
 
 ### How It Works
 
@@ -36,16 +36,16 @@ Explore the following examples demonstrating the integration of **Auth0's Async 
 
 - **LangGraph:**  
   An implementation showcasing how to implement **Human in the Loop** using `@auth0/ai` with LangChain to enforce User Authorization Confirmation on tool executions.  
-  [View Example](/examples/async-user-confirmation/langgraph/)
+  [View Example](/examples/async-authorization/langgraph/)
 
 - **LlamaIndex:**  
   An implementation showcasing how to implement **Human in the Loop** using `@auth0/ai` with LlamaIndex to enforce User Authorization Confirmation on tool executions.  
-  [View Example](/examples/async-user-confirmation/llamaindex/)
+  [View Example](/examples/async-authorization/llamaindex/)
 
 - **Genkit:**  
   An implementation showcasing how to implement **Human in the Loop** using `@auth0/ai` with Genkit to enforce User Authorization Confirmation on tool executions.  
-  [View Example](/examples/async-user-confirmation/genkit/)
+  [View Example](/examples/async-authorization/genkit/)
 
 - **AI SDK:**  
   An implementation showcasing how to implement **Human in the Loop** using `@auth0/ai` with AI SDK to enforce User Authorization Confirmation on tool executions.  
-  [View Example](/examples/async-user-confirmation/ai-sdk/)
+  [View Example](/examples/async-authorization/ai-sdk/)

@@ -65,7 +65,7 @@ a person or organization. Common use cases include:
 
 ### Examples list
 
-- [**Async User Confirmation**](./examples/async-user-confirmation/README.md)
+- [**Async User Confirmation**](./examples/async-authorization/README.md)
 - [**Authorization for RAG**](./examples/authorization-for-rag/README.md)
 - [**Authorization for Tools**](./examples/authorization-for-tools/README.md)
 
