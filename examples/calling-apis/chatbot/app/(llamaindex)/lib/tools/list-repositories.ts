@@ -3,15 +3,15 @@ import { Octokit, RequestError } from "octokit";
 import { z } from "zod/v3";
 
 import { withGitHub } from "@/app/(llamaindex)/lib/auth0-ai";
-import { getCredentialsForConnection } from "@auth0/ai-vercel";
-import { FederatedConnectionError } from "@auth0/ai/interrupts";
+import { getCredentialsFromTokenVault } from "@auth0/ai-vercel";
+import { TokenVaultError } from "@auth0/ai/interrupts";
 
 export const listRepositories = () =>
   withGitHub(
     tool(
       async () => {
         // Get the access token from Auth0 AI
-        const credentials = getCredentialsForConnection();
+        const credentials = getCredentialsFromTokenVault();
 
         // GitHub SDK
         try {
@@ -25,8 +25,8 @@ export const listRepositories = () =>
         } catch (error) {
           if (error instanceof RequestError) {
             if (error.status === 401) {
-              throw new FederatedConnectionError(
-                `Authorization required to access the Federated Connection`
+              throw new TokenVaultError(
+                `Authorization required to access the Token Vault`
               );
             }
           }

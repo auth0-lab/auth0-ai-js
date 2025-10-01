@@ -1,16 +1,12 @@
 "use client";
 
-import {
-  DefaultChatTransport,
-  generateId,
-  lastAssistantMessageIsCompleteWithToolCalls,
-} from "ai";
+import { DefaultChatTransport, generateId, lastAssistantMessageIsCompleteWithToolCalls } from "ai";
 import { useState } from "react";
 
-import { EnsureAPIAccessPopup } from "@/components/auth0-ai/FederatedConnections/popup";
+import { TokenVaultConsentPopup } from "@/components/auth0-ai/TokenVault/popup";
 import { useChat } from "@ai-sdk/react";
 import { useInterruptions } from "@auth0/ai-vercel/react";
-import { FederatedConnectionInterrupt } from "@auth0/ai/interrupts";
+import { TokenVaultInterrupt } from "@auth0/ai/interrupts";
 
 export default function Chat() {
   const [input, setInput] = useState("");
@@ -32,8 +28,8 @@ export default function Chat() {
         </div>
       ))}
 
-      {FederatedConnectionInterrupt.isInterrupt(toolInterrupt) && (
-        <EnsureAPIAccessPopup
+      {TokenVaultInterrupt.isInterrupt(toolInterrupt) && (
+        <TokenVaultConsentPopup
           interrupt={toolInterrupt}
           connectWidget={{
             title: `Requested by: "${toolInterrupt.toolCall.name}"`,

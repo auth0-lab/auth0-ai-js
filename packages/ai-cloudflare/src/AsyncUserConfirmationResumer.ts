@@ -1,10 +1,7 @@
 import { Schedule } from "agents";
 import { UIMessage } from "ai";
 
-import {
-  AuthorizationPendingInterrupt,
-  AuthorizationPollingInterrupt,
-} from "@auth0/ai/interrupts";
+import { AuthorizationPendingInterrupt, AuthorizationPollingInterrupt } from "@auth0/ai/interrupts";
 
 type Constructor<T = object> = new (...args: any[]) => T;
 
@@ -40,7 +37,7 @@ interface ChatAgent {
  * Call the `scheduleAsyncUserConfirmationCheck` method to initiate the scheduling from
  * within the `onAuthorizationInterrupt` callback of the authorizer.
  *
- * auth0AI.withAsyncUserConfirmation({
+ * auth0AI.withAsyncAuthorization({
  *   onAuthorizationInterrupt: async (interrupt, context) => {
  *     const { agent } = getCurrentAgent<Chat>();
  *     agent?.schedulePoller({ interrupt, context });
