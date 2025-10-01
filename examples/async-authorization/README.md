@@ -1,4 +1,4 @@
-## Async User Confirmation
+## Async Authorization
 
 Async User Confirmation enables background agents to perform tasks that require user approval before completion. This ensures that important actions are executed only with the user's consent, enhancing security and user control. For more information, refer to the [documentation](https://demo.auth0.ai/docs/async-user-confirmation).
 
