@@ -39,11 +39,11 @@
     "ioredis": "^5.6"
   },
   "devDependencies": {
-    "@eslint/compat": "^1.2.7",
-    "@types/node": "^22.10.6",
-    "eslint": "^9.22.0",
-    "typedoc": "^0.27.6",
-    "typescript": "^5.7.3",
+    "@eslint/compat": "^1.4.0",
+    "@types/node": "^20.19.19",
+    "eslint": "^9.37.0",
+    "typedoc": "^0.28.13",
+    "typescript": "^5.9.3",
     "vitest": "^3.0.9"
   },
   "publishConfig": {
