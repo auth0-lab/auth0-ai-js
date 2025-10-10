@@ -1,16 +1,13 @@
-import {
-  DefaultChatTransport,
-  lastAssistantMessageIsCompleteWithToolCalls,
-} from "ai";
+import { DefaultChatTransport, lastAssistantMessageIsCompleteWithToolCalls } from "ai";
 import { Loader2, Send, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import { useChat } from "@ai-sdk/react";
 import { useInterruptions } from "@auth0/ai-vercel/react";
-import { FederatedConnectionInterrupt } from "@auth0/ai/interrupts";
+import { TokenVaultInterrupt } from "@auth0/ai/interrupts";
 
 import { useAuth0 } from "../hooks/useAuth0";
-import { FederatedConnectionPopup } from "./FederatedConnectionPopup";
+import { TokenVaultConsentPopup } from "./TokenVaultConsentPopup";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
@@ -99,15 +96,15 @@ export function Chat() {
         </div>
 
         {/* Error message - hide if it's an Auth0 interrupt (we show the popup instead) */}
-        {error && !FederatedConnectionInterrupt.isInterrupt(toolInterrupt) && (
+        {error && !TokenVaultInterrupt.isInterrupt(toolInterrupt) && (
           <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-lg">
             Error: {error.message}
           </div>
         )}
 
         {/* Step-Up Auth Interrupt Handling */}
-        {FederatedConnectionInterrupt.isInterrupt(toolInterrupt) && (
-          <FederatedConnectionPopup interrupt={toolInterrupt} />
+        {TokenVaultInterrupt.isInterrupt(toolInterrupt) && (
+          <TokenVaultConsentPopup interrupt={toolInterrupt} />
         )}
 
         {/* Input form */}
