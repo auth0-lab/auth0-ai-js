@@ -19,27 +19,11 @@ This is a [Next.js](https://nextjs.org) application that implements [Auth0 AI](h
     - In your Auth0 Dashboard, go to Applications > APIs
     - Create a new API with an identifier (audience).
     - Ensure that "Allow Offline Access" is enabled for your API if you are using a flow which still makes use of refresh tokens.
-  - A Resource Server Client for performing token exchanges with Token Vault on behalf of a user. This will be used by the Langgraph API server (@langchain/langgraph-cli or Langgraph Platform) when executing tools that require third-party access. 
-    - Create the Resource Server Client using the Management API:
-      ```
-          curl -L 'https://{tenant}.auth0.com/api/v2/clients' \
-      -H 'Content-Type: application/json' \
-      -H 'Accept: application/json' \
-      -H 'Authorization: Bearer {MANAGEMENT_API_TOKEN}' \
-      -d '{
-        "name": "Calendar API Resource Server Client",
-        "app_type": "resource_server",
-        "grant_types": ["urn:auth0:params:oauth:grant-type:token-exchange:federated-connection-access-token"],
-        "resource_server_identifier": "YOUR_API_IDENTIFIER"
-      }'
-      ```
-      - Your `MANAGEMENT_API_TOKEN` above must have the `create:clients` scope in order to create a new client. To create a new Management API token with the right access permissions:
-        - Navigate to Applications > APIs > Auth0 Management API > API Explorer tab in your tenant.
-        - Click the Create & Authorize Test Application button.
-        - Copy the JWT access token shown and provide it as the `MANAGEMENT_API_TOKEN`.
-        - Use the audience that you provided when creating the API for the Langgraph API Server as the `resource_server_identifier`.
-      - Note down the `client_id` and `client_secret` returned from the cURL response for your environment variables after running cURL successfully.
-  - Either **Google**, **Slack** or **Github** social connections enabled for the application.
+  - A Custom API Client for performing token exchanges with Token Vault on behalf of a user. This will be used by the Langgraph API server (@langchain/langgraph-cli or Langgraph Platform) when executing tools that require third-party access.
+    - On the settings page for the previously created API, click the "Add Application" button in the header and create the Custom API Client.
+    - Ensure that the `Token Vault` grant type is enabled under the Advanced Settings.
+    - Note down the "Client ID" and "Client Secret" of this newly created Custom API Client.
+  - Either **Google**, **Slack** or **GitHub** social connections enabled for the application.
 
 ### Setup the workspace `.env` file
 
@@ -54,7 +38,7 @@ AUTH0_SECRET="<use [openssl rand -hex 32] to generate a 32 bytes value>"
 APP_BASE_URL=http://localhost:3000
 # the offline_access scope is needed if your flow is using a refresh token
 AUTH0_SCOPE='openid profile email offline_access'
-# Langgraph API audience. Only needed for Langgraph example.
+# Langgraph API audience (only needed for Langgraph example)
 AUTH0_AUDIENCE="<auth0-audience>"
 NEXT_PUBLIC_URL="http://localhost:3000"
 
@@ -63,7 +47,7 @@ OPENAI_API_KEY=xx-xxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 # LANGGRAPH
 LANGGRAPH_API_URL=http://localhost:54367
-# Auth0 Resource Server Client Configuration (for token exchange with Token Vault)
+# Auth0 Custom API Client Configuration (for token exchange with Token Vault)
 # These credentials belong to a special "resource_server" client that can perform token exchanges
 # on behalf of the user within your Langgraph API. Only needed for Langgraph example.
 RESOURCE_SERVER_CLIENT_ID="<your-resource-server-client-id>"

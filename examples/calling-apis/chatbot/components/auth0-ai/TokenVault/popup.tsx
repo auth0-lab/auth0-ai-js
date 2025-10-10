@@ -4,12 +4,13 @@ import { useCallback, useEffect, useState } from "react";
 
 import { WaitingMessage } from "../util/loader";
 import { PromptUserContainer } from "../util/prompt-user-container";
-import { TokenVaultAuthProps } from "./TokenVaultAuthProps";
+
+import type { TokenVaultAuthProps } from "./TokenVaultAuthProps";
 
 export function TokenVaultConsentPopup({
   interrupt: { connection, requiredScopes, resume },
   connectWidget: { icon, title, description, action, containerClassName },
-  auth: { authorizePath = "/auth/login", returnTo = "/close" } = {},
+  auth: { connectPath = "/auth/connect", returnTo = "/close" } = {},
   onFinish,
 }: TokenVaultAuthProps) {
   const [isLoading, setIsLoading] = useState(false);
@@ -43,14 +44,13 @@ export function TokenVaultConsentPopup({
   //Open the login popup
   const startLoginPopup = useCallback(async () => {
     const search = new URLSearchParams({
-      returnTo,
       connection,
-      access_type: "offline",
+      returnTo,
+      scope: requiredScopes.join(),
       prompt: "consent",
-      connection_scope: requiredScopes.join(),
     });
 
-    const url = new URL(authorizePath, window.location.origin);
+    const url = new URL(connectPath, window.location.origin);
     url.search = search.toString();
 
     const windowFeatures =
@@ -63,7 +63,7 @@ export function TokenVaultConsentPopup({
       setLoginPopup(popup);
       setIsLoading(true);
     }
-  }, [connection, requiredScopes]);
+  }, [connection, requiredScopes, returnTo, connectPath]);
 
   if (isLoading) {
     return <WaitingMessage />;
