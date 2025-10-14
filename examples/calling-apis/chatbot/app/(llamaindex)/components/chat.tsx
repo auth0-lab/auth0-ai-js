@@ -1,12 +1,12 @@
 "use client";
 
 import { DefaultChatTransport, generateId } from "ai";
+import { useState } from "react";
 
-import { EnsureAPIAccessPopup } from "@/components/auth0-ai/FederatedConnections/popup";
+import { TokenVaultConsentPopup } from "@/components/auth0-ai/TokenVault/popup";
 import { useChat } from "@ai-sdk/react";
 import { useInterruptions } from "@auth0/ai-vercel/react";
-import { FederatedConnectionInterrupt } from "@auth0/ai/interrupts";
-import { useState } from "react";
+import { TokenVaultInterrupt } from "@auth0/ai/interrupts";
 
 export default function Chat() {
   const [input, setInput] = useState("");
@@ -30,14 +30,14 @@ export default function Chat() {
     <div className="flex flex-col gap-4 w-full max-w-md py-12 sm:py-24 px-4 sm:px-0 mx-auto stretch">
       {messages.map((message, index) => {
         const answer = message.role === "user" ? (message.parts[0] as any)?.text : message.parts && message.parts.length > 0 && (message.parts[0] as any)?.text?.match(/[\n\r]Answer:(.*?)[\n\r]/);
-        const isInterrupt = FederatedConnectionInterrupt.isInterrupt(toolInterrupt);
+        const isInterrupt = TokenVaultInterrupt.isInterrupt(toolInterrupt);
         return (
           <div key={message.id} className="whitespace-pre-wrap">
             {message.role === "user" ? "User: " : "AI: "}
             {(isInterrupt && message.role === "assistant" && index === messages.length - 1) ? (
               <div className="flex flex-col gap-4">
-              {FederatedConnectionInterrupt.isInterrupt(toolInterrupt) && (
-                  <EnsureAPIAccessPopup
+              {TokenVaultInterrupt.isInterrupt(toolInterrupt) && (
+                  <TokenVaultConsentPopup
                     onFinish={toolInterrupt.resume}
                     interrupt={toolInterrupt}
                     connectWidget={{
