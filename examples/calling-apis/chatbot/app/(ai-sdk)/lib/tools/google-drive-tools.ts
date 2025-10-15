@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { isZodSchema } from "@agentic/core";
 import { GoogleDriveClient } from "@agentic/google-drive";
-import { getAccessTokenForConnection } from "@auth0/ai-vercel";
+import { getAccessTokenFromTokenVault } from "@auth0/ai-vercel";
 
 import { withGoogleDriveTools } from "../auth0-ai";
 
@@ -27,11 +27,11 @@ export const googleDriveTools = Object.fromEntries(
         execute: async (args) => {
           // Get the access token from Auth0 AI
           try {
-            const accessToken = getAccessTokenForConnection();
+            const accessToken = getAccessTokenFromTokenVault();
 
             if (!accessToken) {
               throw new Error(
-                "No access token returned from getAccessTokenForConnection"
+                "No access token returned from getAccessTokenFromTokenVault"
               );
             }
 

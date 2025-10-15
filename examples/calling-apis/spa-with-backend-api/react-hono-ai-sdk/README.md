@@ -206,7 +206,7 @@ const auth0AI = new Auth0AI({
   }
 });
 
-export const withGoogleCalendar = auth0AI.withTokenForConnection({
+export const withGoogleCalendar = auth0AI.withTokenVault({
   accessToken: async () => global.authContext?.accessToken, // Access token for Token Vault token exchange
   connection: "google-oauth2",
   scopes: ["https://www.googleapis.com/auth/calendar"]
@@ -216,12 +216,12 @@ export const withGoogleCalendar = auth0AI.withTokenForConnection({
 Tools can also now use the SDK's built-in token management when using access tokens with Token Vault token exchange:
 ```typescript
 // tools/listNearbyEvents.ts
-import { getAccessTokenForConnection } from "@auth0/ai-vercel";
+import { getAccessTokenFromTokenVault } from "@auth0/ai-vercel";
 
 export const listNearbyEvents = withGoogleCalendar(
   tool({
     execute: async ({ start, end, calendarId }) => {
-      const token = getAccessTokenForConnection(); // Automatic token retrieval
+      const token = getAccessTokenFromTokenVault(); // Automatic token retrieval
       // Use token with Google Calendar API...
     }
   })

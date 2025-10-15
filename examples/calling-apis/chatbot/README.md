@@ -13,7 +13,7 @@ This is a [Next.js](https://nextjs.org) application that implements [Auth0 AI](h
     - **Application Type**: `Regular Web Application`
     - **Allowed Callback URLs**: `http://localhost:3000/auth/callback`
     - **Allowed Logout URLs**: `http://localhost:3000`
-    - **Grant Type**: `Token Exchange (Federated Connection)` (or `urn:auth0:params:oauth:grant-type:token-exchange:federated-connection-access-token`). You should also ensure that the `Refresh Token` grant type is enabled for flows which do not use an external API.
+    - **Grant Type**: `Token Vault` (or `urn:auth0:params:oauth:grant-type:token-exchange:federated-connection-access-token`). You should also ensure that the `Refresh Token` grant type is enabled for flows which do not use an external API.
     - **Allow Refresh Token Rotation**: currently you should disable this setting if you are using Token Vault for token exchanges with a refresh token.
   - An API for representing the external Langgraph API Server
     - In your Auth0 Dashboard, go to Applications > APIs
