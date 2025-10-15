@@ -49,7 +49,7 @@ export function TokenVaultConsentPopup({
       scope: requiredScopes.join(" "),
       // Add all extra authorization parameters to the search params, they will be collected and submitted via the
       // authorization_params parameter of the connect account flow.
-      ...authorizationParams
+      ...authorizationParams,
     });
 
     const url = new URL(connectPath, window.location.origin);
@@ -65,7 +65,7 @@ export function TokenVaultConsentPopup({
       setLoginPopup(popup);
       setIsLoading(true);
     }
-  }, [connection, requiredScopes, returnTo, connectPath]);
+  }, [connection, requiredScopes, returnTo, authorizationParams, connectPath]);
 
   if (isLoading) {
     return <WaitingMessage />;
