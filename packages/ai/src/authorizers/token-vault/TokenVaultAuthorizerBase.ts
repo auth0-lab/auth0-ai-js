@@ -1,15 +1,26 @@
 import crypto from "crypto";
 import stableHash from "stable-hash";
 
-import { TokenResponse, TokenSet, tokenSetFromTokenResponse } from "../../credentials";
-import { Auth0Interrupt, TokenVaultError, TokenVaultInterrupt } from "../../interrupts";
+import {
+  TokenResponse,
+  TokenSet,
+  tokenSetFromTokenResponse,
+} from "../../credentials";
+import {
+  Auth0Interrupt,
+  TokenVaultError,
+  TokenVaultInterrupt,
+} from "../../interrupts";
 import { resolveParameter } from "../../parameters";
 import { SubStore } from "../../stores";
 import { omit, RequireFields } from "../../util";
 import { ContextGetter, nsFromContext } from "../context";
 import { Auth0ClientParams, Auth0ClientSchema } from "../types";
 import { asyncLocalStorage, AsyncStorageValue } from "./asyncLocalStorage";
-import { SUBJECT_TOKEN_TYPES, TokenVaultAuthorizerParams } from "./TokenVaultAuthorizerParams";
+import {
+  SUBJECT_TOKEN_TYPES,
+  TokenVaultAuthorizerParams,
+} from "./TokenVaultAuthorizerParams";
 
 /**
  * Requests authorization to a third party service via Token Vault.
@@ -25,7 +36,7 @@ export class TokenVaultAuthorizerBase<ToolExecuteArgs extends any[]> {
 
   constructor(
     auth0: Partial<Auth0ClientParams>,
-    params: TokenVaultAuthorizerParams<ToolExecuteArgs>
+    params: TokenVaultAuthorizerParams<ToolExecuteArgs>,
   ) {
     this.auth0 = Auth0ClientSchema.parse(auth0);
     this.params = {
@@ -48,13 +59,13 @@ export class TokenVaultAuthorizerBase<ToolExecuteArgs extends any[]> {
 
     if (!hasRefreshToken && !hasAccessToken) {
       throw new Error(
-        "Either refreshToken or accessToken must be provided to initialize the Authorizer."
+        "Either refreshToken or accessToken must be provided to initialize the Authorizer.",
       );
     }
 
     if (hasRefreshToken && hasAccessToken) {
       throw new Error(
-        "Only one of refreshToken or accessToken can be provided to initialize the Authorizer."
+        "Only one of refreshToken or accessToken can be provided to initialize the Authorizer.",
       );
     }
 
@@ -66,7 +77,7 @@ export class TokenVaultAuthorizerBase<ToolExecuteArgs extends any[]> {
     ) {
       if (!this.auth0.clientId || !this.auth0.clientSecret) {
         throw new Error(
-          "clientId and clientSecret must currently be provided when using accessToken for token exchange with Token Vault."
+          "clientId and clientSecret must currently be provided when using accessToken for token exchange with Token Vault.",
         );
       }
     }
@@ -94,18 +105,21 @@ export class TokenVaultAuthorizerBase<ToolExecuteArgs extends any[]> {
     const store = asyncLocalStorage.getStore();
     if (!store) {
       throw new Error(
-        "The tool must be wrapped with the FederationConnectionAuthorizer."
+        "The tool must be wrapped with the FederationConnectionAuthorizer.",
       );
     }
 
-    const { scopes, connection } = store;
+    const { scopes, connection, authorizationParams } = store;
 
     if (!tokenResponse) {
       throw new TokenVaultInterrupt(
         `Authorization required to access the Token Vault: ${this.params.connection}`,
-        connection,
-        scopes,
-        scopes
+        {
+          connection,
+          scopes,
+          requiredScopes: scopes,
+          authorizationParams,
+        },
       );
     }
 
@@ -117,10 +131,13 @@ export class TokenVaultAuthorizerBase<ToolExecuteArgs extends any[]> {
 
     if (missingScopes.length > 0) {
       throw new TokenVaultInterrupt(
-        `Authorization required to access the Token Vault: ${this.params.connection}. Missing scopes: ${missingScopes.join(", ")}`,
-        connection,
-        scopes,
-        [...currentScopes, ...scopes]
+        `Authorization required to access the Token Vault: ${this.params.connection}. Authorized scopes: ${currentScopes.join(", ")}. Missing scopes: ${missingScopes.join(", ")}`,
+        {
+          connection,
+          scopes,
+          requiredScopes: [...currentScopes, ...scopes],
+          authorizationParams,
+        },
       );
     }
   }
@@ -131,7 +148,7 @@ export class TokenVaultAuthorizerBase<ToolExecuteArgs extends any[]> {
     const store = asyncLocalStorage.getStore();
     if (!store) {
       throw new Error(
-        "The tool must be wrapped with the FederationConnectionAuthorizer."
+        "The tool must be wrapped with the FederationConnectionAuthorizer.",
       );
     }
 
@@ -146,7 +163,7 @@ export class TokenVaultAuthorizerBase<ToolExecuteArgs extends any[]> {
       subjectTokenType = "urn:ietf:params:oauth:token-type:refresh_token";
     } else if (typeof this.params.accessToken === "function") {
       subjectToken = (await this.getAccessTokenWithToolContext(
-        ...toolContext
+        ...toolContext,
       )) as string;
       subjectTokenType = "urn:ietf:params:oauth:token-type:access_token";
     } else if (typeof this.params.accessToken === "string") {
@@ -211,7 +228,7 @@ export class TokenVaultAuthorizerBase<ToolExecuteArgs extends any[]> {
       // fallback to existing behavior, where third party accessToken can be provided directly
       tokenResponse = (await resolveParameter(
         this.params.accessToken!,
-        toolContext
+        toolContext,
       )) as TokenResponse;
     }
     this.validateToken(tokenResponse);
@@ -238,7 +255,7 @@ export class TokenVaultAuthorizerBase<ToolExecuteArgs extends any[]> {
    */
   protect(
     getContext: ContextGetter<ToolExecuteArgs>,
-    execute: (...args: ToolExecuteArgs) => any
+    execute: (...args: ToolExecuteArgs) => any,
   ): (...args: ToolExecuteArgs) => any {
     return async (...args: ToolExecuteArgs) => {
       const context = getContext(...args);
@@ -246,30 +263,31 @@ export class TokenVaultAuthorizerBase<ToolExecuteArgs extends any[]> {
         context: context,
         scopes: this.params.scopes,
         connection: this.params.connection,
+        authorizationParams: this.params.authorizationParams,
       };
 
       if (asyncLocalStorage.getStore()) {
         throw new Error(
-          "Cannot nest tool calls that require Token Vault authorization."
+          "Cannot nest tool calls that require Token Vault authorization.",
         );
       }
 
       return asyncLocalStorage.run(asyncStore, async () => {
         const credentialsNS = nsFromContext(
           this.params.credentialsContext,
-          context
+          context,
         );
         try {
           let credentials: TokenSet = await this.credentialsStore.get(
             credentialsNS,
-            "credential"
+            "credential",
           );
           if (!credentials) {
             credentials = await this.getAccessToken(...args);
             await this.credentialsStore.put(
               credentialsNS,
               "credential",
-              credentials
+              credentials,
             );
           }
           asyncStore.credentials = credentials;
@@ -277,12 +295,12 @@ export class TokenVaultAuthorizerBase<ToolExecuteArgs extends any[]> {
         } catch (err) {
           if (err instanceof TokenVaultError) {
             this.credentialsStore.delete(credentialsNS, "credential");
-            const interrupt = new TokenVaultInterrupt(
-              err.message,
-              asyncStore.connection,
-              asyncStore.scopes,
-              asyncStore.scopes
-            );
+            const interrupt = new TokenVaultInterrupt(err.message, {
+              connection: asyncStore.connection,
+              scopes: asyncStore.scopes,
+              requiredScopes: asyncStore.scopes,
+              authorizationParams: asyncStore.authorizationParams,
+            });
             return this.handleAuthorizationInterrupts(interrupt);
           }
           if (err instanceof Auth0Interrupt) {

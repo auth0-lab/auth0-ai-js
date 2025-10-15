@@ -6,8 +6,6 @@ import { Auth0Interrupt } from "./Auth0Interrupt";
  * Throw this error if the service returns Unauthorized for the current access token.
  */
 export class TokenVaultInterrupt extends Auth0Interrupt {
-  public behavior: "resume" | "reload";
-
   /**
    * The auth0 connection name.
    */
@@ -25,20 +23,28 @@ export class TokenVaultInterrupt extends Auth0Interrupt {
    */
   public readonly requiredScopes: string[];
 
+  /**
+   * Additional authorization parameters to be passed during token acquisition.
+   */
+  public readonly authorizationParams: Record<string, string>;
+
+  public behavior: "resume" | "reload";
+
   public static code = "TOKEN_VAULT_ERROR" as const;
 
-  constructor(
-    message: string,
-    connection: string,
-    scopes: string[],
-    requiredScopes: string[],
-    behavior: "resume" | "reload" = "resume"
-  ) {
+  constructor(message: string, params: {
+    connection: string;
+    scopes: string[];
+    requiredScopes: string[];
+    authorizationParams?: Record<string, string>;
+    behavior?: "resume" | "reload";
+  }) {
     super(message, TokenVaultInterrupt.code);
-    this.behavior = behavior;
-    this.connection = connection;
-    this.scopes = scopes;
-    this.requiredScopes = requiredScopes;
+    this.connection = params.connection;
+    this.scopes = params.scopes;
+    this.requiredScopes = params.requiredScopes;
+    this.authorizationParams = { ...(params.authorizationParams ?? {}) };
+    this.behavior = params.behavior ?? "resume";
   }
 }
 

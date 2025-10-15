@@ -59,6 +59,11 @@ export type TokenVaultAuthorizerParams<ToolExecuteArgs extends any[]> =
     connection: string;
 
     /**
+     * Additional authorization parameters to be passed during token acquisition.
+     */
+    authorizationParams?: Record<string, string>;
+
+    /**
      * AuthContext defines the scope of credential sharing:
      * - "tool-call": Credentials are valid only for a single invocation of the tool.
      * - "tool": Credentials are shared across multiple calls to the same tool within the same thread.
@@ -70,7 +75,7 @@ export type TokenVaultAuthorizerParams<ToolExecuteArgs extends any[]> =
     credentialsContext?: AuthContext;
 
     /**
-     * An store used to store the authorization credentials according
+     * A store used to store the authorization credentials according
      * to the `credentialsContext` scope.
      */
     store: Store;
