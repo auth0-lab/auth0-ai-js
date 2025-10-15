@@ -78,7 +78,7 @@ Then use the `withGoogleAccess` to wrap the tool and use `getAccessTokenFromToke
 import { tool } from "@langchain/core/tools";
 import { getAccessTokenFromTokenVault } from "@auth0/ai-langchain";
 import { TokenVaultError } from "@auth0/ai/interrupts";
-import { addHours } from "date-fns";
+import { addDays } from "date-fns";
 
 export const checkCalendarTool = withGoogleAccess(
   tool(
@@ -86,7 +86,7 @@ export const checkCalendarTool = withGoogleAccess(
       const accessToken = getAccessTokenFromTokenVault();
       const body = JSON.stringify({
         timeMin: date,
-        timeMax: addHours(date, 1),
+        timeMax: addDays(date, 1),
         timeZone: "UTC",
         items: [{ id: "primary" }],
       });
