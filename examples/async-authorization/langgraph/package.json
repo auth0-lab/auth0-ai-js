@@ -20,10 +20,10 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@auth0/ai-langchain": "*",
-    "@langchain/core": "^0.3.72",
+    "@langchain/core": "^0.3.78",
     "@langchain/langgraph": "^0.4.6",
     "@langchain/langgraph-checkpoint": "^0.1.0",
-    "@langchain/langgraph-cli": "^0.0.60",
+    "@langchain/langgraph-cli": "^0.0.70",
     "@langchain/langgraph-sdk": "^0.0.109",
     "@langchain/openai": "^0.3.14",
     "@openfga/sdk": "0.8.0",
@@ -31,7 +31,7 @@
     "dotenv": "^16.4.7",
     "enquirer": "^2.4.1",
     "express": "^4.21.2",
-    "nanoid": "^5.1.0",
+    "nanoid": "^5.1.6",
     "node-cron": "^3.0.3",
     "node-persist": "^4.0.4",
     "zod": "^3.25.76"
