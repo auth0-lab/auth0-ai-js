@@ -46,13 +46,13 @@ export function withInterruptions(
         toolName: toolMeta.toolName,
         toolArgs: toolMeta.toolArgs,
         toolCallId: `${config.messages[config.messages.length - 1].id}-${toolMeta.toolCallId}`,
-        cause: new TokenVaultInterrupt(
-          interruption.message,
-          interruption.connection,
-          interruption.scopes,
-          interruption.requiredScopes,
-          "reload"
-        ),
+        cause: new TokenVaultInterrupt(interruption.message, {
+          connection: interruption.connection,
+          scopes: interruption.scopes,
+          requiredScopes: interruption.requiredScopes,
+          authorizationParams: interruption.authorizationParams,
+          behavior: "reload"
+        }),
       });
     }
   };
