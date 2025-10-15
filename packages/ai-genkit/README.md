@@ -83,7 +83,7 @@ Then use the `withGoogleAccess` to wrap the tool and use `getAccessTokenFromToke
 ```javascript
 import { getAccessTokenFromTokenVault } from "@auth0/ai-genkit";
 import { TokenVaultError } from "@auth0/ai/interrupts";
-import { addHours } from "date-fns";
+import { addDays } from "date-fns";
 import { z } from "zod";
 
 export const checkCalendarTool = ai.defineTool(
@@ -102,7 +102,7 @@ export const checkCalendarTool = ai.defineTool(
     const accessToken = getAccessTokenFromTokenVault();
     const body = JSON.stringify({
       timeMin: date,
-      timeMax: addHours(date, 1),
+      timeMax: addDays(date, 1),
       timeZone: "UTC",
       items: [{ id: "primary" }],
     });

@@ -80,7 +80,7 @@ Then use the `withGoogleAccess` to wrap the tool and use `getAccessTokenFromToke
 import { tool } from "ai";
 import { getAccessTokenFromTokenVault } from "@auth0/ai-vercel";
 import { TokenVaultError } from "@auth0/ai/interrupts";
-import { addHours } from "date-fns";
+import { addDays } from "date-fns";
 
 export const checkUsersCalendar = withGoogleAccess(
   tool({
@@ -94,7 +94,7 @@ export const checkUsersCalendar = withGoogleAccess(
       const url = "https://www.googleapis.com/calendar/v3/freeBusy";
       const body = JSON.stringify({
         timeMin: date,
-        timeMax: addHours(date, 1),
+        timeMax: addDays(date, 1),
         timeZone: "UTC",
         items: [{ id: "primary" }],
       });
