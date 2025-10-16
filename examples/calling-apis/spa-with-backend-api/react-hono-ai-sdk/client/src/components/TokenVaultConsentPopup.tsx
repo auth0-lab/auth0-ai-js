@@ -20,7 +20,7 @@ export function TokenVaultConsentPopup({
 }: TokenVaultConsentPopupProps) {
   const [isLoading, setIsLoading] = useState(false);
 
-  const { connection, requiredScopes, resume } = interrupt;
+  const { connection, requiredScopes, authorizationParams, resume } = interrupt;
 
   // Use Auth0 SPA SDK to request additional connection/scopes
   const startFederatedLogin = useCallback(async () => {
@@ -36,19 +36,26 @@ export function TokenVaultConsentPopup({
       const auth0Client = getAuth0Client();
 
       // Use getTokenWithPopup for step-up authorization to request additional scopes
-      await auth0Client.getTokenWithPopup({
+      /*await auth0Client.getTokenWithPopup({
         authorizationParams: {
           prompt: "consent", // Required for Google Calendar scopes
           connection: connection, // e.g., "google-oauth2"
           connection_scope: validScopes.join(" "), // Google-specific scopes
           access_type: "offline",
         },
+      });*/
+      await auth0Client.connectAccountWithRedirect({
+        connection,
+        authorization_params: {
+          scope: validScopes.join(" "), // provider-specific scopes
+          ...authorizationParams
+        },
       });
 
       // IMPORTANT: After getting new scopes via popup, we need to ensure
       // subsequent API calls use the updated token. The Auth0 client should automatically
       // use the new token, but we should trigger a refresh to ensure the latest token is cached.
-      await auth0Client.getTokenSilently();
+      //await auth0Client.getTokenSilently();
 
       setIsLoading(false);
 

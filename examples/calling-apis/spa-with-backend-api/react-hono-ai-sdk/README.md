@@ -51,14 +51,14 @@ You will need the following prerequisites to run this app:
 
 ### 1. Auth0 Configuration
 
-1. Create an Auth0 Application:
+1. Create an Auth0 SPA Application:
    - Go to your [Auth0 Dashboard](https://manage.auth0.com/)
    - Create a new **Single Page Application**
    - Configure the following settings:
      - **Allowed Callback URLs**: `http://localhost:5173`
      - **Allowed Logout URLs**: `http://localhost:5173`
      - **Allowed Web Origins**: `http://localhost:5173`
-     - Make sure to Allow Refresh Token in Grant Types under Advanced Settings but you can disable "Allow Refresh Token Rotation"
+     - Make sure to Allow Refresh Token in Grant Types under Advanced Settings and that "Allow Refresh Token Rotation" is enabled
 
 2. Create an Auth0 API:
    - In your Auth0 Dashboard, go to APIs
@@ -66,68 +66,46 @@ You will need the following prerequisites to run this app:
    - Make sure to "Allow Offline Access" in Access Settings 
    - Note down the API identifier for your environment variables
 
-3. Create a Resource Server Client (for Token Vault Token Exchange):
-   - This is a special client that allows your API server to perform token exchanges
-   - Create this client programmatically via the Auth0 Management API:
-   ```json
-   {
-     "name": "Calendar API Resource Server Client",
-     "app_type": "resource_server",
-     "resource_server_identifier": "YOUR_API_IDENTIFIER"
-   }
-   ```
-
-   A sample curl to create this Resource Server Client:
-  ```bash
-    curl -L 'https://{tenant}.auth0.com/api/v2/clients' \
-      -H 'Content-Type: application/json' \
-      -H 'Accept: application/json' \
-      -H 'Authorization: Bearer {MANAGEMENT_API_TOKEN}' \
-      -d '{
-        "name": "Calendar API Resource Server Client",
-        "app_type": "resource_server",
-        "grant_types": ["urn:auth0:params:oauth:grant-type:token-exchange:federated-connection-access-token"],
-        "resource_server_identifier": "YOUR_API_IDENTIFIER"
-      }'
-  ```
-   - Note that your `MANAGEMENT_API_TOKEN` above must have the `create:clients` scope in order to work. One way you can retrieve
-   a token with this access is by doing the following:
-      - Navigate to APIs -> Auth0 Management API -> API Explorer tab in your tenant
-      - Hit the "Create & Authorize Test Application" button
-      - Copy the jwt access token shown and provide it as the `MANAGEMENT_API_TOKEN`
-   - Note down the `client_id` and `client_secret` for your environment variables after running curl successfully.
+3. Create a Custom API Client (for Token Vault Token Exchange):
+   - This is a special client that allows your API to perform token exchanges
+   - In your Auth0 Dashboard, on the configuration page of your API, click the "Add Application" button in the header and create the Custom API Client
+   - Ensure that the `Token Vault` grant type is enabled under the Advanced Settings
+   - Note down the "Client ID" and "Client Secret" of this newly created Custom API Client
    - This client enables Token Vault to exchange an access token for an external API access token (e.g., Google Calendar API)
 
 4. Configure a Social Connection for Google in Auth0
    - Make sure to enable all `Calendar` scopes from the Permissions options
-   - Make sure to enable Token Vault for the Connection under the Advanced Settings
-   - Make sure to enable the connection for your SPA Application created in Step 1 and the Resource Server Client created in Step 3
+   - Make sure to enable the "Use for Connected Accounts with Token Vault" toggle
+   - Make sure to enable the connection for your SPA Application created in Step 1 and the Custom API Client created in Step 3
    - Test the connection in Auth0 "Try Connection" screen and make sure connection is working & configured correctly
 
 ### 2. Environment Variables
 
 #### Client (.env)
-Copy `.env.example` to `.env` and fill in your Auth0 configuration:
+From the `./client` directory, copy `.env.example` to `.env` and fill in your Auth0 configuration using details from your SPA Application:
 
 ```bash
+# Auth0 Configuration
 VITE_AUTH0_DOMAIN=your-auth0-domain.auth0.com
 VITE_AUTH0_CLIENT_ID=your-spa-client-id
 VITE_AUTH0_AUDIENCE=your-api-identifier
+
+# Server Configuration
 VITE_SERVER_URL=http://localhost:3000
 ```
 
 #### Server (.env)
-Copy `.env.example` to `.env` and fill in your Auth0 configuration:
+From the `./server` directory, copy `.env.example` to `.env` and fill in your Auth0 configuration using details from API and Custom API Client:
 
 ```bash
 # Auth0 Configuration
 AUTH0_DOMAIN=your-auth0-domain.auth0.com
 AUTH0_AUDIENCE=your-api-identifier
 
-# Resource Server Client Configuration (for Token Vault token exchange)
-# These credentials belong to a special "resource_server" client that can perform token exchanges
-RESOURCE_SERVER_CLIENT_ID=your-resource-server-client-id
-RESOURCE_SERVER_CLIENT_SECRET=your-resource-server-client-secret
+# Custom API Client Configuration (for Token Vault token exchange)
+# These credentials belong to Custom API client that can perform token exchanges
+CUSTOM_API_CLIENT_ID=your-custom-api-client-id
+CUSTOM_API_CLIENT_SECRET=your-custom-api-client-secret
 
 # OpenAI Configuration  
 OPENAI_API_KEY=your-openai-api-key
@@ -201,8 +179,8 @@ const auth0AI = new Auth0AI({
   auth0: {
     domain: process.env.AUTH0_DOMAIN!,
     // For token exchange with Token Vault, we want to provide the resource server client (linked client's) credentials
-    clientId: process.env.RESOURCE_SERVER_CLIENT_ID!, // Resource server client
-    clientSecret: process.env.RESOURCE_SERVER_CLIENT_SECRET!, // Resource server secret
+    clientId: process.env.CUSTOM_API_CLIENT_ID!, // Resource server client
+    clientSecret: process.env.CUSTOM_API_CLIENT_SECRET!, // Resource server secret
   }
 });
 
