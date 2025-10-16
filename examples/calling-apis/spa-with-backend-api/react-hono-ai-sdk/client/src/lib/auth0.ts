@@ -24,8 +24,11 @@ export const initAuth0 = async (): Promise<Auth0Client> => {
     authorizationParams: {
       redirect_uri: window.location.origin,
       audience: AUTH0_AUDIENCE,
-      scope: "openid profile email", // Only basic scopes - additional scopes are handled via interrupts
+      scope: "openid profile email offline_access", // Only basic scopes - additional scopes are handled via interrupts
     },
+    useRefreshTokens: true,
+    useMrrt: true,
+    useDpop: true,
   });
 
   return auth0Client;
