@@ -51,6 +51,7 @@ export function withInterruptions(
           scopes: interruption.scopes,
           requiredScopes: interruption.requiredScopes,
           authorizationParams: interruption.authorizationParams,
+          scopeDelimiter: interruption.scopeDelimiter,
           behavior: "reload"
         }),
       });

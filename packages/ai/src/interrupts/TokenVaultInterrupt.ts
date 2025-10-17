@@ -28,22 +28,33 @@ export class TokenVaultInterrupt extends Auth0Interrupt {
    */
   public readonly authorizationParams: Record<string, string>;
 
+  /**
+   * The delimiter to use for authorization requests to the third-party connection.
+   * Defaults to " ", but some providers expect commas (",").
+   */
+  public readonly scopeDelimiter: string;
+
   public behavior: "resume" | "reload";
 
   public static code = "TokenVaultError" as const;
 
-  constructor(message: string, params: {
-    connection: string;
-    scopes: string[];
-    requiredScopes: string[];
-    authorizationParams?: Record<string, string>;
-    behavior?: "resume" | "reload";
-  }) {
+  constructor(
+    message: string,
+    params: {
+      connection: string;
+      scopes: string[];
+      requiredScopes: string[];
+      authorizationParams?: Record<string, string>;
+      scopeDelimiter?: string;
+      behavior?: "resume" | "reload";
+    },
+  ) {
     super(message, TokenVaultInterrupt.code);
     this.connection = params.connection;
     this.scopes = params.scopes;
     this.requiredScopes = params.requiredScopes;
     this.authorizationParams = { ...(params.authorizationParams ?? {}) };
+    this.scopeDelimiter = params.scopeDelimiter || " ";
     this.behavior = params.behavior ?? "resume";
   }
 }

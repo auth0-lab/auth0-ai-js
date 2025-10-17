@@ -42,6 +42,7 @@ describe("interrupts", () => {
           "requiredScopes": [
             "email",
           ],
+          "scopeDelimiter": " ",
           "scopes": [
             "email",
           ],
@@ -86,6 +87,27 @@ describe("interrupts", () => {
       });
 
       expect(interrupt.authorizationParams).toEqual(authParams);
+    });
+
+    it("should create interrupt with default scope delimiter", () => {
+      const interrupt = new TokenVaultInterrupt("test message", {
+        connection: "custom",
+        scopes: ["read:profile"],
+        requiredScopes: ["read:profile", "write:profile"],
+      });
+
+      expect(interrupt.scopeDelimiter).toEqual(" ");
+    });
+
+    it("should create interrupt with custom scopeDelimiter", () => {
+      const interrupt = new TokenVaultInterrupt("test message", {
+        connection: "custom",
+        scopes: ["read:profile"],
+        requiredScopes: ["read:profile", "write:profile"],
+        scopeDelimiter: ",",
+      });
+
+      expect(interrupt.scopeDelimiter).toEqual(",");
     });
   });
 

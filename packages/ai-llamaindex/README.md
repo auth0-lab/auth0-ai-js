@@ -73,6 +73,8 @@ export const withGoogleAccess = auth0AI.withTokenVault({
   connection: 'google-oauth2',
   // The scopes to request.
   scopes: ["openid", "https://www.googleapis.com/auth/calendar.freebusy"],
+  // The delimiter to use for authorization requests to the third-party connection (optional, default is " ").
+  scopeDelimiter: " ",
   // Additional authorization params needed to connect an account (optional).
   authorizationParams: {
     access_type: "offline"

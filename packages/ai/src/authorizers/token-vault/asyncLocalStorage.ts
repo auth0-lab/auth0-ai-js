@@ -34,6 +34,12 @@ export type AsyncStorageValue = {
    * Additional authorization parameters to be passed during token acquisition.
    */
   authorizationParams?: Record<string, string>;
+
+  /**
+   * The delimiter to use for authorization requests to the third-party connection.
+   * Defaults to " ", but some providers expect commas (",").
+   */
+  scopeDelimiter?: string;
 };
 
 export const asyncLocalStorage = new AsyncLocalStorage<AsyncStorageValue>();

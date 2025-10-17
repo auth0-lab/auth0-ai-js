@@ -109,7 +109,7 @@ export class TokenVaultAuthorizerBase<ToolExecuteArgs extends any[]> {
       );
     }
 
-    const { scopes, connection, authorizationParams } = store;
+    const { scopes, connection, authorizationParams, scopeDelimiter } = store;
 
     if (!tokenResponse) {
       throw new TokenVaultInterrupt(
@@ -119,6 +119,7 @@ export class TokenVaultAuthorizerBase<ToolExecuteArgs extends any[]> {
           scopes,
           requiredScopes: scopes,
           authorizationParams,
+          scopeDelimiter,
         },
       );
     }
@@ -137,6 +138,7 @@ export class TokenVaultAuthorizerBase<ToolExecuteArgs extends any[]> {
           scopes,
           requiredScopes: [...currentScopes, ...scopes],
           authorizationParams,
+          scopeDelimiter,
         },
       );
     }
@@ -264,6 +266,7 @@ export class TokenVaultAuthorizerBase<ToolExecuteArgs extends any[]> {
         scopes: this.params.scopes,
         connection: this.params.connection,
         authorizationParams: this.params.authorizationParams,
+        scopeDelimiter: this.params.scopeDelimiter,
       };
 
       if (asyncLocalStorage.getStore()) {
@@ -300,6 +303,7 @@ export class TokenVaultAuthorizerBase<ToolExecuteArgs extends any[]> {
               scopes: asyncStore.scopes,
               requiredScopes: asyncStore.scopes,
               authorizationParams: asyncStore.authorizationParams,
+              scopeDelimiter: asyncStore.scopeDelimiter,
             });
             return this.handleAuthorizationInterrupts(interrupt);
           }
