@@ -155,7 +155,7 @@ describe("AsyncAuthorizer", () => {
 
     it("should return the result", () => {
       expect(result.name).toBe("AUTH0_AI_INTERRUPT");
-      expect(result.code).toBe("CIBA_AUTHORIZATION_REQUEST_EXPIRED");
+      expect(result.code).toBe("ASYNC_AUTHORIZATION_AUTHORIZATION_REQUEST_EXPIRED");
       expect(result.message).toBe("Authorization request expired");
       expect(result.request).toMatchObject({
         interval: 10,
