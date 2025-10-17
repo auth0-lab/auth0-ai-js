@@ -5,7 +5,7 @@ import { PromptUserContainer } from "../util/prompt-user-container";
 import type { TokenVaultAuthProps } from "./TokenVaultAuthProps";
 
 export function TokenVaultConsentRedirect({
-  interrupt: { connection, requiredScopes, authorizationParams },
+  interrupt: { connection, requiredScopes, authorizationParams, scopeDelimiter },
   connectWidget: { icon, title, description, action, containerClassName },
   auth: {
     connectPath = "/auth/connect",
@@ -24,7 +24,7 @@ export function TokenVaultConsentRedirect({
           const search = new URLSearchParams({
             connection,
             returnTo,
-            scope: requiredScopes.join(" "),
+            scope: requiredScopes.join(scopeDelimiter || " "),
             // Add all extra authorization parameters to the search params, they will be collected and submitted via the
             // authorization_params parameter of the connect account flow.
             ...authorizationParams,

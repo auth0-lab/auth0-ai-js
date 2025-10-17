@@ -8,7 +8,7 @@ import { PromptUserContainer } from "../util/prompt-user-container";
 import type { TokenVaultAuthProps } from "./TokenVaultAuthProps";
 
 export function TokenVaultConsentPopup({
-  interrupt: { connection, requiredScopes, authorizationParams, resume },
+  interrupt: { connection, requiredScopes, authorizationParams, scopeDelimiter, resume },
   connectWidget: { icon, title, description, action, containerClassName },
   auth: { connectPath = "/auth/connect", returnTo = "/close" } = {},
   onFinish,
@@ -46,7 +46,7 @@ export function TokenVaultConsentPopup({
     const search = new URLSearchParams({
       connection,
       returnTo,
-      scope: requiredScopes.join(" "),
+      scope: requiredScopes.join(scopeDelimiter || " "),
       // Add all extra authorization parameters to the search params, they will be collected and submitted via the
       // authorization_params parameter of the connect account flow.
       ...authorizationParams,
@@ -65,7 +65,7 @@ export function TokenVaultConsentPopup({
       setLoginPopup(popup);
       setIsLoading(true);
     }
-  }, [connection, requiredScopes, returnTo, authorizationParams, connectPath]);
+  }, [connection, requiredScopes, returnTo, authorizationParams, scopeDelimiter, connectPath]);
 
   if (isLoading) {
     return <WaitingMessage />;

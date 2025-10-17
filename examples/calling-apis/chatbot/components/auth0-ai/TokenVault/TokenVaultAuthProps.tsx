@@ -15,6 +15,7 @@ export type TokenVaultAuthProps = {
     connection: string;
     requiredScopes: string[];
     authorizationParams?: Record<string, string>;
+    scopeDelimiter?: string;
     resume?: () => void;
   };
   auth?: {
