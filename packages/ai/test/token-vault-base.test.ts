@@ -154,7 +154,7 @@ describe("TokenVaultAuthorizerBase", () => {
 
     it('should throw "Authorization required" error', async () => {
       expect(err.message).toMatchInlineSnapshot(
-        `"Authorization required to access the Token Vault: test-connection. Missing scopes: read:calendar"`
+        `"Authorization required to access the Token Vault: test-connection. Authorized scopes: read:profile, read:foobar. Missing scopes: read:calendar"`
       );
     });
 
