@@ -29,6 +29,11 @@ export type AsyncStorageValue = {
    * The scopes that the current access token has.
    */
   currentScopes?: string[];
+
+  /**
+   * Additional authorization parameters to be passed during token acquisition.
+   */
+  authorizationParams?: Record<string, string>;
 };
 
 export const asyncLocalStorage = new AsyncLocalStorage<AsyncStorageValue>();

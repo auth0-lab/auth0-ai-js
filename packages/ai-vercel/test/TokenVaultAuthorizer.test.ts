@@ -56,12 +56,11 @@ describe("TokenVaultAuthorizer", () => {
         //@ts-ignore
         "getAccessToken"
       ).mockImplementation(() => {
-        throw new TokenVaultInterrupt(
-          "Authorization required",
-          "test",
-          ["test"],
-          ["test"]
-        );
+        throw new TokenVaultInterrupt("Authorization required", {
+          connection: "test",
+          scopes: ["test"],
+          requiredScopes: ["test"],
+        });
       });
 
       try {

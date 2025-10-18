@@ -11,7 +11,10 @@ export const withGoogleCalendar = auth0AI.withTokenVault({
     return refreshToken;
   },
   connection: "google-oauth2",
-  scopes: ["https://www.googleapis.com/auth/calendar.freebusy"],
+  scopes: ["openid", "https://www.googleapis.com/auth/calendar.freebusy"],
+  authorizationParams: {
+    access_type: "offline"
+  },
 });
 
 export const withSlack = auth0AI.withTokenVault({
