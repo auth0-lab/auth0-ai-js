@@ -497,7 +497,7 @@ describe("AsyncAuthorizerBase", () => {
 
     it("should return the error", () => {
       expect(result.name).toEqual("AUTH0_AI_INTERRUPT");
-      expect(result.code).toEqual("CIBA_ACCESS_DENIED");
+      expect(result.code).toEqual("ASYNC_AUTHORIZATION_ACCESS_DENIED");
       expect(result.message).toEqual(
         "the user rejected the authorization request",
       );
@@ -576,7 +576,7 @@ describe("AsyncAuthorizerBase", () => {
 
     it("should return the error", () => {
       expect(result.name).toEqual("AUTH0_AI_INTERRUPT");
-      expect(result.code).toEqual("CIBA_AUTHORIZATION_REQUEST_EXPIRED");
+      expect(result.code).toEqual("ASYNC_AUTHORIZATION_AUTHORIZATION_REQUEST_EXPIRED");
       expect(result.message).toEqual("The authorization request has expired.");
     });
 

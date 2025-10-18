@@ -22,7 +22,7 @@ export class AsyncAuthorizationInterrupt extends Auth0Interrupt {
       Auth0Interrupt.isInterrupt(interrupt) &&
       typeof interrupt.code === "string" &&
       (this.code === interrupt.code ||
-        (!this.code && interrupt.code.startsWith("CIBA_")))
+        (!this.code && interrupt.code.startsWith("ASYNC_AUTHORIZATION_")))
     );
   }
 
@@ -38,7 +38,7 @@ export class AccessDeniedInterrupt
   extends AsyncAuthorizationInterrupt
   implements WithRequestData
 {
-  public static code: string = "CIBA_ACCESS_DENIED" as const;
+  public static code: string = "ASYNC_AUTHORIZATION_ACCESS_DENIED" as const;
   constructor(
     message: string,
     public readonly request: AsyncAuthorizationRequest
@@ -52,7 +52,7 @@ export class AccessDeniedInterrupt
  */
 export class UserDoesNotHavePushNotificationsInterrupt extends AsyncAuthorizationInterrupt {
   public static code: string =
-    "CIBA_USER_DOES_NOT_HAVE_PUSH_NOTIFICATIONS" as const;
+    "ASYNC_AUTHORIZATION_USER_DOES_NOT_HAVE_PUSH_NOTIFICATIONS" as const;
   constructor(message: string) {
     super(message, UserDoesNotHavePushNotificationsInterrupt.code);
   }
@@ -65,7 +65,7 @@ export class AuthorizationRequestExpiredInterrupt
   extends AsyncAuthorizationInterrupt
   implements WithRequestData
 {
-  public static code: string = "CIBA_AUTHORIZATION_REQUEST_EXPIRED" as const;
+  public static code: string = "ASYNC_AUTHORIZATION_AUTHORIZATION_REQUEST_EXPIRED" as const;
   constructor(
     message: string,
     public readonly request: AsyncAuthorizationRequest
@@ -82,7 +82,7 @@ export class AuthorizationPendingInterrupt
   extends AsyncAuthorizationInterrupt
   implements WithRequestData
 {
-  public static code: string = "CIBA_AUTHORIZATION_PENDING" as const;
+  public static code: string = "ASYNC_AUTHORIZATION_AUTHORIZATION_PENDING" as const;
   constructor(
     message: string,
     public readonly request: AsyncAuthorizationRequest
@@ -105,7 +105,7 @@ export class AuthorizationPollingInterrupt
   extends AsyncAuthorizationInterrupt
   implements WithRequestData
 {
-  public static code: string = "CIBA_AUTHORIZATION_POLLING_ERROR" as const;
+  public static code: string = "ASYNC_AUTHORIZATION_AUTHORIZATION_POLLING_ERROR" as const;
   constructor(
     message: string,
     public readonly request: AsyncAuthorizationRequest,
@@ -129,7 +129,7 @@ export class InvalidGrantInterrupt
   extends AsyncAuthorizationInterrupt
   implements WithRequestData
 {
-  public static code: string = "CIBA_INVALID_GRANT" as const;
+  public static code: string = "ASYNC_AUTHORIZATION_INVALID_GRANT" as const;
   constructor(
     message: string,
     public readonly request: AsyncAuthorizationRequest

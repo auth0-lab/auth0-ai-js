@@ -25,7 +25,7 @@ export class TokenVaultInterrupt extends Auth0Interrupt {
    */
   public readonly requiredScopes: string[];
 
-  public static code = "TokenVaultError" as const;
+  public static code = "TOKEN_VAULT_ERROR" as const;
 
   constructor(
     message: string,

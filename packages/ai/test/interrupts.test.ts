@@ -35,7 +35,7 @@ describe("interrupts", () => {
       expect(serialized).toMatchInlineSnapshot(`
         {
           "behavior": "resume",
-          "code": "TokenVaultError",
+          "code": "TOKEN_VAULT_ERROR",
           "connection": "google-oauth2",
           "message": "this is a message",
           "name": "AUTH0_AI_INTERRUPT",
@@ -82,7 +82,7 @@ describe("interrupts", () => {
     it("should contain the interrupt options", () => {
       expect(serialized).toMatchInlineSnapshot(`
         {
-          "code": "CIBA_AUTHORIZATION_REQUEST_EXPIRED",
+          "code": "ASYNC_AUTHORIZATION_AUTHORIZATION_REQUEST_EXPIRED",
           "message": "The request has expired",
           "name": "AUTH0_AI_INTERRUPT",
           "request": {
