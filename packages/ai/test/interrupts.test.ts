@@ -22,18 +22,18 @@ describe("interrupts", () => {
     let interrupt: TokenVaultInterrupt;
     let serialized: any;
     beforeEach(() => {
-      interrupt = new TokenVaultInterrupt(
-        "this is a message",
-        "google-oauth2",
-        ["email"],
-        ["email"]
-      );
+      interrupt = new TokenVaultInterrupt("this is a message", {
+        connection: "google-oauth2",
+        scopes: ["email"],
+        requiredScopes: ["email"],
+      });
       serialized = interrupt.toJSON();
     });
 
     it("should contain the interrupt options", () => {
       expect(serialized).toMatchInlineSnapshot(`
         {
+          "authorizationParams": {},
           "behavior": "resume",
           "code": "TOKEN_VAULT_ERROR",
           "connection": "google-oauth2",
@@ -60,6 +60,33 @@ describe("interrupts", () => {
     it("should properly assert is an auth0interrupt", () => {
       expect(Auth0Interrupt.isInterrupt(interrupt)).toBe(true);
     });
+
+    it("should create interrupt with default empty authorizationParams", () => {
+      const interrupt = new TokenVaultInterrupt("test message", {
+        connection: "custom",
+        scopes: ["read:profile"],
+        requiredScopes: ["read:profile", "write:profile"],
+      });
+
+      expect(interrupt.authorizationParams).toEqual({});
+    });
+
+    it("should create interrupt with custom authorizationParams", () => {
+      const authParams = {
+        audience: "https://api.example.com",
+        prompt: "consent",
+      };
+
+      const interrupt = new TokenVaultInterrupt("test message", {
+        connection: "custom",
+        scopes: ["read:profile"],
+        requiredScopes: ["read:profile", "write:profile"],
+        authorizationParams: authParams,
+        behavior: "resume",
+      });
+
+      expect(interrupt.authorizationParams).toEqual(authParams);
+    });
   });
 
   describe("AsyncAuthorizationInterrupt", () => {
@@ -74,7 +101,7 @@ describe("interrupts", () => {
           requestedAt: 123,
           expiresIn: 123,
           interval: 123,
-        }
+        },
       );
       serialized = interrupt.toJSON();
     });
@@ -105,13 +132,13 @@ describe("interrupts", () => {
 
     it("should properly assert the serialized version", () => {
       expect(AuthorizationRequestExpiredInterrupt.isInterrupt(serialized)).toBe(
-        true
+        true,
       );
     });
 
     it("should properly assert the instance", () => {
       expect(AuthorizationRequestExpiredInterrupt.isInterrupt(interrupt)).toBe(
-        true
+        true,
       );
     });
 
