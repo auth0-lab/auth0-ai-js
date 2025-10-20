@@ -81,8 +81,8 @@ describe("interrupts", () => {
         connection: "custom",
         scopes: ["read:profile"],
         requiredScopes: ["read:profile", "write:profile"],
-        behavior: "resume",
         authorizationParams: authParams,
+        behavior: "resume",
       });
 
       expect(interrupt.authorizationParams).toEqual(authParams);

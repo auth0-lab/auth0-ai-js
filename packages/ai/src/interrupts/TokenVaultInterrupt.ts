@@ -28,7 +28,7 @@ export class TokenVaultInterrupt extends Auth0Interrupt {
    */
   public readonly authorizationParams: Record<string, string>;
 
-  public behavior: "resume" | "reload";
+  public readonly behavior: "resume" | "reload";
 
   public static code = "TOKEN_VAULT_ERROR" as const;
 
