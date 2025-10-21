@@ -71,9 +71,58 @@ You will need the following prerequisites to run this app:
    - In your Auth0 Dashboard, on the configuration page of your API, click the "Add Application" button in the header and create the Custom API Client
    - Ensure that the `Token Vault` grant type is enabled under the Advanced Settings
    - Note down the "Client ID" and "Client Secret" of this newly created Custom API Client
-   - This client enables Token Vault to exchange an access token for an external API access token (e.g., Google Calendar API)
+   - Now your Custom API will be able to use Token Vault, to exchange an access token for an external API access token (e.g., Google Calendar API)
 
-4. Configure a Social Connection for Google in Auth0
+4. Define a Multi-Resource Refresh Token policy for the Custom API Client
+   - When a call to Token Vault fails due to the user not having a connected account (or lacking some permissions), this demo triggers a Connect Account flow for this user. This flow leverages Auth0 [My Account API](https://auth0.com/docs/manage-users/my-account-api), and as such, your application will need to have access to it in order to enable this flow.
+   - In order to grant access from your SPA Application to the My Account API, you will need to leverage the [Multi-Resource Refresh Token](https://auth0.com/docs/secure/tokens/refresh-tokens/multi-resource-refresh-token) feature, where the refresh tokens delivered to your SPA will also allow it to obtain an access token to call My Account API.
+   - This will require defining a new [refresh token policy](https://auth0.com/docs/secure/tokens/refresh-tokens/multi-resource-refresh-token/configure-and-implement-multi-resource-refresh-token) for your SPA client where the `audience` is `https://<your auth0 domain>/me/` and the `scope` should include at least the `"create:me:connected_accounts"` scope.
+   - The configuration page explains how to achieve this using various tools, but here is an example showing how to do it with `curl`:
+
+```shell
+curl --request PATCH \
+  --url 'https://{yourDomain}/api/v2/clients/{yourClientId}' \
+  --header 'authorization: Bearer {yourMgmtApiAccessToken}' \
+  --header 'content-type: application/json' \
+  --data '{
+  "refresh_token": {
+    "expiration_type": "expiring",
+    "rotation_type": "rotating",
+    "token_lifetime": 31557600,
+    "idle_token_lifetime": 2592000,
+    "leeway": 0,
+    "infinite_token_lifetime": false,
+    "infinite_idle_token_lifetime": false,
+    "policies": [
+      {
+        "audience": "https://{yourDomain}/me/",
+        "scope": [
+          "create:me:connected_accounts"
+        ]
+      }
+    ]
+  }
+}'
+```
+
+5. Grant access to My Account API from your application
+   - In order to grant access, use the [Application Access to APIs](https://auth0.com/docs/get-started/applications/application-access-to-apis-client-grants) feature, by creating a client grant for user flows.
+
+```shell
+curl --location 'https://{yourDomain}/api/v2/client-grants' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer {YOUR_MANAGEMENT_API_TOKEN}' \
+--data '{
+    "client_id": "{CLIENT_ID}",
+    "audience": "https://{yourDomain}/me/",
+    "scope": [
+        "create:me:connected_accounts"
+    ],
+    "subject_type": "user"
+}'
+```
+
+6. Configure a Social Connection for Google in Auth0
    - Make sure to enable all `Calendar` scopes from the Permissions options
    - Make sure to enable the "Use for Connected Accounts with Token Vault" toggle
    - Make sure to enable the connection for your SPA Application created in Step 1 and the Custom API Client created in Step 3
