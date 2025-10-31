@@ -64,7 +64,11 @@ const withGoogleAccess = auth0AI.withTokenVault({
   // The connection name:
   connection: "google-oauth2",
   // The scopes to request:
-  scopes: ["https://www.googleapis.com/auth/calendar.freebusy"],
+  scopes: ["openid", "https://www.googleapis.com/auth/calendar.freebusy"],
+  // Additional authorization params needed to connect an account (optional).
+  authorizationParams: {
+    access_type: "offline"
+  },
 });
 ```
 
@@ -74,7 +78,7 @@ Then use the `withGoogleAccess` to wrap the tool and use `getAccessTokenFromToke
 import { tool } from "@langchain/core/tools";
 import { getAccessTokenFromTokenVault } from "@auth0/ai-langchain";
 import { TokenVaultError } from "@auth0/ai/interrupts";
-import { addHours } from "date-fns";
+import { addDays } from "date-fns";
 
 export const checkCalendarTool = withGoogleAccess(
   tool(
@@ -82,7 +86,7 @@ export const checkCalendarTool = withGoogleAccess(
       const accessToken = getAccessTokenFromTokenVault();
       const body = JSON.stringify({
         timeMin: date,
-        timeMax: addHours(date, 1),
+        timeMax: addDays(date, 1),
         timeZone: "UTC",
         items: [{ id: "primary" }],
       });
@@ -135,6 +139,9 @@ const auth0AI = new Auth0AI();
 export const withGmailCommunity = auth0AI.withTokenVault({
   connection: "google-oauth2",
   scopes: ["https://mail.google.com/"],
+  authorizationParams: {
+    access_type: "offline"
+  },
 });
 
 ```
