@@ -60,23 +60,28 @@ You will need the following prerequisites to run this app:
      - **Allowed Web Origins**: `http://localhost:5173`
      - Make sure to Allow Refresh Token in Grant Types under Advanced Settings and that "Allow Refresh Token Rotation" is enabled
 
-2. Create an Auth0 API:
+2. Create an Auth0 API that represents your Hono API back-end:
    - In your Auth0 Dashboard, go to APIs
    - Create a new API with an identifier (audience)
    - Make sure to "Allow Offline Access" in Access Settings 
    - Note down the API identifier for your environment variables
 
 3. Create a Custom API Client (for Token Vault Token Exchange):
-   - This is a special client that allows your API to perform token exchanges
+   - This is a special application that allows your API to perform token exchanges
    - In your Auth0 Dashboard, on the configuration page of your API, click the "Add Application" button in the header and create the Custom API Client
    - Ensure that the `Token Vault` grant type is enabled under the Advanced Settings
    - Note down the "Client ID" and "Client Secret" of this newly created Custom API Client
    - Now your Custom API will be able to use Token Vault, to exchange an access token for an external API access token (e.g., Google Calendar API)
 
-4. Define a Multi-Resource Refresh Token policy for the Custom API Client
-   - When a call to Token Vault fails due to the user not having a connected account (or lacking some permissions), this demo triggers a Connect Account flow for this user. This flow leverages Auth0 [My Account API](https://auth0.com/docs/manage-users/my-account-api), and as such, your application will need to have access to it in order to enable this flow.
-   - In order to grant access from your SPA Application to the My Account API, you will need to leverage the [Multi-Resource Refresh Token](https://auth0.com/docs/secure/tokens/refresh-tokens/multi-resource-refresh-token) feature, where the refresh tokens delivered to your SPA will also allow it to obtain an access token to call My Account API.
-   - This will require defining a new [refresh token policy](https://auth0.com/docs/secure/tokens/refresh-tokens/multi-resource-refresh-token/configure-and-implement-multi-resource-refresh-token) for your SPA client where the `audience` is `https://<your auth0 domain>/me/` and the `scope` should include at least the `"create:me:connected_accounts"` scope.
+4. Grant access to My Account API from your application
+   - When a call to Token Vault fails due to the user not having a connected account (or lacking some permissions), this demo triggers a Connect Account flow for this user. This flow leverages Auth0's [My Account API](https://auth0.com/docs/manage-users/my-account-api), and as such, your application will need to have access to it in order to enable this flow.
+   - In order to grant access, use the [Application Access to APIs](https://auth0.com/docs/get-started/applications/application-access-to-apis-client-grants) feature, by creating a client grant for user flows.
+   - In your Auth0 Dashboard, go to APIs, and open the Settings for "Auth0 My Account API".
+   - On the Applications tab, authorize your application, ensuring that the `create:me:connected_accounts` permission at least is selected.
+
+5. Define a Multi-Resource Refresh Token policy for your SPA Application
+   - After your SPA Application has been granted access to the My Account API, you will also need to leverage the [Multi-Resource Refresh Token](https://auth0.com/docs/secure/tokens/refresh-tokens/multi-resource-refresh-token) feature, where the refresh token delivered to your SPA will allow it to obtain an access token to call My Account API.
+   - This will require defining a new [refresh token policy](https://auth0.com/docs/secure/tokens/refresh-tokens/multi-resource-refresh-token/configure-and-implement-multi-resource-refresh-token) for your SPA Application where the `audience` is `https://<your auth0 domain>/me/` and the `scope` should include at least the `"create:me:connected_accounts"` scope.
    - The configuration page explains how to achieve this using various tools, but here is an example showing how to do it with `curl`:
 
 ```shell
@@ -105,28 +110,11 @@ curl --request PATCH \
 }'
 ```
 
-5. Grant access to My Account API from your application
-   - In order to grant access, use the [Application Access to APIs](https://auth0.com/docs/get-started/applications/application-access-to-apis-client-grants) feature, by creating a client grant for user flows.
-
-```shell
-curl --location 'https://{yourDomain}/api/v2/client-grants' \
---header 'Content-Type: application/json' \
---header 'Authorization: Bearer {YOUR_MANAGEMENT_API_TOKEN}' \
---data '{
-    "client_id": "{CLIENT_ID}",
-    "audience": "https://{yourDomain}/me/",
-    "scope": [
-        "create:me:connected_accounts"
-    ],
-    "subject_type": "user"
-}'
-```
-
 6. Configure a Social Connection for Google in Auth0
-   - Make sure to enable all `Calendar` scopes from the Permissions options
    - Make sure to enable the "Use for Connected Accounts with Token Vault" toggle
-   - Make sure to enable the connection for your SPA Application created in Step 1 and the Custom API Client created in Step 3
-   - Test the connection in Auth0 "Try Connection" screen and make sure connection is working & configured correctly
+   - Make sure to enable `Offline Access` and all `Calendar` scopes from the Permissions options
+   - On the Applications tab, make sure to enable the connection for your SPA Application created in Step 1
+   - Test the connection in Auth0 "Try Connection" screen and make sure the connection is working & configured correctly
 
 ### 2. Environment Variables
 
@@ -180,7 +168,7 @@ npm run dev
 or run them individually with:
 ```bash
 npm run dev:client    # Run the Vite dev server for React
-npm run dev:server    # Run the Hono backend
+npm run dev:server    # Run the Hono API backend
 ```
 
 The client will be available at `http://localhost:5173` and will communicate with the server at `http://localhost:3000`.
