@@ -10,7 +10,7 @@ The flow works by having the client send its access token to a First Party API, 
 
 ## Features
 
-The following example app demonstrates using a SPA chatbot application, a backend API (and a linked Resource Server Client), and Token Vault to access a Third Party API (Google Calendar API).
+The following example app demonstrates using a SPA chatbot application, a backend API (and a linked Custom API Client), and Token Vault to access a Third Party API (Google Calendar API).
 
 This template leverages a modern stack for building a React SPA application with a Hono API.
 
@@ -153,8 +153,8 @@ AUTH0_AUDIENCE=your-api-identifier
 
 # Custom API Client Configuration (for Token Vault token exchange)
 # These credentials belong to Custom API client that can perform token exchanges
-CUSTOM_API_CLIENT_ID=your-custom-api-client-id
-CUSTOM_API_CLIENT_SECRET=your-custom-api-client-secret
+AUTH0_CUSTOM_API_CLIENT_ID=your-custom-api-client-id
+AUTH0_CUSTOM_API_CLIENT_SECRET=your-custom-api-client-secret
 
 # OpenAI Configuration  
 OPENAI_API_KEY=your-openai-api-key
@@ -218,7 +218,7 @@ The client will be available at `http://localhost:5173` and will communicate wit
 ## SDK Notes
 
 The core `@auth0/ai` package now supports:
-- **Resource Server Client Credentials**: Separate client credentials for token exchange operations
+- **Custom API Client Credentials**: Separate client credentials for token exchange operations
 - **Access Token Support**: Direct access token exchange instead of requiring refresh tokens
 
 The example uses the enhanced SDK pattern with dedicated access token support:
@@ -227,9 +227,9 @@ The example uses the enhanced SDK pattern with dedicated access token support:
 const auth0AI = new Auth0AI({
   auth0: {
     domain: process.env.AUTH0_DOMAIN!,
-    // For token exchange with Token Vault, we want to provide the resource server client (linked client's) credentials
-    clientId: process.env.CUSTOM_API_CLIENT_ID!, // Resource server client
-    clientSecret: process.env.CUSTOM_API_CLIENT_SECRET!, // Resource server secret
+    // For token exchange with Token Vault, we want to provide the Custom API Client credentials
+    clientId: process.env.AUTH0_CUSTOM_API_CLIENT_ID!, // Custom API Client ID for token exchange
+    clientSecret: process.env.AUTH0_CUSTOM_API_CLIENT_SECRET!, // Custom API Client secret
   }
 });
 
