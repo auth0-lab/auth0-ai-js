@@ -12,18 +12,19 @@
     "@ai-sdk/openai": "^3.0.0",
     "@auth0/ai": "*",
     "@auth0/ai-vercel": "*",
+    "@auth0/auth0-ai-js-examples-react-hono-ai-sdk-shared": "*",
     "@hono/node-server": "^1.13.7",
     "ai": "^6.0.0",
     "dotenv": "^16.4.5",
     "googleapis": "^153.0.0",
     "hono": "^4.7.11",
     "jose": "^5.2.0",
-    "@auth0/auth0-ai-js-examples-react-hono-ai-sdk-shared": "*",
+    "turbo": "^2.9.14",
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@types/node": "^22.15.31",
-    "tsx": "^4.7.1",
+    "@types/node": "^20.19.41",
+    "tsx": "^4.22.3",
     "typescript": "^5.7.3"
   }
 }

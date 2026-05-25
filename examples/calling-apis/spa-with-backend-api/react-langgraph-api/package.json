@@ -31,8 +31,8 @@
     "eslint-plugin-no-instanceof": "^1.0.1",
     "eslint-plugin-prettier": "^5.5.4",
     "prettier": "^3.6.2",
-    "tsx": "^4.20.6",
-    "turbo": "latest",
+    "tsx": "^4.22.3",
+    "turbo": "^2.9.14",
     "typescript": "^5"
   },
   "packageManager": "npm@11.2.1"
