@@ -43,7 +43,7 @@
     "eslint-plugin-prettier": "^5.2.3",
     "globals": "^15.14.0",
     "prettier": "^3.3.3",
-    "tsx": "^4.19.1",
+    "tsx": "^4.22.4",
     "turbo": "latest",
     "typescript": "^5"
   }
