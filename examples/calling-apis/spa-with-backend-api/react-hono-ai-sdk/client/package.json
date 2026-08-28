@@ -31,7 +31,8 @@
     "remark-gfm": "^4.0.1",
     "remark-math": "^6.0.0",
     "tailwind-merge": "^3.3.1",
-    "tailwindcss": "^4.1.10"
+    "tailwindcss": "^4.1.10",
+    "turbo": "^2.9.16"
   },
   "devDependencies": {
     "@eslint/js": "^9.28.0",
