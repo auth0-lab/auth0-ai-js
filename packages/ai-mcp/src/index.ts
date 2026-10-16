@@ -14,7 +14,7 @@ export type {
   ServiceTokenResult,
 } from './types.js';
 export { buildPrincipal } from './principal.js';
-export { createMcpClient } from './client.js';
+export { createMcpClient, ForeignCallerError } from './client.js';
 export type { McpClient, VerifiedCaller } from './client.js';
 export {
   runWithRequestContext,

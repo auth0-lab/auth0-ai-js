@@ -1,8 +1,15 @@
 import { ApiClient, InvalidConfigurationError } from '@auth0/auth0-api-js';
-import type { IndexedTokenStore, TokenStore, VerifiedToken, VerifyAccessTokenOptions } from '@auth0/auth0-api-js';
+import type {
+  IndexedTokenStore,
+  OnBehalfOfTokenResult,
+  TokenStore,
+  VerifiedToken,
+  VerifyAccessTokenOptions,
+} from '@auth0/auth0-api-js';
 import { UnauthenticatedError } from './errors.js';
 import { buildPrincipal } from './principal.js';
 import { createRequestScopedClient } from './request-scoped-client.js';
+import { SingleFlight } from './single-flight.js';
 import type { McpClientOptions, Principal, RequestScopedMcpClient } from './types.js';
 
 /**
@@ -19,6 +26,22 @@ import type { McpClientOptions, Principal, RequestScopedMcpClient } from './type
 export interface VerifiedCaller {
   /** The caller's identity. */
   readonly principal: Principal;
+}
+
+/**
+ * Thrown by {@link McpClient.withToken} when the value passed in was not produced by this
+ * client's {@link McpClient.verifyAccessToken}.
+ *
+ * This is a server programming error (a wrong, copied or hand-built handle), not a problem
+ * with the caller's credentials. It deliberately does not extend the core `AuthError`, so a
+ * transport maps it to an internal server error and never to a 401 challenge. Its message
+ * is fixed and generic.
+ */
+export class ForeignCallerError extends Error {
+  constructor() {
+    super('Caller handle was not issued by this client.');
+    this.name = 'ForeignCallerError';
+  }
 }
 
 /** Verifies incoming access tokens and creates clients bound to the verified caller. */
@@ -40,8 +63,9 @@ export interface McpClient {
   /**
    * Creates a client bound to a caller returned by this client's
    * {@link McpClient.verifyAccessToken}.
-   * @throws {UnauthenticatedError} When `caller` was not produced by this client, or
-   * when the caller's token has expired.
+   * @throws {ForeignCallerError} When `caller` was not produced by this client. This is a
+   * programming error and is not an authentication failure.
+   * @throws {UnauthenticatedError} When the caller's token has expired.
    */
   withToken(caller: VerifiedCaller): RequestScopedMcpClient;
 }
@@ -101,6 +125,14 @@ export function createMcpClient(options: McpClientOptions): McpClient {
     });
 
   const tokenStore = options.tokenStore;
+  // One per client: request-scoped clients of this client share concurrent exchanges.
+  const exchanges = new SingleFlight<OnBehalfOfTokenResult>();
+  const exchangeIdentity = {
+    tenant: options.domain,
+    clientId: options.clientId,
+    audience: options.audience,
+    layout: options.scopeMatching === 'non_strict' ? ('index' as const) : ('strict' as const),
+  };
   // Maps each handle this client issued to the token the core client verified. Without a
   // store the core client only compares token strings and never re-verifies, so a handle
   // this client did not issue must never reach it. The core claims object is stored as
@@ -124,7 +156,7 @@ export function createMcpClient(options: McpClientOptions): McpClient {
     withToken(caller) {
       const verified = typeof caller === 'object' && caller !== null ? issued.get(caller) : undefined;
       if (verified === undefined) {
-        throw new UnauthenticatedError('Caller was not verified by this client.');
+        throw new ForeignCallerError();
       }
       if (caller.principal.expiresAt <= Math.floor(Date.now() / 1000)) {
         throw new UnauthenticatedError('Access token has expired.');
@@ -134,6 +166,8 @@ export function createMcpClient(options: McpClientOptions): McpClient {
         tokenStore,
         principal: caller.principal,
         verified,
+        exchanges,
+        exchangeIdentity,
       });
     },
   };

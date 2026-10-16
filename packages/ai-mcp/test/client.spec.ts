@@ -8,11 +8,12 @@ import {
   InvalidConfigurationError,
   MissingClientAuthError,
   MissingOrganizationError,
+  AuthError,
   OrganizationNotAllowedError,
   VerifyAccessTokenError,
 } from '@auth0/auth0-api-js';
 import type { CachedToken, IndexedTokenStore, TokenIndexMember } from '@auth0/auth0-api-js';
-import { createMcpClient } from '../src/client.js';
+import { ForeignCallerError, createMcpClient } from '../src/client.js';
 import type { McpClient } from '../src/client.js';
 import { UnauthenticatedError } from '../src/errors.js';
 import { createAuth0Handlers, createTestKey, mintAccessToken } from './support/index.js';
@@ -245,19 +246,36 @@ describe('verifyAccessToken', () => {
 });
 
 describe('withToken', () => {
-  it('rejects values that this client did not produce', async () => {
+  it('rejects values that this client did not produce with a programming error, not a 401', async () => {
     useTenant();
     const client = makeClient({ tokenStore: new PlainStore() });
     const other = makeClient();
     const real = await client.verifyAccessToken({ accessToken: await token() });
 
-    expect(() => client.withToken({ principal: real.principal })).toThrow(UnauthenticatedError);
-    expect(() => client.withToken({ ...real })).toThrow(UnauthenticatedError);
-    expect(() => client.withToken(JSON.parse(JSON.stringify(real)))).toThrow(UnauthenticatedError);
-    expect(() => client.withToken(Object.create(real))).toThrow(UnauthenticatedError);
-    expect(() => other.withToken(real)).toThrow(UnauthenticatedError);
-    expect(() => client.withToken(null as never)).toThrow(UnauthenticatedError);
-    expect(() => client.withToken(undefined as never)).toThrow(UnauthenticatedError);
+    const foreign: Array<[string, () => unknown]> = [
+      ['hand-built', () => client.withToken({ principal: real.principal })],
+      ['spread copy', () => client.withToken({ ...real })],
+      ['serialized copy', () => client.withToken(JSON.parse(JSON.stringify(real)))],
+      ['prototype descendant', () => client.withToken(Object.create(real))],
+      ['other client', () => other.withToken(real)],
+      ['null', () => client.withToken(null as never)],
+      ['undefined', () => client.withToken(undefined as never)],
+    ];
+    for (const [, call] of foreign) {
+      const err = (() => {
+        try {
+          call();
+        } catch (e) {
+          return e;
+        }
+        return undefined;
+      })();
+      expect(err).toBeInstanceOf(ForeignCallerError);
+      expect(err).not.toBeInstanceOf(AuthError);
+      expect(err).not.toBeInstanceOf(UnauthenticatedError);
+      expect((err as Error).message).toBe('Caller handle was not issued by this client.');
+      expect((err as { statusCode?: number }).statusCode).toBeUndefined();
+    }
     expect(() => client.withToken(real)).not.toThrow();
   });
 
@@ -268,7 +286,18 @@ describe('withToken', () => {
     const now = Date.now();
     const spy = vi.spyOn(Date, 'now').mockReturnValue(now + 2 * 3600 * 1000);
     try {
-      expect(() => client.withToken(caller)).toThrow(UnauthenticatedError);
+      const err = (() => {
+        try {
+          client.withToken(caller);
+        } catch (e) {
+          return e;
+        }
+        return undefined;
+      })();
+      expect(err).toBeInstanceOf(UnauthenticatedError);
+      expect(err).not.toBeInstanceOf(ForeignCallerError);
+      expect((err as UnauthenticatedError).statusCode).toBe(401);
+      expect((err as UnauthenticatedError).code).toBe('invalid_token');
     } finally {
       spy.mockRestore();
     }
