@@ -1,6 +1,7 @@
 {
   "name": "@auth0/ai-mcp",
   "version": "0.0.0",
+  "private": true,
   "description": "Auth0 token delegation and request authentication for Model Context Protocol servers",
   "repository": {
     "type": "git",
