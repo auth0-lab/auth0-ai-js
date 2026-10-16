@@ -102,7 +102,14 @@ What this gives you:
 - `list_reports` runs only for callers whose token carries `tool:list_reports`. Other callers get a tool result with `isError: true`.
 - The token exchange always acts for the caller of the current request.
 
-`createNodeMcpHandler` mounts on `http.createServer` and on Express with `app.all('/mcp', handler)`. Mount it before any body-parsing middleware. For other runtimes use `createMcpSdkHandler`, which takes a standard `Request` and returns a `Response`. For a different MCP stack use [`createMcpHandler`](./docs/Handler.md).
+`createNodeMcpHandler` mounts on `http.createServer` as shown above. On Express, route both the MCP path and the protected resource metadata path to the handler, or MCP clients cannot discover your authorization server:
+
+```text
+app.all('/mcp', handler);
+app.get('/.well-known/oauth-protected-resource/mcp', handler);
+```
+
+The metadata path is `/.well-known/oauth-protected-resource` followed by the path of `resource`. Set `metadata.path` to serve it elsewhere. Mount the handler before any body-parsing middleware. For other runtimes use `createMcpSdkHandler`, which takes a standard `Request` and returns a `Response`. For a different MCP stack use [`createMcpHandler`](./docs/Handler.md).
 
 ## Documentation
 

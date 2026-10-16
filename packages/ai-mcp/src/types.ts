@@ -94,6 +94,10 @@ export type ServiceTokenResult = Awaited<ReturnType<ApiClient['getAccessTokenFor
  *
  * The verified access token is closed over by the implementation and is never
  * exposed through this interface, so tool code cannot forward or log it by accident.
+ * On the MCP SDK adapter `extra.authInfo.token` is intentionally an empty string, so tools
+ * call downstream APIs through this client. The SDK still exposes raw request headers,
+ * including Authorization, through `extra.requestInfo.headers`; tool code must not log or
+ * forward them.
  */
 export interface RequestScopedMcpClient {
   /** Exchanges the caller's token for a token to a downstream API. */

@@ -85,12 +85,17 @@ Failures that happen before your handler runs use a generic JSON body (`error` a
 | Server requires a DPoP nonce | 401 | `use_dpop_nonce` |
 | Token lacks a scope in `requiredScopes` | 403 | `insufficient_scope`, with `scope` listing the missing scopes |
 | Your handler throws `UnauthenticatedError` | 401 | `invalid_token` |
-| Your handler throws `InsufficientScopeError` or `DownscopedTokenError` | 403 | `insufficient_scope` |
+| A custom `createMcpHandler` handler throws `InsufficientScopeError` or `DownscopedTokenError` | 403 | `insufficient_scope` |
 | Anything else | 500 | no challenge, generic body |
 
 A missing credential gets a challenge without an `error` value, because RFC 6750 section 3.1 reserves error values for requests that did carry authentication. The challenge always advertises the schemes the DPoP mode accepts and the `resource_metadata` URL.
 
-Every path other than the metadata path goes through authentication. The handler does not route, so mount it only on the path that serves MCP.
+Every path other than the metadata path goes through authentication. The handler does not route, so mount it only on the path that serves MCP, and also on the metadata path. The metadata path is `/.well-known/oauth-protected-resource` followed by the path of `resource` (for `https://mcp.example.com/mcp` that is `/.well-known/oauth-protected-resource/mcp`), unless you set `metadata.path`. A framework that routes by path, such as Express, needs both routes or discovery fails:
+
+```text
+app.all('/mcp', handler);
+app.get('/.well-known/oauth-protected-resource/mcp', handler);
+```
 
 ### Proxies
 
@@ -135,6 +140,10 @@ export const handle = createMcpSdkHandler({
 ```
 
 The verified caller reaches your tools in two ways: as `extra.authInfo` in every tool callback, which is the SDK's own mechanism, and through the request context, so `getCallerMcpClient()`, `getCallerPrincipal()` and `withRequiredScopes()` work inside tools. `authInfo.clientId` is an empty string when the token carries neither `client_id` nor `azp`.
+
+The verified caller reaches your tools in the ways above, but the raw access token does not: `extra.authInfo.token` is intentionally an empty string. Call downstream APIs through the request-scoped client (`getCallerMcpClient()`), never with a token you read yourself. The MCP SDK still exposes the raw request headers, including `Authorization`, to tools through `extra.requestInfo.headers`, so tool code must not log or forward headers.
+
+A downscoped token exchange inside a tool is not an HTTP failure on this adapter. The SDK turns the error into a tool result with `isError: true` and a generic message, and the response stays HTTP 200. The 403 `insufficient_scope` response applies only when the error escapes a custom `createMcpHandler` handler, as in the table above. A request to the MCP endpoint with any method other than `POST` gets a 405 with `Allow: POST`.
 
 `createServer` runs once per request, and the adapter closes the server when the request ends. Register tools inside it and keep expensive setup outside of it.
 

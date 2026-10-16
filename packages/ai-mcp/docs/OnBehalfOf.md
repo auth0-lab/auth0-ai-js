@@ -47,7 +47,7 @@ Use `grantedScopes`, not `scope`, to decide what a token covers. An empty `scope
 
 ## Narrowed grants
 
-Auth0 can grant fewer scopes than you asked for. When you request scopes and the grant does not include all of them, `getTokenOnBehalfOf` throws `DownscopedTokenError`, so a tool never runs with less authority than it asked for. The error carries no scope data.
+Auth0 can grant fewer scopes than you asked for. When you request scopes and the grant does not include all of them, `getTokenOnBehalfOf` throws `DownscopedTokenError`, so a tool never runs with less authority than it asked for. The error carries no scope data. On `createMcpSdkHandler` and `createNodeMcpHandler`, the MCP SDK turns the error into a sanitized tool result with `isError: true` and the response stays HTTP 200. A 403 `insufficient_scope` is sent only when the error escapes a custom `createMcpHandler` handler.
 
 The narrower token is still cached under the scopes it was actually granted. A later, narrower request can reuse it. See [Token caching](./TokenCaching.md).
 
@@ -97,6 +97,6 @@ export async function readConfig(): Promise<string> {
 }
 ```
 
-The result is the core `TokenSet` (`accessToken`, `expiresAt`, `scope`, `tokenType`) plus `grantedScopes`. When the server returned no `scope` field, `grantedScopes` holds the normalized requested scopes. As with the exchange, requesting scopes that the grant does not include throws `DownscopedTokenError`.
+The result is the core `TokenSet` (`accessToken`, `expiresAt`, `scope`, `tokenType`) plus `grantedScopes`. When the server returned no `scope` field, `grantedScopes` holds the normalized requested scopes. A client credentials grant that is narrower than requested is a server-side configuration failure, because the scopes belong to the server's own client and the caller cannot fix them. It surfaces as a generic 500 through `onError`, with the downscope detail as the error's `cause`, and not as a 403.
 
 This package does not cache client credentials tokens.

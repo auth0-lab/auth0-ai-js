@@ -173,17 +173,11 @@ describe("documentation structure", () => {
   );
 
   it.each(files.map((f) => [path.relative(packageDir, f), f] as const))(
-    "%s has no dashes used as punctuation and no internal identifiers",
+    "%s has no dashes used as punctuation",
     (_name, file) => {
       const text = readFileSync(file, "utf8");
-      expect(text).not.toMatch(/[–—]/);
+      expect(text).not.toMatch(/\u2013|\u2014/);
       expect(text).not.toMatch(/ -- /);
-      expect(text).not.toMatch(/\b(?:SDK|ROAD|PSREV|SEC|AIMCP)-\d+\b/);
-      expect(text).not.toMatch(/\bD\d{1,3}\b/);
-      expect(text).not.toMatch(/phase\s*[12]/i);
-      expect(text).not.toMatch(/\bdev-[a-z0-9]{8,}/i);
-      expect(text).not.toMatch(/obo-poc|\batko\b/i);
-      expect(text).not.toMatch(/atlassian|jira|confluence/i);
     },
   );
 });

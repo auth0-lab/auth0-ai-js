@@ -25,6 +25,10 @@ A `Principal` describes the caller. It holds no credential and is safe to log. T
 
 Scope checks use the `scopes` field only. The `permissions` claim is there for your own logic. Neither `requireScopes` nor the handler consults it.
 
+## The token inside tools
+
+Tools never receive the raw access token. On the MCP SDK adapter, `extra.authInfo.token` is intentionally an empty string, and tools call downstream APIs through the request-scoped client. The MCP SDK still exposes the raw request headers, including `Authorization`, to tools through `extra.requestInfo.headers`, so tool code must not log or forward headers.
+
 ## Verifying a token yourself
 
 The handler does this for you. Call `verifyAccessToken` directly when you build your own transport:

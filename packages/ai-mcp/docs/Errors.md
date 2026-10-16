@@ -10,7 +10,7 @@ All authentication errors extend `AuthError` from `@auth0/auth0-api-js`, which c
 | --- | --- | --- | --- |
 | `UnauthenticatedError` | 401 | `invalid_token` | Protected code runs without an authenticated caller, for example outside a request context, or `withToken` receives an expired token. |
 | `InsufficientScopeError` | 403 | `insufficient_scope` | The caller lacks a scope that `requireScopes` checks. |
-| `DownscopedTokenError` | 403 | `insufficient_scope` | A token exchange or client credentials grant succeeded but did not include every requested scope. |
+| `DownscopedTokenError` | 403 | `insufficient_scope` | An on-behalf-of token exchange succeeded but did not include every requested scope. A client credentials grant that falls short is a server configuration failure instead, see [On Behalf Of](./OnBehalfOf.md#client-credentials). |
 | `ForeignCallerError` | none | none | `McpClient.withToken` receives a handle that this client did not issue. This is a programming error. It extends `Error`, not `AuthError`, so it is never turned into a challenge. |
 
 Messages are generic by design:
@@ -34,12 +34,12 @@ Messages are generic by design:
 | `InvalidRequestError` | 400 | `invalid_request` |
 | Missing scope in `requiredScopes` | 403 | `insufficient_scope` |
 | `UnauthenticatedError` thrown by your handler | 401 | `invalid_token` |
-| `InsufficientScopeError` or `DownscopedTokenError` thrown by your handler | 403 | `insufficient_scope` |
+| `InsufficientScopeError` or `DownscopedTokenError` escaping a custom `createMcpHandler` handler | 403 | `insufficient_scope` |
 | Anything else thrown by your handler, including core and network errors | 500 | none, generic body |
 
 Only this package's three error classes become client-facing failures when they escape your handler. A failed token exchange or a `ForeignCallerError` is an internal error: the client gets a generic 500 and `onError` receives the real error.
 
-With the official MCP SDK's `McpServer`, the SDK turns an error thrown inside a tool callback into a tool result with `isError: true`, so the error does not reach the handler. Catch errors in the tool when you want control over the message.
+With the official MCP SDK's `McpServer` (`createMcpSdkHandler` and `createNodeMcpHandler`), the SDK turns an error thrown inside a tool callback into a tool result with `isError: true` and a sanitized message, so the error does not reach the handler and the HTTP status stays 200. That includes `DownscopedTokenError` from a downscoped exchange. Catch errors in the tool when you want control over the message.
 
 ## Core errors
 
