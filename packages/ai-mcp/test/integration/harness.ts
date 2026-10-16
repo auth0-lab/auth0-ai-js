@@ -305,8 +305,11 @@ export function buildToolServer(options: ToolServerOptions): McpServer {
         .requestInfo?.headers;
       const raw = headers?.authorization;
       const authorization = Array.isArray(raw) ? raw[0] : raw;
+      if (authorization === undefined) {
+        throw new Error("forward_inbound: the request carried no Authorization header to forward");
+      }
       const response = await fetch(options.downstreamUrl, {
-        headers: { authorization: authorization! },
+        headers: { authorization },
       });
       const outcome: DelegateOutcome = {
         status: response.status,
@@ -385,6 +388,8 @@ export async function startApp(wiring: Wiring, tenant: Tenant, options: HandlerO
 
 /** A response as the SDK transport saw it. */
 export interface Seen {
+  /** Upper-case HTTP method of the request that produced this response. */
+  method: string;
   status: number;
   wwwAuthenticate: string | null;
   contentType: string | null;
@@ -406,7 +411,9 @@ export async function connectClient(app: App, bearer?: string | { authorization:
   const base = app.fetch ?? socketFetch;
   const recording = (async (input: string | URL | Request, init?: RequestInit) => {
     const response = await base(input, init);
+    const method = (input instanceof Request ? input.method : (init?.method ?? "GET")).toUpperCase();
     seen.push({
+      method,
       status: response.status,
       wwwAuthenticate: response.headers.get("www-authenticate"),
       contentType: response.headers.get("content-type"),

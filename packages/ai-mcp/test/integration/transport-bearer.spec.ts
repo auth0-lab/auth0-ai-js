@@ -142,6 +142,10 @@ describe.each(WIRINGS)("bearer authentication through the SDK client (%s wiring)
         // only and answers 405, which the client treats as "no stream" without retrying.
         const gets = session.seen.filter((r) => r.status === 405);
         expect(gets.length).toBeLessThanOrEqual(1);
+        expect(session.seen.filter((r) => r.method !== "GET").every((r) => r.status === 200 || r.status === 202)).toBe(
+          true,
+        );
+        expect(gets.every((r) => r.method === "GET")).toBe(true);
         expect(session.seen.every((r) => r.status === 200 || r.status === 202 || r.status === 405)).toBe(true);
       } finally {
         await session.close();
