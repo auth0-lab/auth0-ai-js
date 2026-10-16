@@ -1212,7 +1212,7 @@ describe("metadata path validation", () => {
 });
 
 describe("realm validation", () => {
-  it.each(["", 'a"b', "a\\b", "a\nb", "é", 42 as unknown as string])(
+  it.each(["", " ", "\t ", 'a"b', "a\\b", "a\nb", "é", 42 as unknown as string])(
     "rejects %j",
     (realm) => {
       expect(() => makeHandler({ realm })).toThrow(InvalidConfigurationError);
@@ -1222,6 +1222,54 @@ describe("realm validation", () => {
   it("accepts a clean realm", () => {
     expect(() => makeHandler({ realm: "my mcp" })).not.toThrow();
   });
+});
+
+describe("onError observer failures", () => {
+  it("swallows a rejected promise returned by onError without changing the response", async () => {
+    const unhandled: unknown[] = [];
+    const listener = (reason: unknown) => unhandled.push(reason);
+    process.on("unhandledRejection", listener);
+    try {
+      useTenant();
+      // Plain function: vi.fn would attach its own handler to the returned promise.
+      let calls = 0;
+      const onError = () => {
+        calls += 1;
+        return Promise.reject(new Error("observer down"));
+      };
+      const { handle } = makeHandler({ onError }, async () => {
+        throw new Error("boom");
+      });
+      const response = await handle(request(await bearer()));
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      expect(calls).toBe(1);
+      expect(response.status).toBe(500);
+      expect(await bodyOf(response)).toEqual({
+        error: "server_error",
+        error_description: "Internal server error.",
+      });
+      expect(unhandled).toEqual([]);
+    } finally {
+      process.off("unhandledRejection", listener);
+    }
+  });
+});
+
+describe("malformed request url", () => {
+  it.each(["not a url", "/relative/path", ""])(
+    "answers 400 invalid_request with a challenge for %j instead of throwing",
+    async (url) => {
+      const { handle } = makeHandler();
+      const response = await handle({
+        url,
+        method: "POST",
+        headers: new Headers(),
+      } as unknown as Request);
+      expect(response.status).toBe(400);
+      expect(await bodyOf(response)).toMatchObject({ error: "invalid_request" });
+      expect(wwwAuthenticate(response)).toContain('error="invalid_request"');
+    },
+  );
 });
 
 describe("pre-verification responses never escape", () => {

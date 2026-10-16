@@ -85,7 +85,7 @@ export interface McpHandlerOptions {
   };
   /**
    * Called with the raw error whenever the handler answers 500. The error never
-   * reaches the response. A throwing hook is ignored.
+   * reaches the response. A throwing hook, or one that returns a rejected promise, is ignored.
    */
   onError?: (error: unknown) => void;
 }
@@ -347,7 +347,7 @@ function validateMetadataPath(path: string, origin: string): void {
  *
  * @throws {TypeError} When `resource` is not an absolute URL.
  * @throws {InvalidConfigurationError} When `metadata.path` is not a normalized absolute path,
- * or `realm` is empty or contains characters a challenge cannot carry.
+ * or `realm` is empty, whitespace-only or contains characters a challenge cannot carry.
  */
 export function createMcpHandler(
   options: McpHandlerOptions,
@@ -356,7 +356,7 @@ export function createMcpHandler(
   if (
     options.realm !== undefined &&
     (typeof options.realm !== "string" ||
-      options.realm === "" ||
+      options.realm.trim() === "" ||
       sanitizeChallengeValue(options.realm) !== options.realm)
   ) {
     throw new InvalidConfigurationError(
@@ -420,7 +420,11 @@ export function createMcpHandler(
 
   function report(error: unknown): void {
     try {
-      options.onError?.(error);
+      const result: unknown = options.onError?.(error);
+      if (isThenable(result)) {
+        // An async observer that rejects must not surface as an unhandled rejection.
+        result.then(undefined, () => {});
+      }
     } catch {
       // A failing observer must not change the response.
     }
@@ -443,7 +447,13 @@ export function createMcpHandler(
   }
 
   return async function handle(request: Request): Promise<Response> {
-    const url = new URL(request.url);
+    let url: URL;
+    try {
+      url = new URL(request.url);
+    } catch {
+      // Same treatment as other malformed requests: a well-formed 400 challenge.
+      return fail(() => authFailure(400, "invalid_request"), undefined);
+    }
     if (url.pathname === metadataPath) {
       if (request.method !== "GET") {
         return new Response(null, { status: 405, headers: { allow: "GET" } });
@@ -533,4 +543,12 @@ export function createMcpHandler(
       );
     }
   };
+}
+
+function isThenable(value: unknown): value is PromiseLike<unknown> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as { then?: unknown }).then === "function"
+  );
 }
