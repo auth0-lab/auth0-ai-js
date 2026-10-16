@@ -29,8 +29,8 @@ describe('Principal', () => {
   it('has the expected field types', () => {
     expectTypeOf<Principal['sub']>().toEqualTypeOf<string>();
     expectTypeOf<Principal['expiresAt']>().toEqualTypeOf<number>();
-    expectTypeOf<Principal['scopes']>().toEqualTypeOf<string[]>();
-    expectTypeOf<Principal['permissions']>().toEqualTypeOf<string[] | null>();
+    expectTypeOf<Principal['scopes']>().toEqualTypeOf<readonly string[]>();
+    expectTypeOf<Principal['permissions']>().toEqualTypeOf<readonly string[] | null>();
     expectTypeOf<Principal['clientId']>().toEqualTypeOf<string | null>();
     expectTypeOf<Principal['orgId']>().toEqualTypeOf<string | null>();
   });

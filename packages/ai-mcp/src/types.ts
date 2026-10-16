@@ -34,12 +34,12 @@ export interface Principal {
   /** Token expiry as epoch seconds (the `exp` claim). */
   readonly expiresAt: number;
   /** Scopes parsed from the space-delimited `scope` claim. Empty when the claim is absent. */
-  readonly scopes: string[];
+  readonly scopes: readonly string[];
   /**
    * RBAC permissions from the `permissions` claim. `null` when the claim is absent,
    * meaning permissions are unknown. An empty array means the caller has none.
    */
-  readonly permissions: string[] | null;
+  readonly permissions: readonly string[] | null;
   /**
    * The OAuth client the token was issued to. Taken from the `client_id` claim,
    * falling back to `azp`. `null` when neither is present.
