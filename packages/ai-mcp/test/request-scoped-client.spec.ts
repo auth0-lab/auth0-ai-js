@@ -3,7 +3,7 @@ import { inspect } from 'node:util';
 import { HttpResponse, http } from 'msw';
 import { setupServer } from 'msw/node';
 import { decodeJwt } from 'jose';
-import { MissingClientAuthError } from '@auth0/auth0-api-js';
+import { AuthError, MissingClientAuthError } from '@auth0/auth0-api-js';
 import type { CachedToken, IndexedTokenStore, TokenIndexMember } from '@auth0/auth0-api-js';
 import { createMcpClient } from '../src/client.js';
 import type { McpClient, VerifiedCaller } from '../src/client.js';
@@ -301,9 +301,12 @@ describe('request-scoped client: other operations', () => {
     const client = makeClient();
     const scoped = client.withToken(await caller(client));
 
-    await expect(
-      scoped.getClientCredentialsToken({ audience: DOWNSTREAM, scope: 'a b' })
-    ).rejects.toBeInstanceOf(DownscopedTokenError);
+    const err = await scoped.getClientCredentialsToken({ audience: DOWNSTREAM, scope: 'a b' }).catch((e) => e);
+
+    expect(err).toBeInstanceOf(Error);
+    expect(err).not.toBeInstanceOf(AuthError);
+    expect(err).not.toBeInstanceOf(DownscopedTokenError);
+    expect(err.cause).toBeInstanceOf(DownscopedTokenError);
   });
 
   it('rejects an empty client credentials grant when scopes were requested', async () => {
@@ -311,9 +314,10 @@ describe('request-scoped client: other operations', () => {
     const client = makeClient();
     const scoped = client.withToken(await caller(client));
 
-    await expect(scoped.getClientCredentialsToken({ audience: DOWNSTREAM, scope: 'a' })).rejects.toBeInstanceOf(
-      DownscopedTokenError
-    );
+    const err = await scoped.getClientCredentialsToken({ audience: DOWNSTREAM, scope: 'a' }).catch((e) => e);
+
+    expect(err).not.toBeInstanceOf(AuthError);
+    expect(err.cause).toBeInstanceOf(DownscopedTokenError);
   });
 
   it('reports no granted scopes for an empty client credentials response when none were requested', async () => {

@@ -1,10 +1,12 @@
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { HttpResponse, http } from 'msw';
 import { setupServer } from 'msw/node';
 import { AuthError, InvalidRequestError, MissingClientAuthError } from '@auth0/auth0-api-js';
 import type { CachedToken } from '@auth0/auth0-api-js';
 import { sanitizeTokenError } from '../src/request-scoped-client.js';
 import { createMcpClient } from '../src/client.js';
+import { createMcpHandler } from '../src/handler.js';
+import { getCallerMcpClientOrThrow } from '../src/index.js';
 import type { McpClient, VerifiedCaller } from '../src/client.js';
 import { DownscopedTokenError, InsufficientScopeError, UnauthenticatedError } from '../src/errors.js';
 import { createAuth0Handlers, createTestKey, mintAccessToken, scopeMode } from './support/index.js';
@@ -286,7 +288,7 @@ describe('request-scoped client: package errors', () => {
     expect(error.cause).toBeUndefined();
   });
 
-  it('passes a narrowed client credentials grant through unchanged', async () => {
+  it('fails a narrowed client credentials grant with a non-auth error that carries the downscope cause', async () => {
     useTenant(scopeMode.fixed('other:scope'));
     const client = makeClient();
     const scoped = client.withToken(await caller(client));
@@ -298,7 +300,41 @@ describe('request-scoped client: package errors', () => {
       })
     );
 
-    expect(error).toBeInstanceOf(DownscopedTokenError);
-    expect(error.cause).toBeUndefined();
+    expect(error).not.toBeInstanceOf(AuthError);
+    expect(error).not.toBeInstanceOf(DownscopedTokenError);
+    expect(error.message).toBe(GENERIC);
+    expect(error.cause).toBeInstanceOf(DownscopedTokenError);
+  });
+
+  it('answers a generic 500 without a scope challenge when a handler hits a narrowed client credentials grant', async () => {
+    useTenant(scopeMode.fixed('other:scope'));
+    const client = makeClient();
+    const onError = vi.fn();
+    const handle = createMcpHandler({
+      client,
+      resource: AUDIENCE,
+      authorizationServers: [tenant.issuer],
+      onError,
+      handler: async () => {
+        await getCallerMcpClientOrThrow().getClientCredentialsToken({ audience: DOWNSTREAM, scope: 'read:a' });
+        return new Response('ok');
+      },
+    });
+    const accessToken = await mintAccessToken(key, {
+      iss: tenant.issuer,
+      aud: AUDIENCE,
+      sub: 'user|1',
+      scope: 'openid',
+    });
+
+    const response = await handle(
+      new Request(`${AUDIENCE}/mcp`, { method: 'POST', headers: { authorization: `Bearer ${accessToken}` } })
+    );
+
+    expect(response.status).toBe(500);
+    expect(response.headers.get('www-authenticate')).toBeNull();
+    expect(await response.json()).toEqual({ error: 'server_error', error_description: 'Internal server error.' });
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect((onError.mock.calls[0]?.[0] as Error).cause).toBeInstanceOf(DownscopedTokenError);
   });
 });

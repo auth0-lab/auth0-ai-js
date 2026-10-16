@@ -82,11 +82,26 @@ function flightKey(identity: ExchangeIdentity, verified: VerifiedToken, audience
  * Throws when scopes were requested and the grant does not include all of them.
  * No scope requested means nothing to enforce.
  */
-function assertCovers(requested: string | undefined, grantedScopes: readonly string[]): void {
-  if (requested === undefined) return;
+function covers(requested: string | undefined, grantedScopes: readonly string[]): boolean {
+  if (requested === undefined) return true;
   const granted = new Set(grantedScopes);
-  if (!normalizeScopes(requested).every((scope) => granted.has(scope))) {
-    throw new DownscopedTokenError();
+  return normalizeScopes(requested).every((scope) => granted.has(scope));
+}
+
+/** Rejects an exchanged token whose grant is narrower than requested, as a caller-facing error. */
+function assertCovers(requested: string | undefined, grantedScopes: readonly string[]): void {
+  if (!covers(requested, grantedScopes)) throw new DownscopedTokenError();
+}
+
+/**
+ * Rejects a client credentials grant narrower than requested. The credentials belong to this
+ * server, so the caller's token has no part in it and the caller cannot fix it. The failure
+ * is therefore a plain server-side error rather than an auth error, and carries the
+ * {@link DownscopedTokenError} as its `cause` for diagnostics.
+ */
+function assertServerGrantCovers(requested: string | undefined, grantedScopes: readonly string[]): void {
+  if (!covers(requested, grantedScopes)) {
+    throw withCause(new Error(GENERIC_FAILURE_MESSAGE), new DownscopedTokenError());
   }
 }
 
@@ -219,16 +234,18 @@ export function createRequestScopedClient(init: RequestScopedClientInit): Reques
         return result;
       }),
 
-    getClientCredentialsToken: (options: ClientCredentialsOptions): Promise<ClientCredentialsTokenResult> =>
-      guarded(async () => {
-        const result = await apiClient.getClientCredentialsToken({
+    getClientCredentialsToken: async (options: ClientCredentialsOptions): Promise<ClientCredentialsTokenResult> => {
+      const result = await guarded(() =>
+        apiClient.getClientCredentialsToken({
           audience: options.audience,
           ...(options.scope !== undefined && { scope: options.scope }),
-        });
-        const grantedScopes = normalizeScopes(result.scope ?? options.scope ?? '');
-        assertCovers(options.scope, grantedScopes);
-        return { ...result, grantedScopes };
-      }),
+        })
+      );
+      const grantedScopes = normalizeScopes(result.scope ?? options.scope ?? '');
+      // Thrown outside `guarded`: this error is already sanitized and must keep its own cause.
+      assertServerGrantCovers(options.scope, grantedScopes);
+      return { ...result, grantedScopes };
+    },
 
     getTokenForService: (options: TokenForServiceOptions) =>
       guarded(() =>
