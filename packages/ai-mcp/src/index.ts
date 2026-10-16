@@ -31,3 +31,5 @@ export { MemoryIndexedTokenStore } from './stores/memory-indexed-store.js';
 export type { MemoryIndexedTokenStoreOptions } from './stores/memory-indexed-store.js';
 export { createEncryptedTokenStore } from './stores/encrypted-store.js';
 export type { EncryptedTokenStoreOptions } from './stores/encrypted-store.js';
+// Types a custom token store needs, re-exported so integrators do not have to depend on the core package directly.
+export type { CachedToken, IndexedTokenStore, TokenIndexMember, TokenSet, TokenStore } from '@auth0/auth0-api-js';
