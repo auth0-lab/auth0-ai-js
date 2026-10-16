@@ -25,6 +25,8 @@ const expectedValues = [
   "DownscopedTokenError",
   "buildPrincipal",
   "createMcpClient",
+  "ForeignCallerError",
+  "createMcpHandler",
   "runWithRequestContext",
   "getRequestContext",
   "getCallerPrincipal",

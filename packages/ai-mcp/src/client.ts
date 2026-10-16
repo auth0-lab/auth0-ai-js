@@ -47,6 +47,14 @@ export class ForeignCallerError extends Error {
 /** Verifies incoming access tokens and creates clients bound to the verified caller. */
 export interface McpClient {
   /**
+   * The DPoP mode this client enforces: the `dpop.mode` it was created with, or
+   * `'allowed'` when none was given. Ingress code reads it to decide which schemes
+   * to accept and advertise. When you pass your own `apiClient` its mode cannot be
+   * read, so this reports `'allowed'`; build the client from options if challenges
+   * must reflect `'required'` or `'disabled'`.
+   */
+  readonly dpopMode: 'allowed' | 'required' | 'disabled';
+  /**
    * Verifies an access token (Bearer or DPoP) and resolves the caller. Organization
    * policy and DPoP rules configured on the client are enforced here. Errors from the
    * core client propagate unchanged.
@@ -140,6 +148,8 @@ export function createMcpClient(options: McpClientOptions): McpClient {
   const issued = new WeakMap<VerifiedCaller, VerifiedToken>();
 
   return {
+    dpopMode: options.apiClient === undefined ? (options.dpop?.mode ?? 'allowed') : 'allowed',
+
     async verifyAccessToken(verifyOptions) {
       const claims = await apiClient.verifyAccessToken(verifyOptions);
       const principal = buildPrincipal(claims);

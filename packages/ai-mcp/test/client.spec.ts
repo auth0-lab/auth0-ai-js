@@ -88,6 +88,20 @@ async function dpopMaterial(accessTokenFor: (jkt: string) => Promise<string>, ur
 }
 
 describe('createMcpClient construction', () => {
+  it.each([
+    [undefined, 'allowed'],
+    ['allowed', 'allowed'],
+    ['required', 'required'],
+    ['disabled', 'disabled'],
+  ] as const)('reports dpopMode for dpop.mode %s', (mode, expected) => {
+    expect(makeClient(mode === undefined ? {} : { dpop: { mode } }).dpopMode).toBe(expected);
+  });
+
+  it('reports allowed for a supplied apiClient, whose mode cannot be read', () => {
+    const apiClient = new ApiClient({ domain: 'tenant.example.com', audience: AUDIENCE, dpop: { mode: 'required' } });
+    expect(createMcpClient({ domain: 'tenant.example.com', audience: AUDIENCE, apiClient }).dpopMode).toBe('allowed');
+  });
+
   it('throws InvalidConfigurationError at construction for non_strict without a store', () => {
     expect(() => makeClient({ scopeMatching: 'non_strict' })).toThrow(InvalidConfigurationError);
   });

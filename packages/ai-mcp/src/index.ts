@@ -16,6 +16,8 @@ export type {
 export { buildPrincipal } from './principal.js';
 export { createMcpClient, ForeignCallerError } from './client.js';
 export type { McpClient, VerifiedCaller } from './client.js';
+export { createMcpHandler } from './handler.js';
+export type { McpHandlerOptions, AuthInfo, HandlerDpopMode } from './handler.js';
 export {
   runWithRequestContext,
   getRequestContext,
