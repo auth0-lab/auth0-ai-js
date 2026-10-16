@@ -30,6 +30,16 @@
   ],
   "exports": {
     "./package.json": "./package.json",
+    "./mcp-sdk": {
+      "import": {
+        "types": "./dist/esm/mcp-sdk.d.ts",
+        "default": "./dist/esm/mcp-sdk.js"
+      },
+      "require": {
+        "types": "./dist/cjs/mcp-sdk.d.ts",
+        "default": "./dist/cjs/mcp-sdk.js"
+      }
+    },
     ".": {
       "import": {
         "types": "./dist/esm/index.d.ts",

@@ -38,6 +38,13 @@ const expectedValues = [
   "createEncryptedTokenStore",
 ];
 
+const mcpSdkValues = [
+  "createMcpSdkHandler",
+  "createNodeMcpHandler",
+  "toNodeHandler",
+  "asTokenVerifier",
+];
+
 // Resolves the package by its own name so the exports map is what gets exercised.
 function run(args: string[]): string {
   return execFileSync(process.execPath, args, {
@@ -73,6 +80,37 @@ describe.skipIf(!built)("built package formats", () => {
       "const m = require('@auth0/ai-mcp'); console.log(JSON.stringify(Object.keys(m).sort()))",
     ]);
     expect(JSON.parse(out)).toEqual([...expectedValues].sort());
+  });
+
+  it("resolves @auth0/ai-mcp/mcp-sdk through the exports map in ESM", () => {
+    const out = run([
+      "--input-type=module",
+      "-e",
+      "import('@auth0/ai-mcp/mcp-sdk').then((m) => console.log(JSON.stringify(Object.keys(m).sort())))",
+    ]);
+    expect(JSON.parse(out)).toEqual(expect.arrayContaining(mcpSdkValues));
+  });
+
+  it("resolves @auth0/ai-mcp/mcp-sdk through the exports map in CommonJS", () => {
+    const out = run([
+      "-e",
+      "const m = require('@auth0/ai-mcp/mcp-sdk'); console.log(JSON.stringify(Object.keys(m).sort()))",
+    ]);
+    expect(JSON.parse(out)).toEqual(expect.arrayContaining(mcpSdkValues));
+  });
+
+  it("does not export the mcp-sdk names from the root entry", () => {
+    for (const name of mcpSdkValues) {
+      expect(expectedValues).not.toContain(name);
+    }
+    const out = run([
+      "-e",
+      "const m = require('@auth0/ai-mcp'); console.log(JSON.stringify(Object.keys(m)))",
+    ]);
+    const keys: string[] = JSON.parse(out);
+    for (const name of mcpSdkValues) {
+      expect(keys).not.toContain(name);
+    }
   });
 
   it("exports constructible error classes from both formats", () => {

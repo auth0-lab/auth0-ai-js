@@ -14,6 +14,7 @@ export interface McpToolErrorResult {
   isError: true;
   /** Machine-readable marker for the failure kind. */
   _meta: { error: 'insufficient_scope' };
+  [key: string]: unknown;
 }
 
 function normalize(required: string | readonly string[]): string[] {

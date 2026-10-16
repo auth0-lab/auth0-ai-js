@@ -1,0 +1,331 @@
+/**
+ * Glue between this package and the MCP TypeScript SDK (`@modelcontextprotocol/sdk`).
+ *
+ * This module is the only one that imports the SDK. The SDK is an optional peer
+ * dependency, so the module is published as its own entry point and nothing else
+ * in the package imports it.
+ */
+import type { IncomingMessage, ServerResponse } from 'node:http';
+import { AuthError } from '@auth0/auth0-api-js';
+import {
+  InsufficientScopeError as SdkInsufficientScopeError,
+  InvalidTokenError as SdkInvalidTokenError,
+} from '@modelcontextprotocol/sdk/server/auth/errors.js';
+import type { OAuthTokenVerifier } from '@modelcontextprotocol/sdk/server/auth/provider.js';
+import type { AuthInfo as SdkAuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js';
+import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
+import type { McpClient } from './client.js';
+import { createMcpHandler } from './handler.js';
+import type { AuthInfo, McpHandlerOptions } from './handler.js';
+
+/**
+ * The part of the SDK's `McpServer` (or low-level `Server`) this module uses.
+ * Any object with `connect` and `close` fits.
+ */
+export interface McpServerLike {
+  connect(transport: WebStandardStreamableHTTPServerTransport): Promise<void>;
+  close(): Promise<void>;
+}
+
+/** Options for {@link createMcpSdkHandler}. */
+export interface McpSdkHandlerOptions extends Omit<McpHandlerOptions, 'handler'> {
+  /**
+   * Creates the server that answers one request. It is called once per request
+   * and the server is closed when the request ends, because the transport runs
+   * in stateless mode and the SDK does not allow a stateless transport to be
+   * shared between requests. Register tools inside this function; keep expensive
+   * setup outside of it.
+   */
+  createServer: () => McpServerLike | Promise<McpServerLike>;
+}
+
+/**
+ * Creates a function that authenticates MCP HTTP requests with
+ * {@link createMcpHandler} and serves them with the SDK's web standard
+ * Streamable HTTP transport. It takes a standard `Request` and returns a `Response`.
+ *
+ * The verified caller reaches your tools in two ways: as `extra.authInfo` in every
+ * tool callback (the SDK's own mechanism), and through the request context, so
+ * `getCallerMcpClient()`, `getCallerPrincipal()` and `withRequiredScopes()` work
+ * inside tools.
+ *
+ * `AuthInfo.clientId` is `''` when the token carries no `client_id` or `azp`.
+ *
+ * Mode: stateless and JSON responses. The server is closed as soon as
+ * `handleRequest` returns, which is only valid for JSON response mode (a streamed
+ * response would be cut off), so this function does not offer streaming. Each POST is answered with one JSON
+ * body and no session id is issued, so any instance can serve any request.
+ * Server-to-client notifications and standalone event streams (GET) are not
+ * offered. If you need sessions or streaming, use {@link createMcpHandler} and
+ * manage the transport yourself.
+ *
+ * Failures that happen before the server runs (no credential, bad token, missing
+ * server-wide scope) follow the challenge rules of {@link createMcpHandler}.
+ * A tool that needs a scope only for itself should use `withRequiredScopes`,
+ * which answers with an `isError` tool result and HTTP 200.
+ *
+ * @param options - Handler options plus {@link McpSdkHandlerOptions.createServer}.
+ * @returns A function from `Request` to `Response`.
+ */
+export function createMcpSdkHandler(
+  options: McpSdkHandlerOptions,
+): (request: Request) => Promise<Response> {
+  const { createServer, ...handlerOptions } = options;
+  return createMcpHandler({
+    ...handlerOptions,
+    handler: async (request: Request, authInfo: AuthInfo): Promise<Response> => {
+      const transport = new WebStandardStreamableHTTPServerTransport({
+        sessionIdGenerator: undefined,
+        enableJsonResponse: true,
+      });
+      const server = await createServer();
+      try {
+        await server.connect(transport);
+        return await transport.handleRequest(request, { authInfo });
+      } finally {
+        await server.close().catch(() => undefined);
+      }
+    },
+  });
+}
+
+/** Options for {@link toNodeHandler}. */
+export interface NodeHandlerOptions {
+  /**
+   * Public identifier of the server. Its origin is used to rebuild the absolute
+   * request URL, so the `Host` header of the incoming request is never trusted
+   * (DPoP checks the URL the client used).
+   */
+  resource: string;
+  /** Largest request body accepted, in bytes. Defaults to 1 MiB. Larger bodies get a 413. */
+  maxBodyBytes?: number;
+}
+
+const DEFAULT_MAX_BODY_BYTES = 1024 * 1024;
+
+function genericResponse(
+  res: ServerResponse,
+  status: number,
+  error: string,
+  description: string,
+  close = false,
+): void {
+  if (res.headersSent) {
+    res.destroy();
+    return;
+  }
+  res.statusCode = status;
+  if (close) res.setHeader('connection', 'close');
+  res.setHeader('content-type', 'application/json');
+  res.setHeader('cache-control', 'no-store');
+  res.end(JSON.stringify({ error, error_description: description }));
+}
+
+class BodyTooLargeError extends Error {}
+class MalformedRequestError extends Error {}
+
+const VALID_PATH = /^\/(?![/\\])[^\s]*$/;
+
+async function readBody(req: IncomingMessage, limit: number): Promise<Uint8Array | undefined> {
+  const declared = req.headers['content-length'];
+  if (declared !== undefined) {
+    if (!/^\d{1,15}$/.test(declared)) throw new MalformedRequestError();
+    if (Number(declared) > limit) throw new BodyTooLargeError();
+  }
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  for await (const chunk of req) {
+    const bytes: Uint8Array = typeof chunk === 'string' ? new TextEncoder().encode(chunk) : chunk;
+    size += bytes.byteLength;
+    if (size > limit) throw new BodyTooLargeError();
+    chunks.push(bytes);
+  }
+  if (chunks.length === 0) return undefined;
+  const body = new Uint8Array(size);
+  let offset = 0;
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return body;
+}
+
+/**
+ * Adapts a standard `Request` to `Response` handler, such as the one returned
+ * by {@link createMcpHandler} or {@link createMcpSdkHandler}, to Node's `http`
+ * request listener signature. The result mounts on `http.createServer`, Express
+ * (`app.all('/mcp', handler)`) and anything else that passes
+ * `IncomingMessage` and `ServerResponse`.
+ *
+ * All authentication stays in the web handler; this function only converts
+ * messages. Headers, including `Authorization` and `DPoP`, are passed through
+ * unchanged. The body is read up to `maxBodyBytes`; a malformed `Content-Length`
+ * or a path that does not start with a single `/` gets 400, an oversized body 413
+ * (the connection is closed). Mount it before body-parsing middleware; if a parser
+ * already consumed the stream, the parsed `req.body` (string, Buffer or object) is
+ * used, with the same size limit. Any other error becomes a generic 500.
+ *
+ * @param handle - The web handler to adapt.
+ * @param options - Public resource identifier and body limit.
+ * @returns A function that writes the response to `res` and never rejects.
+ */
+export function toNodeHandler(
+  handle: (request: Request) => Promise<Response>,
+  options: NodeHandlerOptions,
+): (req: IncomingMessage, res: ServerResponse) => Promise<void> {
+  const origin = new URL(options.resource).origin;
+  const limit = options.maxBodyBytes ?? DEFAULT_MAX_BODY_BYTES;
+
+  return async function listener(req, res) {
+    try {
+      const headers = new Headers();
+      for (const [name, value] of Object.entries(req.headers)) {
+        if (value === undefined) continue;
+        if (Array.isArray(value)) {
+          for (const item of value) headers.append(name, item);
+        } else {
+          headers.append(name, value);
+        }
+      }
+      const method = req.method ?? 'GET';
+      const path = (req as IncomingMessage & { originalUrl?: string }).originalUrl ?? req.url ?? '/';
+      // Only a single-slash path keeps the origin fixed; "//host" would be read as another authority.
+      if (!VALID_PATH.test(path)) throw new MalformedRequestError();
+      let body: BodyInit | undefined;
+      if (method !== 'GET' && method !== 'HEAD') {
+        const parsed = (req as IncomingMessage & { body?: unknown }).body;
+        if (parsed !== undefined) {
+          const bytes =
+            parsed instanceof Uint8Array
+              ? parsed
+              : new TextEncoder().encode(typeof parsed === 'string' ? parsed : (JSON.stringify(parsed) ?? ''));
+          if (bytes.byteLength > limit) throw new BodyTooLargeError();
+          body = bytes as unknown as BodyInit;
+          headers.delete('content-length');
+        } else {
+          const bytes = await readBody(req, limit);
+          if (bytes !== undefined) body = bytes as unknown as BodyInit;
+        }
+      }
+      const controller = new AbortController();
+      res.on('close', () => {
+        if (!res.writableFinished) controller.abort();
+      });
+      const response = await handle(
+        new Request(origin + path, { method, headers, body, signal: controller.signal }),
+      );
+      res.statusCode = response.status;
+      response.headers.forEach((value, name) => res.appendHeader(name, value));
+      if (response.body === null) {
+        res.end();
+        return;
+      }
+      const reader = response.body.getReader();
+      try {
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          if (res.destroyed) break;
+          if (!res.write(value)) {
+            await new Promise<void>((resolve) => {
+              const finish = () => {
+                res.off('drain', finish);
+                res.off('close', finish);
+                resolve();
+              };
+              res.once('drain', finish);
+              res.once('close', finish);
+            });
+          }
+        }
+        res.end();
+      } finally {
+        await reader.cancel().catch(() => undefined);
+      }
+    } catch (error) {
+      if (error instanceof BodyTooLargeError) {
+        res.once('finish', () => req.destroy());
+        genericResponse(res, 413, 'invalid_request', 'The request body is too large.', true);
+        return;
+      }
+      if (error instanceof MalformedRequestError) {
+        genericResponse(res, 400, 'invalid_request', 'The request is malformed.', true);
+        return;
+      }
+      genericResponse(res, 500, 'server_error', 'Internal server error.');
+    }
+  };
+}
+
+/**
+ * Convenience for {@link createMcpSdkHandler} followed by {@link toNodeHandler}.
+ *
+ * @param options - Handler options plus an optional body limit.
+ * @returns A Node request listener.
+ */
+export function createNodeMcpHandler(
+  options: McpSdkHandlerOptions & Pick<NodeHandlerOptions, 'maxBodyBytes'>,
+): (req: IncomingMessage, res: ServerResponse) => Promise<void> {
+  return toNodeHandler(createMcpSdkHandler(options), {
+    resource: options.resource,
+    maxBodyBytes: options.maxBodyBytes,
+  });
+}
+
+/**
+ * Adapts an {@link McpClient} to the SDK's `OAuthTokenVerifier`, for use with the
+ * SDK's `requireBearerAuth` Express middleware.
+ *
+ * Prefer {@link createMcpHandler} or {@link createMcpSdkHandler}. This shim
+ * INHERITS THE SDK MIDDLEWARE'S CHALLENGE BEHAVIOUR, which does not meet this
+ * package's challenge rules: it answers a missing credential with
+ * `error="invalid_token"` (RFC 6750 section 3.1 says to send no error value),
+ * echoes the SDK's own messages in `error_description`, lists the configured
+ * scopes rather than only the missing ones, and does not know DPoP. Here, Bearer
+ * is the only scheme and a DPoP-bound token fails verification.
+ *
+ * What you lose compared with the handler: `requireBearerAuth` does not run
+ * this package's request context. Inside your routes `getRequestContext()`,
+ * `getCallerPrincipal()` and `getCallerMcpClient()` return `undefined`, and no
+ * request-scoped client exists. To get them back, call `client.verifyAccessToken`
+ * yourself in a wrapper and use `runWithRequestContext`, or switch to the handler.
+ *
+ * Errors are mapped with generic messages: any failed verification becomes the
+ * SDK's `InvalidTokenError`, a 403 from the core becomes the SDK's
+ * `InsufficientScopeError`, and everything else is rethrown so the middleware
+ * answers 500.
+ *
+ * @param client - The client that verifies tokens.
+ * @returns A verifier for `requireBearerAuth({ verifier })`.
+ */
+export function asTokenVerifier(client: McpClient): OAuthTokenVerifier {
+  return {
+    async verifyAccessToken(token: string): Promise<SdkAuthInfo> {
+      let caller;
+      try {
+        caller = await client.verifyAccessToken({ accessToken: token, scheme: 'bearer' });
+      } catch (error) {
+        if (error instanceof AuthError) {
+          if (error.statusCode === 403) {
+            throw new SdkInsufficientScopeError('Insufficient scope.');
+          }
+          if (error.statusCode === undefined || error.statusCode < 500) {
+            throw new SdkInvalidTokenError('Invalid access token.');
+          }
+        }
+        throw error;
+      }
+      const principal = caller.principal;
+      return {
+        token,
+        clientId: principal.clientId ?? '',
+        scopes: [...principal.scopes],
+        expiresAt: principal.expiresAt,
+        extra: {
+          sub: principal.sub,
+          ...(principal.orgId !== null && { orgId: principal.orgId }),
+        },
+      };
+    },
+  };
+}
