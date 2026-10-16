@@ -88,7 +88,7 @@ describe.skipIf(!built)("built package formats", () => {
       "-e",
       "import('@auth0/ai-mcp/mcp-sdk').then((m) => console.log(JSON.stringify(Object.keys(m).sort())))",
     ]);
-    expect(JSON.parse(out)).toEqual(expect.arrayContaining(mcpSdkValues));
+    expect(JSON.parse(out)).toEqual([...mcpSdkValues].sort());
   });
 
   it("resolves @auth0/ai-mcp/mcp-sdk through the exports map in CommonJS", () => {
@@ -96,7 +96,7 @@ describe.skipIf(!built)("built package formats", () => {
       "-e",
       "const m = require('@auth0/ai-mcp/mcp-sdk'); console.log(JSON.stringify(Object.keys(m).sort()))",
     ]);
-    expect(JSON.parse(out)).toEqual(expect.arrayContaining(mcpSdkValues));
+    expect(JSON.parse(out)).toEqual([...mcpSdkValues].sort());
   });
 
   it("does not export the mcp-sdk names from the root entry", () => {
