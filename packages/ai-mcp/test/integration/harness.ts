@@ -299,9 +299,14 @@ export function buildToolServer(options: ToolServerOptions): McpServer {
     "forward_inbound",
     { description: "Sends the caller's own inbound token downstream, which a server must never do." },
     async (extra) => {
-      const info = (extra as { authInfo?: { token: string } }).authInfo;
+      // AuthInfo.token is withheld (always ''), so a server that forwards the inbound token has to
+      // read the raw Authorization header, the one remaining channel the transport exposes.
+      const headers = (extra as { requestInfo?: { headers?: Record<string, string | string[] | undefined> } })
+        .requestInfo?.headers;
+      const raw = headers?.authorization;
+      const authorization = Array.isArray(raw) ? raw[0] : raw;
       const response = await fetch(options.downstreamUrl, {
-        headers: { authorization: `Bearer ${info!.token}` },
+        headers: { authorization: authorization! },
       });
       const outcome: DelegateOutcome = {
         status: response.status,

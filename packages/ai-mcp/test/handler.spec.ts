@@ -476,7 +476,7 @@ describe("DPoP modes", () => {
       request({ authorization: `DPoP ${accessToken}`, dpop: proof }),
     );
     expect(response.status).toBe(200);
-    expect(calls[0]?.authInfo.token).toBe(accessToken);
+    expect(calls[0]?.authInfo.token).toBe('');
   });
 
   it("allowed: accepts a DPoP request and a Bearer request", async () => {
@@ -625,7 +625,7 @@ describe("AuthInfo", () => {
     expect(response.status).toBe(200);
     const info = calls[0]?.authInfo;
     expect(info).toEqual({
-      token: headers.authorization.slice("Bearer ".length),
+      token: '',
       clientId: "client-a",
       scopes: ["read", "write"],
       expiresAt: exp,

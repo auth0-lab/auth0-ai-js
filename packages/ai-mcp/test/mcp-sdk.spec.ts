@@ -176,9 +176,47 @@ describe("createMcpSdkHandler", () => {
       scopes: ["read", "write"],
       extra: { sub: "user|1" },
     });
-    expect(typeof seen[0]!.authInfo!.token).toBe("string");
+    expect(seen[0]!.authInfo!.token).toBe("");
     expect(seen[0]!.contextSub).toBe("user|1");
     expect(seen[0]!.hasClient).toBe(true);
+  });
+
+  it("answers 405 with Allow: POST for GET and DELETE on the MCP path", async () => {
+    useTenant();
+    const factory = vi.fn(() => buildMcpServer([]));
+    const handle = makeHandler([], { createServer: factory });
+    for (const method of ["GET", "DELETE"]) {
+      const response = await handle(
+        new Request(ENDPOINT, {
+          method,
+          headers: { authorization: `Bearer ${await token()}`, accept: "text/event-stream" },
+        }),
+      );
+      expect(response.status).toBe(405);
+      expect(response.headers.get("allow")).toBe("POST");
+    }
+    expect(factory).not.toHaveBeenCalled();
+  });
+
+  it("still serves the metadata document with GET", async () => {
+    useTenant();
+    const response = await makeHandler([])(
+      new Request(`${ORIGIN}/.well-known/oauth-protected-resource`),
+    );
+    expect(response.status).toBe(200);
+  });
+
+  it("surfaces a downscoped exchange inside a tool as an isError result with HTTP 200", async () => {
+    useTenant();
+    tenant.state.scope = scopeMode.fixed("other:scope");
+    const response = await makeHandler([])(
+      toolCall("delegate", { authorization: `Bearer ${await token()}` }),
+    );
+    const body = (await response.json()) as ToolResult;
+
+    expect(response.status).toBe(200);
+    expect(body.result?.isError).toBe(true);
+    expect(body.result?.content[0]?.text).not.toContain("api:read");
   });
 
   it("lets a tool exchange the caller's token through the request-scoped client", async () => {

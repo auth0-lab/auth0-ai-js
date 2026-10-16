@@ -138,7 +138,11 @@ describe.each(WIRINGS)("bearer authentication through the SDK client (%s wiring)
 
         expect(isError).toBe(false);
         expect(value).toMatchObject({ contextSub: "user|valid", clientSub: "user|valid" });
-        expect(session.seen.every((r) => r.status === 200 || r.status === 202)).toBe(true);
+        // The SDK client opens a GET for an SSE stream after initialize. The handler serves POST
+        // only and answers 405, which the client treats as "no stream" without retrying.
+        const gets = session.seen.filter((r) => r.status === 405);
+        expect(gets.length).toBeLessThanOrEqual(1);
+        expect(session.seen.every((r) => r.status === 200 || r.status === 202 || r.status === 405)).toBe(true);
       } finally {
         await session.close();
       }

@@ -25,7 +25,14 @@ import type { Principal, RequestScopedMcpClient } from "./types.js";
  * handed to that SDK as is.
  */
 export interface AuthInfo {
-  /** The access token the caller presented. */
+  /**
+   * Always the empty string. The presented access token is intentionally
+   * withheld so tool code cannot forward or log it by accident; tools should use
+   * the request-scoped client (`getCallerMcpClient()`) to call downstream APIs.
+   * Note that the MCP SDK transport still exposes the raw request headers through
+   * `extra.requestInfo.headers`, so the `Authorization` header remains reachable
+   * there.
+   */
   token: string;
   /** The OAuth client the token was issued to. Empty when the token names none. */
   clientId: string;
@@ -294,6 +301,9 @@ function classifyAuthentication(error: unknown): Failure {
  * Maps an error thrown by the downstream handler. Only the wrapper's own errors
  * become client-facing failures; anything else, including core errors such as a
  * failed token exchange, is an internal error and must not turn into a challenge.
+ * These errors only reach this function when they escape the downstream handler.
+ * Under `createMcpSdkHandler` the MCP SDK catches errors thrown by tools first, so
+ * a downscoped exchange there becomes an `isError` tool result with HTTP 200.
  */
 function classifyDownstream(error: unknown, held: readonly string[]): Failure {
   if (error instanceof InsufficientScopeError) {
@@ -518,7 +528,7 @@ export function createMcpHandler(
     }
 
     const authInfo: AuthInfo = {
-      token: credentials.token,
+      token: '',
       clientId: principal.clientId ?? "",
       scopes: [...principal.scopes],
       expiresAt: principal.expiresAt,

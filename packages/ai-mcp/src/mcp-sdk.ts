@@ -50,6 +50,10 @@ export interface McpSdkHandlerOptions extends Omit<McpHandlerOptions, 'handler'>
  * inside tools.
  *
  * `AuthInfo.clientId` is `''` when the token carries no `client_id` or `azp`.
+ * `AuthInfo.token` is always `''`: the bearer is deliberately withheld, so tools
+ * should call downstream APIs through the request-scoped client. The SDK
+ * transport still exposes raw request headers as `extra.requestInfo.headers`, so
+ * the `Authorization` header is reachable there.
  *
  * Mode: stateless and JSON responses. The server is closed as soon as
  * `handleRequest` returns, which is only valid for JSON response mode (a streamed
@@ -63,7 +67,14 @@ export interface McpSdkHandlerOptions extends Omit<McpHandlerOptions, 'handler'>
  * Failures that happen before the server runs (no credential, bad token, missing
  * server-wide scope) follow the challenge rules of {@link createMcpHandler}.
  * A tool that needs a scope only for itself should use `withRequiredScopes`,
- * which answers with an `isError` tool result and HTTP 200.
+ * which answers with an `isError` tool result and HTTP 200. The same holds for a
+ * downscoped token exchange inside a tool: the MCP SDK catches errors thrown by
+ * tools, so on this path the caller sees a sanitized tool result with
+ * `isError: true` and HTTP 200. A 403 `insufficient_scope` response applies only
+ * when such an error escapes a custom {@link createMcpHandler} handler.
+ *
+ * Only POST is served on the MCP endpoint. After authentication, any other method
+ * gets 405 with `Allow: POST`.
  *
  * @param options - Handler options plus {@link McpSdkHandlerOptions.createServer}.
  * @returns A function from `Request` to `Response`.
@@ -75,6 +86,11 @@ export function createMcpSdkHandler(
   return createMcpHandler({
     ...handlerOptions,
     handler: async (request: Request, authInfo: AuthInfo): Promise<Response> => {
+      // Only POST is served. This runs after authentication (the metadata route is
+      // answered before it), so an unauthenticated GET gets the usual 401 challenge.
+      if (request.method !== 'POST') {
+        return new Response(null, { status: 405, headers: { allow: 'POST' } });
+      }
       const transport = new WebStandardStreamableHTTPServerTransport({
         sessionIdGenerator: undefined,
         enableJsonResponse: true,
@@ -365,7 +381,7 @@ export function asTokenVerifier(client: McpClient): OAuthTokenVerifier {
       }
       const principal = caller.principal;
       return {
-        token,
+        token: '',
         clientId: principal.clientId ?? '',
         scopes: [...principal.scopes],
         expiresAt: principal.expiresAt,
