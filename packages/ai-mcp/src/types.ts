@@ -126,9 +126,10 @@ export interface McpClientOptions {
   clientSecret?: string;
   /**
    * Cache for exchanged tokens. Omit it to exchange on every call. Must be an
-   * {@link IndexedTokenStore} when `scopeMatching` is `'non_strict'`: the core
-   * client throws `InvalidConfigurationError` otherwise, when a token is requested
-   * (the store is supplied per call, so it cannot be checked earlier).
+   * {@link IndexedTokenStore} when `scopeMatching` is `'non_strict'`: `createMcpClient`
+   * throws `InvalidConfigurationError` at construction otherwise. That check is skipped
+   * when you pass your own `apiClient`, because its matching mode cannot be read; the
+   * core client then throws on the first token request.
    */
   tokenStore?: TokenStore | IndexedTokenStore;
   /**
@@ -155,10 +156,12 @@ export interface McpClientOptions {
    */
   dpop?: ApiClientOptions['dpop'];
   /**
-   * A pre-built core client. When provided it is used as is, so `clientId`,
-   * `clientSecret`, `scopeMatching`, `organizationPolicy`, `organizationId` and
-   * `dpop` are ignored: configure those on the client you pass in. `tokenStore`
-   * is still honoured because it is supplied per call.
+   * A pre-built core client, used as is. Combining it with `clientId`, `clientSecret`,
+   * `scopeMatching`, `organizationPolicy`, `organizationId` or `dpop` makes
+   * `createMcpClient` throw `InvalidConfigurationError`, so no setting is silently
+   * ignored: configure those on the client you pass in. `tokenStore` is still honoured
+   * because it is supplied per call. The client is not exposed on the returned
+   * `McpClient`.
    */
   apiClient?: ApiClient;
 }

@@ -23,6 +23,17 @@ const expectedValues = [
   "UnauthenticatedError",
   "InsufficientScopeError",
   "DownscopedTokenError",
+  "buildPrincipal",
+  "createMcpClient",
+  "runWithRequestContext",
+  "getRequestContext",
+  "getCallerPrincipal",
+  "getCallerMcpClient",
+  "getCallerMcpClientOrThrow",
+  "requireScopes",
+  "withRequiredScopes",
+  "MemoryIndexedTokenStore",
+  "createEncryptedTokenStore",
 ];
 
 // Resolves the package by its own name so the exports map is what gets exercised.

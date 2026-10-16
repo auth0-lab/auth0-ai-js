@@ -13,3 +13,19 @@ export type {
   ClientCredentialsTokenResult,
   ServiceTokenResult,
 } from './types.js';
+export { buildPrincipal } from './principal.js';
+export { createMcpClient } from './client.js';
+export type { McpClient, VerifiedCaller } from './client.js';
+export {
+  runWithRequestContext,
+  getRequestContext,
+  getCallerPrincipal,
+  getCallerMcpClient,
+  getCallerMcpClientOrThrow,
+} from './request-context.js';
+export { requireScopes, withRequiredScopes } from './scopes.js';
+export type { McpToolErrorResult } from './scopes.js';
+export { MemoryIndexedTokenStore } from './stores/memory-indexed-store.js';
+export type { MemoryIndexedTokenStoreOptions } from './stores/memory-indexed-store.js';
+export { createEncryptedTokenStore } from './stores/encrypted-store.js';
+export type { EncryptedTokenStoreOptions } from './stores/encrypted-store.js';
