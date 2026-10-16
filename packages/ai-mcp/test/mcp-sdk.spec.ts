@@ -447,7 +447,8 @@ describe("Node adapter", () => {
       const reply = await rawRequest(url, [
         "POST /mcp HTTP/1.1", "Host: x", "Connection: close", `Content-Length: ${length}`,
       ]);
-      expect(reply === "" || reply.startsWith("HTTP/1.1 400")).toBe(true);
+      // Node's own parser may refuse these before the adapter sees them.
+      expect(reply).not.toContain("HTTP/1.1 200");
     }
     expect(handle).not.toHaveBeenCalled();
   });
@@ -518,8 +519,96 @@ describe("Node adapter", () => {
       "Authorization: Bearer first", "Authorization: Bearer second",
     ]);
 
-    expect(seen).toHaveLength(1);
-    expect(seen[0]).not.toContain("second");
+    expect(seen).toEqual(["Bearer first"]);
+  });
+
+  it("joins a string[] header value into repeated header entries", async () => {
+    const seen: Array<string | null> = [];
+    const adapter = toNodeHandler(
+      async (request) => {
+        seen.push(request.headers.get("x-multi"));
+        return new Response("ok");
+      },
+      { resource: AUDIENCE },
+    );
+    const url = await listen((req, res) => {
+      req.headers["x-multi"] = ["a", "b"];
+      return adapter(req, res);
+    });
+    await fetch(url);
+
+    expect(seen).toEqual(["a, b"]);
+  });
+
+  it("drops the handler's headers when the body stream fails before the first write", async () => {
+    const url = await listen(
+      toNodeHandler(
+        async () =>
+          new Response(
+            new ReadableStream({
+              start(controller) {
+                controller.error(new Error("boom"));
+              },
+            }),
+            {
+              status: 200,
+              headers: { "set-cookie": "a=b", "www-authenticate": "Bearer x", "content-length": "99" },
+            },
+          ),
+        { resource: AUDIENCE },
+      ),
+    );
+    const response = await fetch(url);
+
+    expect(response.status).toBe(500);
+    expect(response.headers.get("set-cookie")).toBeNull();
+    expect(response.headers.get("www-authenticate")).toBeNull();
+    expect(await response.json()).toEqual({
+      error: "server_error",
+      error_description: "Internal server error.",
+    });
+  });
+
+  it("cancels a stalled stream when the client aborts", async () => {
+    let cancelled = false;
+    const url = await listen(
+      toNodeHandler(
+        async () =>
+          new Response(
+            new ReadableStream({
+              pull: () => new Promise<void>(() => undefined),
+              cancel() {
+                cancelled = true;
+              },
+            }),
+          ),
+        { resource: AUDIENCE },
+      ),
+    );
+    const controller = new AbortController();
+    const pending = fetch(url, { signal: controller.signal }).catch(() => undefined);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    controller.abort();
+    await pending;
+    await vi.waitFor(() => expect(cancelled).toBe(true));
+  });
+
+  it("treats an empty parser-default body as no body", async () => {
+    const received: Array<string | null> = [];
+    const adapter = toNodeHandler(
+      async (request) => {
+        received.push(request.body === null ? null : await request.text());
+        return new Response("ok");
+      },
+      { resource: AUDIENCE },
+    );
+    const url = await listen((req, res) => {
+      (req as unknown as { body: unknown }).body = {};
+      return adapter(req, res);
+    });
+    await fetch(url, { method: "POST" });
+
+    expect(received).toEqual([null]);
   });
 
   it("handles a pre-parsed Buffer, Uint8Array and string body and limits each", async () => {

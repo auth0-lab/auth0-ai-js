@@ -53,8 +53,9 @@ export interface McpSdkHandlerOptions extends Omit<McpHandlerOptions, 'handler'>
  *
  * Mode: stateless and JSON responses. The server is closed as soon as
  * `handleRequest` returns, which is only valid for JSON response mode (a streamed
- * response would be cut off), so this function does not offer streaming. Each POST is answered with one JSON
- * body and no session id is issued, so any instance can serve any request.
+ * response would be cut off), so this function does not offer
+ * streaming. Each POST is answered with one JSON body and no session id is
+ * issued, so any instance can serve any request.
  * Server-to-client notifications and standalone event streams (GET) are not
  * offered. If you need sessions or streaming, use {@link createMcpHandler} and
  * manage the transport yourself.
@@ -114,6 +115,8 @@ function genericResponse(
     res.destroy();
     return;
   }
+  // Drop anything an earlier step set (for example headers of a failed upstream response).
+  for (const name of res.getHeaderNames()) res.removeHeader(name);
   res.statusCode = status;
   if (close) res.setHeader('connection', 'close');
   res.setHeader('content-type', 'application/json');
@@ -126,28 +129,58 @@ class MalformedRequestError extends Error {}
 
 const VALID_PATH = /^\/(?![/\\])[^\s]*$/;
 
-async function readBody(req: IncomingMessage, limit: number): Promise<Uint8Array | undefined> {
+function readBody(req: IncomingMessage, limit: number): Promise<Uint8Array | undefined> {
   const declared = req.headers['content-length'];
   if (declared !== undefined) {
-    if (!/^\d{1,15}$/.test(declared)) throw new MalformedRequestError();
-    if (Number(declared) > limit) throw new BodyTooLargeError();
+    if (!/^\d{1,15}$/.test(declared)) return Promise.reject(new MalformedRequestError());
+    if (Number(declared) > limit) return Promise.reject(new BodyTooLargeError());
   }
-  const chunks: Uint8Array[] = [];
-  let size = 0;
-  for await (const chunk of req) {
-    const bytes: Uint8Array = typeof chunk === 'string' ? new TextEncoder().encode(chunk) : chunk;
-    size += bytes.byteLength;
-    if (size > limit) throw new BodyTooLargeError();
-    chunks.push(bytes);
-  }
-  if (chunks.length === 0) return undefined;
-  const body = new Uint8Array(size);
-  let offset = 0;
-  for (const chunk of chunks) {
-    body.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return body;
+  // Event based on purpose: leaving a `for await` loop early destroys the socket,
+  // which would drop the 413 before it is delivered.
+  return new Promise((resolve, reject) => {
+    const chunks: Uint8Array[] = [];
+    let size = 0;
+    const cleanup = () => {
+      req.off('data', onData);
+      req.off('end', onEnd);
+      req.off('error', onError);
+      req.off('close', onClose);
+    };
+    const onData = (chunk: Uint8Array | string) => {
+      const bytes = typeof chunk === 'string' ? new TextEncoder().encode(chunk) : chunk;
+      size += bytes.byteLength;
+      if (size > limit) {
+        cleanup();
+        req.pause();
+        reject(new BodyTooLargeError());
+        return;
+      }
+      chunks.push(bytes);
+    };
+    const onEnd = () => {
+      cleanup();
+      if (chunks.length === 0) return resolve(undefined);
+      const body = new Uint8Array(size);
+      let offset = 0;
+      for (const chunk of chunks) {
+        body.set(chunk, offset);
+        offset += chunk.byteLength;
+      }
+      resolve(body);
+    };
+    const onError = (error: Error) => {
+      cleanup();
+      reject(error);
+    };
+    const onClose = () => {
+      cleanup();
+      reject(new Error('Request closed.'));
+    };
+    req.on('data', onData);
+    req.on('end', onEnd);
+    req.on('error', onError);
+    req.on('close', onClose);
+  });
 }
 
 /**
@@ -163,7 +196,9 @@ async function readBody(req: IncomingMessage, limit: number): Promise<Uint8Array
  * or a path that does not start with a single `/` gets 400, an oversized body 413
  * (the connection is closed). Mount it before body-parsing middleware; if a parser
  * already consumed the stream, the parsed `req.body` (string, Buffer or object) is
- * used, with the same size limit. Any other error becomes a generic 500.
+ * re-serialized (objects as JSON) with the same size limit, so the bytes the web
+ * handler sees can differ from the original. An empty `{}` with no
+ * non-zero `Content-Length` or `Transfer-Encoding` is the parser default and counts as no body. Any other error becomes a generic 500.
  *
  * @param handle - The web handler to adapt.
  * @param options - Public resource identifier and body limit.
@@ -194,7 +229,16 @@ export function toNodeHandler(
       let body: BodyInit | undefined;
       if (method !== 'GET' && method !== 'HEAD') {
         const parsed = (req as IncomingMessage & { body?: unknown }).body;
-        if (parsed !== undefined) {
+        const framed =
+          (req.headers['content-length'] !== undefined && req.headers['content-length'] !== '0') ||
+          req.headers['transfer-encoding'] !== undefined;
+        const emptyParserDefault =
+          !framed &&
+          typeof parsed === 'object' &&
+          parsed !== null &&
+          !(parsed instanceof Uint8Array) &&
+          Object.keys(parsed).length === 0;
+        if (parsed !== undefined && !emptyParserDefault) {
           const bytes =
             parsed instanceof Uint8Array
               ? parsed
@@ -221,6 +265,9 @@ export function toNodeHandler(
         return;
       }
       const reader = response.body.getReader();
+      // A stalled stream must not outlive a client that went away.
+      const onClose = () => void reader.cancel().catch(() => undefined);
+      res.once('close', onClose);
       try {
         for (;;) {
           const { done, value } = await reader.read();
@@ -240,6 +287,7 @@ export function toNodeHandler(
         }
         res.end();
       } finally {
+        res.off('close', onClose);
         await reader.cancel().catch(() => undefined);
       }
     } catch (error) {
