@@ -39,4 +39,16 @@ npm run build
 npm test
 ```
 
+The example needs `@modelcontextprotocol/sdk` 1.31 or newer, and `npm test` fails if the resolved copy is older. If a hoisted older copy wins, install a newer one next to the example without saving. Create a scratch directory outside the repository and run the install there, then copy the result in:
+
+```sh
+SCRATCH="$(mktemp -d)"
+cd "$SCRATCH" && echo '{"name":"scratch","private":true}' > package.json
+npm install --no-save --no-package-lock --ignore-scripts @modelcontextprotocol/sdk@1.32.1
+cd - && mkdir -p examples/ai-mcp-server/node_modules
+cp -R "$SCRATCH/node_modules/." examples/ai-mcp-server/node_modules/
+```
+
+Any version at or above 1.31 works. The copy also brings the SDK's transitive dependencies. A clean checkout fails this test until the root dependency resolves 1.31 or later.
+
 `npm test` runs both servers on loopback with a mocked Auth0 tenant. It makes no network calls.
