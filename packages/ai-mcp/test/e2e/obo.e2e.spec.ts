@@ -60,8 +60,8 @@ describe.skipIf(!e2e.enabled)("e2e on-behalf-of exchange", () => {
       expect(claims.sub).toBe(userSub);
       expect(claims.scope?.split(" ")).toContain("work:read");
       // Actor chain: the exchanging client acts, on behalf of the login client that holds the user token.
-      expect(claims.act?.sub).toContain(e2e.oboClientId);
-      expect(claims.act?.act?.sub).toContain(e2e.loginClientId);
+      expect(claims.act?.sub).toBe(e2e.oboClientId);
+      expect(claims.act?.act?.sub).toBe(e2e.loginClientId);
 
       expect(downstream.calls.map((c) => c.status)).toEqual([200]);
       expect(counter!.exchanges).toBe(1);

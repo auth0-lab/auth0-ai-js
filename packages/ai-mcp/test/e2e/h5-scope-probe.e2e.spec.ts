@@ -1,0 +1,253 @@
+/**
+ * Settles how the authorization server reports `scope` on a partial grant, a zero grant and a
+ * request without a scope, for the three grants the wrapper relies on. The probe table is printed
+ * (scope strings, booleans and status codes only, never a token) and asserted, so a change in
+ * the authorization server's behaviour fails this spec. The second half drives the same
+ * situations through the real handler and checks how the wrapper interprets them.
+ *
+ * `e2e:undefined` is a scope the API does not define, which the authorization server drops.
+ */
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import {
+  M2M_VARS,
+  TOKEN_EXCHANGE_GRANT,
+  callToolJson,
+  connectMcpClient,
+  decodeClaims,
+  installFetchCounter,
+  loadE2eEnv,
+  startDownstreamApi,
+  startMcpServer,
+} from "./support/index.js";
+import type { DelegateResult, DownstreamApi, E2eEnv, E2eMcpServer, FetchCounter } from "./support/index.js";
+
+const e2e = loadE2eEnv(M2M_VARS);
+
+const UNDEFINED_SCOPE = "e2e:undefined";
+const PARTIAL = `work:read ${UNDEFINED_SCOPE}`;
+
+type Grant = "password-realm" | "client_credentials" | "token-exchange";
+type Case = "partial" | "zero" | "none";
+
+interface ProbeRow {
+  grant: Grant;
+  requested: Case;
+  requestedScope: string | null;
+  status: number;
+  responseHasScope: boolean;
+  responseScope: string | null;
+  claimHasScope: boolean;
+  claimScope: string | null;
+  /** OAuth `error` code of a failed request, or null. */
+  error: string | null;
+}
+
+/** Posts a token request, retrying while the tenant rate limits (429). */
+async function postToken(form: Record<string, string>): Promise<Response> {
+  let response: Response | undefined;
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    response = await fetch(`https://${e2e.domain}/oauth/token`, {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams(form),
+    });
+    if (response.status !== 429) break;
+    await response.arrayBuffer();
+    await new Promise((resolve) => setTimeout(resolve, 2000 * (attempt + 1)));
+  }
+  return response!;
+}
+
+/** Posts one token request and reduces the answer to non-secret facts. */
+async function probe(
+  grant: Grant,
+  requested: Case,
+  requestedScope: string | null,
+  form: Record<string, string>,
+): Promise<ProbeRow> {
+  const response = await postToken({ ...form, ...(requestedScope !== null && { scope: requestedScope }) });
+  const body = (await response.json().catch(() => ({}))) as { access_token?: string; scope?: unknown; error?: unknown };
+  const claims = typeof body.access_token === "string" ? decodeClaims(body.access_token) : {};
+  return {
+    grant,
+    requested,
+    requestedScope,
+    status: response.status,
+    responseHasScope: "scope" in body,
+    responseScope: typeof body.scope === "string" ? body.scope : null,
+    claimHasScope: "scope" in claims,
+    claimScope: typeof claims["scope"] === "string" ? claims["scope"] : null,
+    error: typeof body.error === "string" ? body.error : null,
+  };
+}
+
+/** Password-realm token for the test user, retrying while the tenant rate limits. */
+async function mintUserToken(): Promise<string> {
+  const response = await postToken({
+    grant_type: "http://auth0.com/oauth/grant-type/password-realm",
+    realm: e2e.realm,
+    username: e2e.username,
+    password: e2e.password,
+    client_id: e2e.loginClientId,
+    client_secret: e2e.loginClientSecret,
+    audience: e2e.mcpAudience,
+    scope: e2e.downstreamScope,
+  });
+  const body = (await response.json().catch(() => ({}))) as { access_token?: string };
+  if (typeof body.access_token !== "string") throw new Error(`User token request failed: status ${response.status}`);
+  return body.access_token;
+}
+
+const CASES: Array<[Case, string | null]> = [
+  ["partial", PARTIAL],
+  ["zero", UNDEFINED_SCOPE],
+  ["none", null],
+];
+
+describe.skipIf(!e2e.enabled)("e2e scope reporting on partial and zero grants", () => {
+  const rows: ProbeRow[] = [];
+  let userToken = "";
+  const find = (grant: Grant, requested: Case) => rows.find((r) => r.grant === grant && r.requested === requested)!;
+
+  beforeAll(async () => {
+    userToken = await mintUserToken();
+    const subjectToken = userToken;
+    for (const [name, scope] of CASES) {
+      rows.push(
+        await probe("password-realm", name, scope, {
+          grant_type: "http://auth0.com/oauth/grant-type/password-realm",
+          realm: e2e.realm,
+          username: e2e.username,
+          password: e2e.password,
+          client_id: e2e.loginClientId,
+          client_secret: e2e.loginClientSecret,
+          audience: e2e.mcpAudience,
+        }),
+      );
+      rows.push(
+        await probe("client_credentials", name, scope, {
+          grant_type: "client_credentials",
+          client_id: e2e.m2mClientId,
+          client_secret: e2e.m2mClientSecret,
+          audience: e2e.mcpAudience,
+        }),
+      );
+      // The same parameters the core sends for an on-behalf-of exchange.
+      rows.push(
+        await probe("token-exchange", name, scope, {
+          grant_type: TOKEN_EXCHANGE_GRANT,
+          client_id: e2e.oboClientId,
+          client_secret: e2e.oboClientSecret,
+          subject_token: subjectToken,
+          subject_token_type: "urn:ietf:params:oauth:token-type:access_token",
+          requested_token_type: "urn:ietf:params:oauth:token-type:access_token",
+          audience: e2e.downstreamAudience,
+        }),
+      );
+    }
+    const table = rows.map(
+      (r) =>
+        `${r.grant.padEnd(18)} ${r.requested.padEnd(8)} requested=${JSON.stringify(r.requestedScope)} ` +
+        `status=${r.status} error=${r.error ?? "none"} response.scope=${r.responseHasScope ? JSON.stringify(r.responseScope) : "ABSENT"} ` +
+        `claim.scope=${r.claimHasScope ? JSON.stringify(r.claimScope) : "ABSENT"}`,
+    );
+    console.log(`H5 probe table\n${table.join("\n")}`);
+  });
+
+  // Expected observations. Each row: status, OAuth error (null = none), response scope (null = key
+  // absent), claim scope (null = claim absent). The client credentials grant refuses an undefined
+  // scope outright (403) instead of dropping it, and defaults an absent scope to the full grant.
+  // The other two grants drop an undefined scope: a partial request reports the granted part, a
+  // zero request reports an empty string and the token has no `scope` claim.
+  type Expected = [status: number, error: string | null, response: string | null, claim: string | null];
+  const EXPECTED: Record<Grant, Record<Case, Expected>> = {
+    "password-realm": {
+      partial: [200, null, "work:read", "work:read"],
+      zero: [200, null, "", null],
+      none: [200, null, "work:read", "work:read"],
+    },
+    client_credentials: {
+      partial: [403, "access_denied", null, null],
+      zero: [403, "access_denied", null, null],
+      none: [200, null, "work:read", "work:read"],
+    },
+    "token-exchange": {
+      partial: [200, null, "work:read", "work:read"],
+      zero: [200, null, "", null],
+      none: [200, null, null, null],
+    },
+  };
+
+  for (const grant of ["password-realm", "client_credentials", "token-exchange"] as const) {
+    for (const requested of ["partial", "zero", "none"] as const) {
+      it(`${grant} with ${requested} scope reports scope as observed`, () => {
+        const row = find(grant, requested);
+        const [status, error, response, claim] = EXPECTED[grant][requested];
+        expect(row.status).toBe(status);
+        expect(row.error).toBe(error);
+        expect(row.responseHasScope).toBe(response !== null);
+        expect(row.responseScope).toBe(response);
+        expect(row.claimHasScope).toBe(claim !== null);
+        expect(row.claimScope).toBe(claim);
+      });
+    }
+  }
+
+  describe("wrapper interpretation through the real handler", () => {
+    let downstream: DownstreamApi;
+    let server: E2eMcpServer | undefined;
+    let counter: FetchCounter | undefined;
+
+    beforeAll(async () => {
+      downstream = await startDownstreamApi({ domain: e2e.domain, audience: e2e.downstreamAudience });
+    });
+    beforeEach(async () => {
+      counter = installFetchCounter();
+      server = await startMcpServer({ env: e2e as E2eEnv, downstreamUrl: downstream.url });
+    });
+    afterEach(async () => {
+      counter?.restore();
+      await server?.close();
+      server = undefined;
+      downstream.calls.length = 0;
+    });
+    afterAll(async () => {
+      await downstream?.close();
+    });
+
+    async function delegate(scope: string) {
+      const session = await connectMcpClient(server!.url, userToken);
+      try {
+        counter!.reset();
+        return await callToolJson<DelegateResult | string>(session.client, "delegate", { scope });
+      } finally {
+        await session.close();
+      }
+    }
+
+    it("treats a partial grant as the downscope outcome and never calls the downstream API", async () => {
+      const { isError, value } = await delegate(PARTIAL);
+      expect(isError).toBe(true);
+      expect(typeof value).toBe("string");
+      expect(value as string).toMatch(/did not include all requested scopes/i);
+      expect(counter!.exchanges).toBe(1);
+      expect(downstream.calls).toEqual([]);
+    });
+
+    it("treats a zero grant (empty scope string) as nothing granted, not as granted as requested", async () => {
+      const { isError, value } = await delegate(UNDEFINED_SCOPE);
+      expect(isError).toBe(true);
+      expect(typeof value).toBe("string");
+      expect(value as string).toMatch(/did not include all requested scopes/i);
+      expect(counter!.exchanges).toBe(1);
+      expect(downstream.calls).toEqual([]);
+    });
+
+    it("control: a fully granted request is served", async () => {
+      const { isError, value } = await delegate("work:read");
+      expect(isError).toBe(false);
+      expect((value as DelegateResult).grantedScopes).toEqual(["work:read"]);
+      expect(downstream.calls.map((c) => c.status)).toEqual([200]);
+    });
+  });
+});
