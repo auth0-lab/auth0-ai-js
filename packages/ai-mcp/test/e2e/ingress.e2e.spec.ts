@@ -1,5 +1,14 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { callToolJson, connectMcpClient, getUserToken, loadE2eEnv, postInitialize, startDownstreamApi, startMcpServer } from "./support/index.js";
+import {
+  callToolJson,
+  connectMcpClient,
+  getUserToken,
+  loadE2eEnv,
+  postInitialize,
+  startDownstreamApi,
+  startMcpServer,
+} from "./support/index.js";
+import { decodeClaims } from "./support/tokens.js";
 import type { DownstreamApi, E2eMcpServer } from "./support/index.js";
 
 const e2e = loadE2eEnv();
@@ -11,10 +20,15 @@ describe.skipIf(!e2e.enabled)("e2e ingress", () => {
   let wrongAudienceToken: string;
 
   beforeAll(async () => {
-    downstream = await startDownstreamApi({ domain: e2e.domain, audience: e2e.downstreamAudience });
+    downstream = await startDownstreamApi({
+      domain: e2e.domain,
+      audience: e2e.downstreamAudience,
+    });
     server = await startMcpServer({ env: e2e, downstreamUrl: downstream.url });
     userToken = await getUserToken(e2e);
-    wrongAudienceToken = await getUserToken(e2e, { audience: e2e.downstreamAudience });
+    wrongAudienceToken = await getUserToken(e2e, {
+      audience: e2e.downstreamAudience,
+    });
   });
 
   afterAll(async () => {
@@ -25,7 +39,10 @@ describe.skipIf(!e2e.enabled)("e2e ingress", () => {
   it("serves a tool call for a valid token", async () => {
     const session = await connectMcpClient(server.url, userToken);
     try {
-      const { isError, value } = await callToolJson<{ sub: string; scopes: string[] }>(session.client, "whoami");
+      const { isError, value } = await callToolJson<{
+        sub: string;
+        scopes: string[];
+      }>(session.client, "whoami");
       expect(isError).toBe(false);
       expect(value.sub).toMatch(/\|/);
       expect(value.scopes).toContain(e2e.downstreamScope);
@@ -38,7 +55,9 @@ describe.skipIf(!e2e.enabled)("e2e ingress", () => {
     const res = await postInitialize(server.url);
     expect(res.status).toBe(401);
     expect(res.challenge?.scheme).toBe("Bearer");
-    expect(res.challenge?.params["resource_metadata"]).toMatch(/^https:\/\/.+oauth-protected-resource/);
+    expect(res.challenge?.params["resource_metadata"]).toMatch(
+      /^https:\/\/.+oauth-protected-resource/,
+    );
     // RFC 6750 section 3.1: no error code when the request lacked any authentication.
     expect(res.challenge?.params).not.toHaveProperty("error");
   });
@@ -50,23 +69,33 @@ describe.skipIf(!e2e.enabled)("e2e ingress", () => {
   });
 
   it("rejects a tenant-signed token issued for another audience", async () => {
-    const res = await postInitialize(server.url, `Bearer ${wrongAudienceToken}`);
+    const res = await postInitialize(
+      server.url,
+      `Bearer ${wrongAudienceToken}`,
+    );
     expect(res.status).toBe(401);
     expect(res.challenge?.params["error"]).toBe("invalid_token");
   });
 
   it.skipIf(e2e.expiredToken === "")(
-    "rejects an expired token",
+    "rejects an expired token (skipped: needs an expired tenant-issued token, see README)",
     async () => {
-      const res = await postInitialize(server.url, `Bearer ${e2e.expiredToken}`);
+      const exp = decodeClaims(e2e.expiredToken)["exp"];
+      expect(
+        typeof exp,
+        "supplied expired token must carry a numeric exp claim",
+      ).toBe("number");
+      expect(
+        (exp as number) < Math.floor(Date.now() / 1000),
+        "the supplied AUTH0_E2E_EXPIRED_TOKEN is not expired",
+      ).toBe(true);
+      const res = await postInitialize(
+        server.url,
+        `Bearer ${e2e.expiredToken}`,
+      );
       expect(res.status).toBe(401);
       expect(res.challenge?.params["error"]).toBe("invalid_token");
     },
-  );
-
-  it.skipIf(e2e.expiredToken !== "")(
-    "rejects an expired token (skipped: needs a tenant API with a short token lifetime)",
-    () => undefined,
   );
 
   it("answers a token without the required scope with 403 insufficient_scope", async () => {

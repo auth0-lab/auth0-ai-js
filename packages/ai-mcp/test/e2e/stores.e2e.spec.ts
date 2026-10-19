@@ -1,7 +1,20 @@
 import { randomBytes } from "node:crypto";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+} from "vitest";
 import { InvalidConfigurationError } from "@auth0/auth0-api-js";
-import type { CachedToken, IndexedTokenStore, TokenIndexMember, TokenStore } from "@auth0/auth0-api-js";
+import type {
+  CachedToken,
+  IndexedTokenStore,
+  TokenIndexMember,
+  TokenStore,
+} from "@auth0/auth0-api-js";
 import { createEncryptedTokenStore } from "../../src/stores/encrypted-store.js";
 import { MemoryIndexedTokenStore } from "../../src/stores/memory-indexed-store.js";
 import {
@@ -13,7 +26,12 @@ import {
   startDownstreamApi,
   startMcpServer,
 } from "./support/index.js";
-import type { DelegateResult, DownstreamApi, E2eMcpServer, FetchCounter } from "./support/index.js";
+import type {
+  DelegateResult,
+  DownstreamApi,
+  E2eMcpServer,
+  FetchCounter,
+} from "./support/index.js";
 
 const e2e = loadE2eEnv();
 
@@ -71,7 +89,12 @@ function captureBearers(downstreamUrl: string) {
   const original = globalThis.fetch;
   const bearers: string[] = [];
   const wrapper = (async (input: RequestInfo | URL, init?: RequestInit) => {
-    const url = input instanceof Request ? input.url : input instanceof URL ? input.href : String(input);
+    const url =
+      input instanceof Request
+        ? input.url
+        : input instanceof URL
+          ? input.href
+          : String(input);
     if (url === downstreamUrl) {
       const header = new Headers(init?.headers).get("authorization") ?? "";
       const token = /^Bearer (\S+)$/i.exec(header)?.[1];
@@ -88,7 +111,8 @@ function captureBearers(downstreamUrl: string) {
   };
 }
 
-const scopesOf = (scope: string | undefined) => (scope ?? "").split(" ").filter(Boolean);
+const scopesOf = (scope: string | undefined) =>
+  (scope ?? "").split(" ").filter(Boolean);
 
 describe.skipIf(!e2e.enabled)("e2e token stores", () => {
   let downstream: DownstreamApi;
@@ -99,7 +123,10 @@ describe.skipIf(!e2e.enabled)("e2e token stores", () => {
   const closers: (() => Promise<void>)[] = [];
 
   beforeAll(async () => {
-    downstream = await startDownstreamApi({ domain: e2e.domain, audience: e2e.downstreamAudience });
+    downstream = await startDownstreamApi({
+      domain: e2e.domain,
+      audience: e2e.downstreamAudience,
+    });
     userToken = await getUserToken(e2e);
   });
 
@@ -122,15 +149,26 @@ describe.skipIf(!e2e.enabled)("e2e token stores", () => {
   });
 
   async function open(options: Partial<Parameters<typeof startMcpServer>[0]>) {
-    const server = await startMcpServer({ env: e2e, downstreamUrl: downstream.url, ...options });
+    const server = await startMcpServer({
+      env: e2e,
+      downstreamUrl: downstream.url,
+      ...options,
+    });
     servers.push(server);
     const session = await connectMcpClient(server.url, userToken);
     closers.push(() => session.close());
     return session;
   }
 
-  async function delegate(session: Awaited<ReturnType<typeof open>>, scope: string) {
-    const { isError, value } = await callToolJson<DelegateResult>(session.client, "delegate", { scope });
+  async function delegate(
+    session: Awaited<ReturnType<typeof open>>,
+    scope: string,
+  ) {
+    const { isError, value } = await callToolJson<DelegateResult>(
+      session.client,
+      "delegate",
+      { scope },
+    );
     expect(isError).toBe(false);
     expect(value.status).toBe(200);
     return value;
@@ -139,7 +177,10 @@ describe.skipIf(!e2e.enabled)("e2e token stores", () => {
   const lastClaims = () => downstream.calls.at(-1)?.claims;
 
   it("non_strict with an indexed store reuses a covering token and exchanges again for an uncovered scope", async () => {
-    const session = await open({ scopeMatching: "non_strict", tokenStore: new MemoryIndexedTokenStore() });
+    const session = await open({
+      scopeMatching: "non_strict",
+      tokenStore: new MemoryIndexedTokenStore(),
+    });
     counter!.reset();
 
     await delegate(session, "work:read work:write");
@@ -147,17 +188,26 @@ describe.skipIf(!e2e.enabled)("e2e token stores", () => {
 
     const covered = await delegate(session, "work:read");
     expect(counter!.exchanges).toBe(1);
-    expect(covered.grantedScopes).toEqual(expect.arrayContaining(["work:read", "work:write"]));
+    expect(covered.grantedScopes).toEqual(
+      expect.arrayContaining(["work:read", "work:write"]),
+    );
     expect(downstream.calls.map((c) => c.status)).toEqual([200, 200]);
-    expect(scopesOf(lastClaims()?.["scope"] as string | undefined)).toContain("work:read");
+    expect(scopesOf(lastClaims()?.["scope"] as string | undefined)).toContain(
+      "work:read",
+    );
 
     await delegate(session, "work:admin");
     expect(counter!.exchanges).toBe(2);
-    expect(scopesOf(lastClaims()?.["scope"] as string | undefined)).toContain("work:admin");
+    expect(scopesOf(lastClaims()?.["scope"] as string | undefined)).toContain(
+      "work:admin",
+    );
   });
 
   it("strict matching does not reuse a token for a narrower scope", async () => {
-    const session = await open({ scopeMatching: "strict", tokenStore: new MemoryIndexedTokenStore() });
+    const session = await open({
+      scopeMatching: "strict",
+      tokenStore: new MemoryIndexedTokenStore(),
+    });
     counter!.reset();
     await delegate(session, "work:read work:write");
     await delegate(session, "work:read");
@@ -180,7 +230,9 @@ describe.skipIf(!e2e.enabled)("e2e token stores", () => {
 
     /** Runs one delegate call and returns the real downstream bearer and the verified claims. */
     async function firstCall(backing: SpyStore, secret: string) {
-      const session = await open({ tokenStore: createEncryptedTokenStore(backing, { secret }) });
+      const session = await open({
+        tokenStore: createEncryptedTokenStore(backing, { secret }),
+      });
       counter!.reset();
       capture!.bearers.length = 0;
       await delegate(session, "work:read");
@@ -199,21 +251,35 @@ describe.skipIf(!e2e.enabled)("e2e token stores", () => {
 
       const dump = backing.dump();
       const parts = bearer.split(".");
-      expect(parts).toHaveLength(3);
-      expect(dump.includes(bearer)).toBe(false);
-      for (const part of parts) expect(dump.includes(part)).toBe(false);
+      expect(parts.length, "bearer must be a three-segment JWT").toBe(3);
+      expect(
+        dump.includes(bearer),
+        "store dump must not contain the bearer",
+      ).toBe(false);
+      for (const part of parts)
+        expect(
+          dump.includes(part),
+          "store dump must not contain a bearer segment",
+        ).toBe(false);
       expect(typeof claims.sub).toBe("string");
       expect(dump.includes(claims.sub!)).toBe(false);
       expect(dump.includes(encodeURIComponent(claims.sub!))).toBe(false);
       // The stored envelope is a compact JWE (five segments), not a JWT (three).
-      for (const { value } of backing.writes) expect(value.accessToken.split(".")).toHaveLength(5);
+      for (const { value } of backing.writes)
+        expect(
+          value.accessToken.split(".").length,
+          "stored token must be a five-segment JWE",
+        ).toBe(5);
 
       // Second call: served from cache, downstream verifies the decrypted token.
       downstream.calls.length = 0;
       await delegate(session, "work:read");
       expect(counter!.exchanges).toBe(1);
       expect(downstream.calls.map((c) => c.status)).toEqual([200]);
-      expect(capture!.bearers.at(-1)).toBe(bearer);
+      expect(
+        capture!.bearers.at(-1) === bearer,
+        "downstream must receive the cached bearer",
+      ).toBe(true);
 
       // Public read-back through the wrapper with the same secret yields the real token.
       const reader = createEncryptedTokenStore(backing, { secret });
@@ -226,20 +292,27 @@ describe.skipIf(!e2e.enabled)("e2e token stores", () => {
       const secret = newSecret();
       const { bearer } = await firstCall(backing, secret);
 
-      const second = await open({ tokenStore: createEncryptedTokenStore(backing, { secret }) });
+      const second = await open({
+        tokenStore: createEncryptedTokenStore(backing, { secret }),
+      });
       counter!.reset();
       downstream.calls.length = 0;
       await delegate(second, "work:read");
       expect(counter!.exchanges).toBe(0);
       expect(downstream.calls.map((c) => c.status)).toEqual([200]);
-      expect(capture!.bearers.at(-1)).toBe(bearer);
+      expect(
+        capture!.bearers.at(-1) === bearer,
+        "downstream must receive the cached bearer",
+      ).toBe(true);
     });
 
     it("a different key is a cache miss that leads to a fresh exchange and leaks no plaintext", async () => {
       const backing = new SpyStore();
       const { bearer, claims } = await firstCall(backing, newSecret());
 
-      const other = await open({ tokenStore: createEncryptedTokenStore(backing, { secret: newSecret() }) });
+      const other = await open({
+        tokenStore: createEncryptedTokenStore(backing, { secret: newSecret() }),
+      });
       counter!.reset();
       downstream.calls.length = 0;
       await delegate(other, "work:read");
@@ -248,10 +321,17 @@ describe.skipIf(!e2e.enabled)("e2e token stores", () => {
       expect(downstream.calls.map((c) => c.status)).toEqual([200]);
 
       const dump = backing.dump();
-      expect(dump.includes(bearer)).toBe(false);
+      expect(
+        dump.includes(bearer),
+        "store dump must not contain the bearer",
+      ).toBe(false);
       const fresh = capture!.bearers.at(-1)!;
       expect(dump.includes(fresh)).toBe(false);
-      for (const part of fresh.split(".")) expect(dump.includes(part)).toBe(false);
+      for (const part of fresh.split("."))
+        expect(
+          dump.includes(part),
+          "store dump must not contain a bearer segment",
+        ).toBe(false);
       expect(dump.includes(claims.sub!)).toBe(false);
     });
   });
