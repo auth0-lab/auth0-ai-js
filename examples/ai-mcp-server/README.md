@@ -51,6 +51,8 @@ cp .env.example .env   # fill in every value, including the SMOKE_* ones
 npm run smoke:real
 ```
 
+`smoke:real` needs Node 22.9 or later, because it loads `.env` with `--env-file-if-exists`.
+
 `.env` is ignored by git. Keep real values out of any file that is committed.
 
 ### Expected output

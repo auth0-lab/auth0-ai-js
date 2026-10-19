@@ -19,7 +19,7 @@ pass file name fragments to the runner script, for example `run-e2e.sh m2m obo-c
 
 ## Pinned tenant behaviour
 
-The specs that pin exact tenant status or error codes (`h5-scope-probe`, `obo-errors`, `token-vault`)
+The specs that pin exact tenant status or error codes (`scope-probe`, `obo-errors`, `token-vault`)
 document how the tenant behaves today. A failure there means re-observe the tenant first; it is not
 necessarily a library regression.
 

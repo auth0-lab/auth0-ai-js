@@ -120,7 +120,7 @@ describe.skipIf(!e2e.enabled)("e2e scope reporting on partial and zero grants", 
         `status=${r.status} error=${r.error ?? "none"} response.scope=${r.responseHasScope ? JSON.stringify(r.responseScope) : "ABSENT"} ` +
         `claim.scope=${r.claimHasScope ? JSON.stringify(r.claimScope) : "ABSENT"}`,
     );
-    console.log(`H5 probe table\n${table.join("\n")}`);
+    console.log(`scope probe table\n${table.join("\n")}`);
   });
 
   // Expected observations. Each row: status, OAuth error (null = none), response scope (null = key

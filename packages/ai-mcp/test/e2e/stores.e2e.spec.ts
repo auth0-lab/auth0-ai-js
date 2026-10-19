@@ -262,8 +262,8 @@ describe.skipIf(!e2e.enabled)("e2e token stores", () => {
           "store dump must not contain a bearer segment",
         ).toBe(false);
       expect(typeof claims.sub).toBe("string");
-      expect(dump.includes(claims.sub!)).toBe(false);
-      expect(dump.includes(encodeURIComponent(claims.sub!))).toBe(false);
+      expect(dump.includes(claims.sub!), "store dump must not contain the subject").toBe(false);
+      expect(dump.includes(encodeURIComponent(claims.sub!)), "store dump must not contain the encoded subject").toBe(false);
       // The stored envelope is a compact JWE (five segments), not a JWT (three).
       for (const { value } of backing.writes)
         expect(
@@ -332,7 +332,7 @@ describe.skipIf(!e2e.enabled)("e2e token stores", () => {
           dump.includes(part),
           "store dump must not contain a bearer segment",
         ).toBe(false);
-      expect(dump.includes(claims.sub!)).toBe(false);
+      expect(dump.includes(claims.sub!), "store dump must not contain the subject").toBe(false);
     });
   });
 

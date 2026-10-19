@@ -176,7 +176,7 @@ describe.skipIf(!e2e.enabled)("e2e on-behalf-of rejections by the tenant", () =>
     expect(counter!.exchanges).toBe(1);
     expect(tap!.responses).toHaveLength(1);
     const real = tap!.responses[0]!;
-    console.info(`observed undefinedAudience status=${real.status} error=${real.error}`);
+    if (process.env.AUTH0_E2E_VERBOSE === "1") console.info(`observed undefinedAudience status=${real.status} error=${real.error}`);
     expect({ status: real.status, error: real.error }).toEqual(OBSERVED.undefinedAudience);
     expectSanitized(String(first.value), real.description);
     expect(downstream.calls).toHaveLength(0);
@@ -200,7 +200,7 @@ describe.skipIf(!e2e.enabled)("e2e on-behalf-of rejections by the tenant", () =>
     expect(counter!.exchanges).toBe(1);
     expect(tap!.responses).toHaveLength(1);
     const real = tap!.responses[0]!;
-    console.info(`observed machineSubject status=${real.status} error=${real.error}`);
+    if (process.env.AUTH0_E2E_VERBOSE === "1") console.info(`observed machineSubject status=${real.status} error=${real.error}`);
     expect({ status: real.status, error: real.error }).toEqual(OBSERVED.machineSubject);
     expectSanitized(String(result.value), real.description, { "machine token": machineToken });
     expect(downstream.calls).toHaveLength(0);
@@ -222,7 +222,7 @@ describe.skipIf(!e2e.enabled)("e2e on-behalf-of rejections by the tenant", () =>
     expect(counter!.exchanges).toBe(1);
     expect(tap!.responses).toHaveLength(1);
     const real = tap!.responses[0]!;
-    console.info(`observed wrongSecret status=${real.status} error=${real.error}`);
+    if (process.env.AUTH0_E2E_VERBOSE === "1") console.info(`observed wrongSecret status=${real.status} error=${real.error}`);
     expect({ status: real.status, error: real.error }).toEqual(OBSERVED.wrongSecret);
     expectSanitized(String(first.value), real.description, { "wrong secret": wrongSecret });
     expect(downstream.calls).toHaveLength(0);

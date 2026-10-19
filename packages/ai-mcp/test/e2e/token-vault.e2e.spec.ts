@@ -139,7 +139,7 @@ describe.skipIf(!e2e.enabled)("e2e Token Vault getTokenForService", () => {
     expect(first.isError).toBe(true);
     expect(tap!.responses).toHaveLength(1);
     const real = tap!.responses[0]!;
-    console.info(`observed vault grant=${real.grant} status=${real.status} error=${real.error}`);
+    if (process.env.AUTH0_E2E_VERBOSE === "1") console.info(`observed vault grant=${real.grant} status=${real.status} error=${real.error}`);
     expect({ grant: real.grant, status: real.status, error: real.error }).toEqual(OBSERVED);
     expect(Object.values(counter!.byGrant).reduce((a, b) => a + b, 0)).toBe(1);
     expect(counter!.count(real.grant)).toBe(1);

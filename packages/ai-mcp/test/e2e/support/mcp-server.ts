@@ -220,14 +220,36 @@ function bridge(
         return;
       }
       // Stream the body so server-sent events reach the client as they are written.
-      for await (const chunk of response.body as unknown as AsyncIterable<Uint8Array>) res.write(chunk);
-      res.end();
+      const reader = response.body.getReader();
+      let closed = false;
+      res.once("close", () => {
+        closed = true;
+        void reader.cancel().catch(() => undefined);
+      });
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done || closed) break;
+        if (!res.write(value) && !closed) {
+          await new Promise<void>((resolve) => {
+            const settle = () => {
+              res.off("drain", settle);
+              res.off("close", settle);
+              resolve();
+            };
+            res.once("drain", settle);
+            res.once("close", settle);
+          });
+        }
+      }
+      if (!closed) res.end();
     })().catch((err: unknown) => {
       if (!res.headersSent) {
         res.statusCode = 500;
         res.setHeader("x-e2e-bridge-error", err instanceof Error ? err.name : "unknown");
+        res.end();
+        return;
       }
-      res.end();
+      res.destroy(err instanceof Error ? err : new Error("bridge failure"));
     });
   };
 }

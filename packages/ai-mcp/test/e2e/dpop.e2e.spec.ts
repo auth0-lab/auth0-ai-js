@@ -65,7 +65,7 @@ describe.skipIf(!e2e.enabled)("e2e DPoP negatives with an unbound tenant token",
     expect(res.challenge?.params["algs"]).toBe("ES256");
     // RFC 6750 section 3.1: no error value, because the request lacked the supported authentication.
     expect(res.challenge?.params).not.toHaveProperty("error");
-    expect(res.header).not.toMatch(/Bearer/);
+    expect(/Bearer/.test(res.header ?? ""), "challenge must advertise only DPoP").toBe(false);
     expect(res.text.includes(userToken), "response body must not echo the credential").toBe(false);
   });
 
@@ -87,8 +87,8 @@ describe.skipIf(!e2e.enabled)("e2e DPoP negatives with an unbound tenant token",
     expect(res.status).toBe(401);
     // The binding check fails first (no cnf), so the error is invalid_token, not invalid_dpop_proof.
     // Allowed mode sends two challenges (Bearer first, then DPoP); the error rides on the DPoP one.
-    expect(res.header).toMatch(/DPoP error="invalid_token"/);
-    expect(res.header).not.toMatch(/Bearer [^,]*error=/);
+    expect(/DPoP error="invalid_token"/.test(res.header ?? ""), "DPoP challenge carries invalid_token").toBe(true);
+    expect(/Bearer [^,]*error=/.test(res.header ?? ""), "Bearer challenge carries no error").toBe(false);
     expect((res.header ?? "").includes(proof), "challenge header must not echo the proof").toBe(false);
     expect((res.header ?? "").includes(userToken), "challenge header must not echo the credential").toBe(false);
     expect(res.text.includes(proof), "response body must not echo the proof").toBe(false);

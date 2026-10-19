@@ -101,8 +101,8 @@ describe.skipIf(!e2e.enabled)("e2e organization policy", () => {
     expect(res.status).toBe(401);
     expect(res.challenge?.params["error"]).toBe("invalid_token");
     // The challenge must not reveal which organizations the server accepts.
-    expect(res.wwwAuthenticate).not.toContain(OTHER_ORG);
-    expect(res.wwwAuthenticate).not.toContain(e2e.orgId);
+    expect((res.wwwAuthenticate ?? "").includes(OTHER_ORG), "challenge must not echo the org id").toBe(false);
+    expect((res.wwwAuthenticate ?? "").includes(e2e.orgId), "challenge must not echo the org id").toBe(false);
   });
 
   it("accepts the organization when it is one of several allowed", async () => {
