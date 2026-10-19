@@ -215,9 +215,18 @@ function bridge(
       const response = await handle(new Request(origin + (req.url ?? "/"), { method, headers, body }));
       res.statusCode = response.status;
       response.headers.forEach((value, name) => res.appendHeader(name, value));
-      res.end(Buffer.from(await response.arrayBuffer()));
-    })().catch(() => {
-      res.statusCode = 502;
+      if (response.body === null) {
+        res.end();
+        return;
+      }
+      // Stream the body so server-sent events reach the client as they are written.
+      for await (const chunk of response.body as unknown as AsyncIterable<Uint8Array>) res.write(chunk);
+      res.end();
+    })().catch((err: unknown) => {
+      if (!res.headersSent) {
+        res.statusCode = 500;
+        res.setHeader("x-e2e-bridge-error", err instanceof Error ? err.name : "unknown");
+      }
       res.end();
     });
   };

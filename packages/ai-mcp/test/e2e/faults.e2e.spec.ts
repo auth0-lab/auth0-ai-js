@@ -100,7 +100,7 @@ describe.skipIf(!e2e.enabled)("e2e fault injection", () => {
       // A 429 maps like any other upstream failure: the wrapper does not retry or surface Retry-After.
       expect(failed.isError).toBe(true);
       expect(failed.value).toBe(GENERIC_FAILURE);
-      expect(JSON.stringify(failed.value)).not.toContain(UPSTREAM_SECRET);
+      expect(JSON.stringify(failed.value).includes(UPSTREAM_SECRET), "tool result must not echo the upstream body").toBe(false);
       expect(fault!.injected).toBe(1);
       // One attempt only: no automatic retry inside the call.
       expect(counter!.exchanges).toBe(1);
@@ -139,7 +139,6 @@ describe.skipIf(!e2e.enabled)("e2e fault injection", () => {
       expect(fault!.injected).toBe(1);
       expect(counter!.exchanges).toBe(1);
       expect(elapsed).toBeGreaterThanOrEqual(delayMs - 100);
-      console.info(`delayed exchange completed in ${elapsed} ms (injected delay ${delayMs} ms)`);
     });
   });
 
@@ -178,7 +177,7 @@ describe.skipIf(!e2e.enabled)("e2e fault injection", () => {
       expect(failed.status).toBe(401);
       expect(failed.challenge?.scheme).toBe("Bearer");
       expect(failed.challenge?.params.error).toBe("invalid_token");
-      expect(failed.wwwAuthenticate ?? "").not.toContain(UPSTREAM_SECRET);
+      expect((failed.wwwAuthenticate ?? "").includes(UPSTREAM_SECRET), "challenge must not echo the upstream body").toBe(false);
 
       // The fault is exhausted and a failed fetch is not cached: the same token now verifies.
       const retried = await postInitialize(server.url, `Bearer ${userToken}`);

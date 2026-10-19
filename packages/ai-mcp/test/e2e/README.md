@@ -10,12 +10,18 @@ checked) and reports the verified claims.
 
 Every spec is `describe.skipIf(!e2e.enabled)`. The suite is enabled only when `AUTH0_E2E=1`.
 With `AUTH0_E2E=1` and a required variable missing, the spec file fails and names the missing
-variables (never their values). Without `AUTH0_E2E=1`, `npm test` reports these specs as skipped.
+variables (never their values). `npm test` never runs them, even with `AUTH0_E2E=1` exported: the default config excludes `*.e2e.spec.ts`, and `npm run test:e2e` uses `vitest.e2e.config.ts`.
 No CI workflow sets `AUTH0_E2E`, so CI never runs them.
 
 Run them with `npm run test:e2e` after exporting the variables below. Files run one at a time
-(`--no-file-parallelism`) so they do not hit the tenant token endpoint at once. To run a subset,
+(`fileParallelism: false`) so they do not hit the tenant token endpoint at once. To run a subset,
 pass file name fragments to the runner script, for example `run-e2e.sh m2m obo-cache`.
+
+## Pinned tenant behaviour
+
+The specs that pin exact tenant status or error codes (`h5-scope-probe`, `obo-errors`, `token-vault`)
+document how the tenant behaves today. A failure there means re-observe the tenant first; it is not
+necessarily a library regression.
 
 ## Rate limits
 

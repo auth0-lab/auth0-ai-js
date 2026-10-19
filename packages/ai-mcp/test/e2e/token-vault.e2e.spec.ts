@@ -118,7 +118,7 @@ describe.skipIf(!e2e.enabled)("e2e Token Vault getTokenForService", () => {
   });
 
   function expectSanitized(text: string, description: string | null) {
-    expect(text).toBe(PUBLIC_FAILURE_TEXT);
+    expect(text === PUBLIC_FAILURE_TEXT, "tool text must be the generic public failure text").toBe(true);
     expect(
       leaks(text, {
         domain: e2e.domain,
@@ -174,7 +174,5 @@ describe.skipIf(!e2e.enabled)("e2e Token Vault getTokenForService", () => {
     expect(store.size).toBe(0);
   });
 
-  it.skip("returns a federated access token for a linked account (needs a configured Token Vault connection and a linked account for the test user; set AUTH0_E2E_VAULT_CONNECTION once the tenant has both)", async () => {
-    // Intentionally empty: enabling this needs tenant configuration this suite must not create.
-  });
+  it.todo("returns a federated access token for a linked account (needs a configured Token Vault connection and a linked account for the test user)");
 });

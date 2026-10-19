@@ -77,7 +77,7 @@ describe.skipIf(!e2e.enabled)("e2e client credentials through the wrapper", () =
         .getClientCredentialsToken({ audience: e2e.mcpAudience, scope })
         .then(() => undefined, (e: unknown) => e as Error);
       expect(error).toBeInstanceOf(Error);
-      expect(error!.message).toBe("The token operation failed.");
+      expect(error!.message === "The token operation failed.", "error message must be the generic public text").toBe(true);
       expect(error).toBeInstanceOf(TokenByClientCredentialsError);
       expect(error!.name).toBe("TokenByClientCredentialsError");
       // The tenant's reason stays on the cause chain for server-side diagnostics only.

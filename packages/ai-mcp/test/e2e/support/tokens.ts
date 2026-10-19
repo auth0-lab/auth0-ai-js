@@ -13,6 +13,7 @@ export interface TokenEndpointResult {
 const MAX_ATTEMPTS = 6;
 const BASE_DELAY_MS = 1000;
 const MAX_DELAY_MS = 30_000;
+const MIN_DELAY_MS = 250;
 
 function isRetryable(status: number): boolean {
   return status === 429 || status >= 500;
@@ -37,7 +38,7 @@ function serverDelayMs(headers: Headers, now: number): number | null {
 /** Delay before retry number `attempt` (0-based): the server hint if any, else exponential with jitter. */
 export function backoffDelayMs(attempt: number, headers: Headers, now: number = Date.now()): number {
   const hinted = serverDelayMs(headers, now);
-  const delay = hinted ?? BASE_DELAY_MS * 2 ** attempt * (0.75 + Math.random() * 0.5);
+  const delay = Math.max(MIN_DELAY_MS, hinted ?? BASE_DELAY_MS * 2 ** attempt * (0.75 + Math.random() * 0.5));
   return Math.min(delay, MAX_DELAY_MS);
 }
 

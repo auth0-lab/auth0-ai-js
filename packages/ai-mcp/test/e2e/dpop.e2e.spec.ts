@@ -66,7 +66,7 @@ describe.skipIf(!e2e.enabled)("e2e DPoP negatives with an unbound tenant token",
     // RFC 6750 section 3.1: no error value, because the request lacked the supported authentication.
     expect(res.challenge?.params).not.toHaveProperty("error");
     expect(res.header).not.toMatch(/Bearer/);
-    expect(res.text).not.toContain(userToken);
+    expect(res.text.includes(userToken), "response body must not echo the credential").toBe(false);
   });
 
   it("required mode without any header advertises DPoP", async () => {
@@ -89,10 +89,10 @@ describe.skipIf(!e2e.enabled)("e2e DPoP negatives with an unbound tenant token",
     // Allowed mode sends two challenges (Bearer first, then DPoP); the error rides on the DPoP one.
     expect(res.header).toMatch(/DPoP error="invalid_token"/);
     expect(res.header).not.toMatch(/Bearer [^,]*error=/);
-    expect(res.header).not.toContain(proof);
-    expect(res.header).not.toContain(userToken);
-    expect(res.text).not.toContain(proof);
-    expect(res.text).not.toContain(userToken);
+    expect((res.header ?? "").includes(proof), "challenge header must not echo the proof").toBe(false);
+    expect((res.header ?? "").includes(userToken), "challenge header must not echo the credential").toBe(false);
+    expect(res.text.includes(proof), "response body must not echo the proof").toBe(false);
+    expect(res.text.includes(userToken), "response body must not echo the credential").toBe(false);
   });
 
   it("rejects a proof that is not a JWT with a 400 invalid_request challenge", async () => {
@@ -110,7 +110,7 @@ describe.skipIf(!e2e.enabled)("e2e DPoP negatives with an unbound tenant token",
     expect(res.challenge?.params["error"]).toBe("invalid_token");
   });
 
-  it.skip("answers invalid_dpop_proof for a bad proof (unreachable with an unbound token: the binding check fails first; needs a cnf.jkt token)", () => undefined);
+  it.todo("answers invalid_dpop_proof for a bad proof (needs a tenant client that issues cnf.jkt tokens: with an unbound token the binding check fails first)");
 
   it("allowed mode (default) still accepts an unbound Bearer token", async () => {
     const session = await connectMcpClient(allowed.url, userToken);
@@ -123,5 +123,5 @@ describe.skipIf(!e2e.enabled)("e2e DPoP negatives with an unbound tenant token",
     }
   });
 
-  it.skip("accepts a DPoP-bound token with a valid proof (needs a tenant client that issues cnf.jkt tokens)", () => undefined);
+  it.todo("accepts a DPoP-bound token with a valid proof (needs a tenant client that issues cnf.jkt tokens)");
 });

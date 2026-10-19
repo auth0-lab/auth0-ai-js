@@ -141,7 +141,7 @@ describe.skipIf(!e2e.enabled)("e2e on-behalf-of rejections by the tenant", () =>
   }
 
   function expectSanitized(text: string, tenantDescription: string | null, extra: Record<string, string> = {}) {
-    expect(text).toBe(PUBLIC_FAILURE_TEXT);
+    expect(text === PUBLIC_FAILURE_TEXT, "tool text must be the generic public failure text").toBe(true);
     expect(
       leaks(text, {
         domain: e2e.domain,
