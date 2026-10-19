@@ -5,3 +5,5 @@ export * from "./fetch-counter.js";
 export * from "./downstream-api.js";
 export * from "./mcp-server.js";
 export * from "./mcp-client.js";
+export * from "./fetch-fault.js";
+export * from "./dpop.js";

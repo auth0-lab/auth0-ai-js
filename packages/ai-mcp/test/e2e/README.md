@@ -47,7 +47,28 @@ Management API calls and change nothing in the tenant.
 - `postTokenRequest(env, form)`: raw token endpoint POST with retry; returns `{ status, body }`.
 - `decodeClaims(token)`: unverified payload, for claim-name assertions only.
 - `startDownstreamApi({ domain, audience })`: local verifier; `{ url, calls, close }`.
-- `startMcpServer({ env, downstreamUrl, scopeMatching?, tokenStore?, requiredScopes?, organizationPolicy?, organizationId?, audience?, registerTools? })`: `{ url, client, close }`. Tools: `whoami`, `delegate({ scope?, audience? })`.
+- `startMcpServer({ env, downstreamUrl, scopeMatching?, tokenStore?, requiredScopes?, organizationPolicy?, organizationId?, audience?, clientSecret?, dpop?, registerTools? })`: Node adapter (`createNodeMcpHandler`). Returns `{ url, htu, client, close }`. Tools: `whoami`, `delegate({ scope?, audience? })`, `service({ connection, loginHint? })` (Token Vault, returns `{ ok, hasToken, scopeGranted }`, never a token).
+  - No `tokenStore` (or `tokenStore: null`) means no store: nothing is cached and only single-flight applies.
+  - `clientSecret` overrides the exchange client secret. `dpop` is passed to the ingress client (`{ mode: "allowed" | "required" | "disabled" }`, default `allowed`).
+  - `htu` is the URL the handler sees for the MCP endpoint (`<resource origin>/mcp`, the Node adapter and the bridge below rebuild requests on the resource origin). Use it as the `htu` of DPoP proofs.
+- `startWebMcpServer(sameOptions)`: serves the web-standard `createMcpSdkHandler` through a thin bridge (message conversion only). Returns the same fields plus `handle(request)` (call the handler directly) and `metadataUrl` (local URL of the protected resource metadata route).
 - `connectMcpClient(url, accessToken?)` and `callToolJson(client, name, args?)`: real SDK client.
 - `postInitialize(url, authorization?)`: raw POST returning status and parsed `WWW-Authenticate`.
 - `installFetchCounter()`: counts `/oauth/token` POSTs by grant type; call `restore()` in `afterEach`.
+- `installFetchFault(match, fault, { times? })`: `match` is `{ urlIncludes?, method?, grantType?, predicate? }`; `fault` is `{ kind: "status", status, body?, headers? }`, `{ kind: "network", message? }` (rejects with `TypeError("fetch failed")`) or `{ kind: "delay", ms }` (then passes through). Returns `{ injected, restore() }`. `times` faults the first N matches, then passes through.
+- `generateDpopKeyPair()` and `buildDpopProof(keys, { htm, htu, accessToken?, nonce?, iat?, jti? })`: ES256 key generated at runtime and an RFC 9449 proof JWT (`ath` is set when `accessToken` is given). `keys.jkt` is the thumbprint for `cnf.jkt`.
+- `describeRequest(input, init)`: URL, method and grant type of a fetch call.
+
+### Fetch seams: what the global `fetch` wrappers can reach
+
+`createMcpClient` accepts no custom fetch, so `globalThis.fetch` is the only seam. Verified against the installed core (`@auth0/auth0-api-js`) and `jose`:
+
+- Token endpoint calls (exchange, client credentials, Token Vault) call the global `fetch` on every request. Faultable at any time.
+- OIDC discovery (`oauth4webapi` `discoveryRequest`) uses the global `fetch` at call time, but the metadata is cached per client after the first success.
+- JWKS (`jose` `createRemoteJWKSet`) goes through the global `fetch`, but the core binds the `fetch` it sees when the JWKS set is first created (first token verification per client and JWKS URI), and caches the set. A fault installed after that point is not seen.
+- So for JWKS and discovery faults: install the fault, then create a fresh server (new client), then send the first authenticated request. A failed fetch is not cached; the next request retries and succeeds.
+- Observed (live): a 503 on the JWKS or the discovery GET makes ingress answer 401 with a Bearer challenge, not 500, because the core reports any verification failure as `VerifyAccessTokenError`. The retry after the fault is served normally.
+
+### Install order of `installFetchCounter` and `installFetchFault`
+
+The later install is the outer wrapper. Install the fault first and the counter second to count every attempt including faulted ones (a faulted exchange then shows in `counter.exchanges`). Install the counter first and the fault second to count only requests that reach the network. Restore in reverse order of installation.
