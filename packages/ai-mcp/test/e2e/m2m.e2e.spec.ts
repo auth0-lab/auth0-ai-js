@@ -54,7 +54,9 @@ describe.skipIf(!e2e.enabled)("e2e client credentials through the wrapper", () =
     expect(payload["scope"]).toBe("work:read");
     expect(result.scope).toBe("work:read");
     expect(result.grantedScopes).toEqual(["work:read"]);
-    expect(result.expiresAt).toBe(payload.exp);
+    // expiresAt is the client clock at receipt plus expires_in; exp is the server's issue time plus
+    // the same lifetime. They differ by the request latency and clock rounding, so allow 5 seconds.
+    expect(Math.abs(result.expiresAt - (payload.exp as number))).toBeLessThanOrEqual(5);
   });
 
   it("without a scope the grant is whatever the client holds, and the result reports it", async () => {

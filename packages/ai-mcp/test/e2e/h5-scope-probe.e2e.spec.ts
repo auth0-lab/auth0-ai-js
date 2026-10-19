@@ -14,8 +14,10 @@ import {
   callToolJson,
   connectMcpClient,
   decodeClaims,
+  getUserToken,
   installFetchCounter,
   loadE2eEnv,
+  postTokenRequest,
   startDownstreamApi,
   startMcpServer,
 } from "./support/index.js";
@@ -42,22 +44,6 @@ interface ProbeRow {
   error: string | null;
 }
 
-/** Posts a token request, retrying while the tenant rate limits (429). */
-async function postToken(form: Record<string, string>): Promise<Response> {
-  let response: Response | undefined;
-  for (let attempt = 0; attempt < 6; attempt += 1) {
-    response = await fetch(`https://${e2e.domain}/oauth/token`, {
-      method: "POST",
-      headers: { "content-type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams(form),
-    });
-    if (response.status !== 429) break;
-    await response.arrayBuffer();
-    await new Promise((resolve) => setTimeout(resolve, 2000 * (attempt + 1)));
-  }
-  return response!;
-}
-
 /** Posts one token request and reduces the answer to non-secret facts. */
 async function probe(
   grant: Grant,
@@ -65,8 +51,8 @@ async function probe(
   requestedScope: string | null,
   form: Record<string, string>,
 ): Promise<ProbeRow> {
-  const response = await postToken({ ...form, ...(requestedScope !== null && { scope: requestedScope }) });
-  const body = (await response.json().catch(() => ({}))) as { access_token?: string; scope?: unknown; error?: unknown };
+  const response = await postTokenRequest(e2e, { ...form, ...(requestedScope !== null && { scope: requestedScope }) });
+  const body = response.body as { access_token?: string; scope?: unknown; error?: unknown };
   const claims = typeof body.access_token === "string" ? decodeClaims(body.access_token) : {};
   return {
     grant,
@@ -81,23 +67,6 @@ async function probe(
   };
 }
 
-/** Password-realm token for the test user, retrying while the tenant rate limits. */
-async function mintUserToken(): Promise<string> {
-  const response = await postToken({
-    grant_type: "http://auth0.com/oauth/grant-type/password-realm",
-    realm: e2e.realm,
-    username: e2e.username,
-    password: e2e.password,
-    client_id: e2e.loginClientId,
-    client_secret: e2e.loginClientSecret,
-    audience: e2e.mcpAudience,
-    scope: e2e.downstreamScope,
-  });
-  const body = (await response.json().catch(() => ({}))) as { access_token?: string };
-  if (typeof body.access_token !== "string") throw new Error(`User token request failed: status ${response.status}`);
-  return body.access_token;
-}
-
 const CASES: Array<[Case, string | null]> = [
   ["partial", PARTIAL],
   ["zero", UNDEFINED_SCOPE],
@@ -110,7 +79,7 @@ describe.skipIf(!e2e.enabled)("e2e scope reporting on partial and zero grants", 
   const find = (grant: Grant, requested: Case) => rows.find((r) => r.grant === grant && r.requested === requested)!;
 
   beforeAll(async () => {
-    userToken = await mintUserToken();
+    userToken = await getUserToken(e2e);
     const subjectToken = userToken;
     for (const [name, scope] of CASES) {
       rows.push(

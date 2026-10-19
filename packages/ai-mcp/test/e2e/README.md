@@ -13,7 +13,18 @@ With `AUTH0_E2E=1` and a required variable missing, the spec file fails and name
 variables (never their values). Without `AUTH0_E2E=1`, `npm test` reports these specs as skipped.
 No CI workflow sets `AUTH0_E2E`, so CI never runs them.
 
-Run them with `npm run test:e2e` after exporting the variables below.
+Run them with `npm run test:e2e` after exporting the variables below. Files run one at a time
+(`--no-file-parallelism`) so they do not hit the tenant token endpoint at once. To run a subset,
+pass file name fragments to the runner script, for example `run-e2e.sh m2m obo-cache`.
+
+## Rate limits
+
+The tenant rate limits the password-realm and client credentials grants (429). Token helpers in
+`support/tokens.ts` retry 429 and 5xx with bounded exponential backoff, honoring `Retry-After` and
+`x-ratelimit-reset`, through one function, `postTokenRequest`. Minted user and client credentials
+tokens are memoized per process by grant, client, audience, scope and organization; pass
+`fresh: true` to mint a new one. Mint tokens in `beforeAll`, outside any fetch counter window, so
+retries never move a count assertion.
 
 ## Environment
 
@@ -31,8 +42,9 @@ Management API calls and change nothing in the tenant.
 ## Support API (`test/e2e/support`)
 
 - `loadE2eEnv(extra?)`: reads the contract; throws naming missing variables when enabled.
-- `getUserToken(env, { audience?, scope? })`: password-realm access token for the test user.
-- `getClientCredentialsToken(env, { audience, scope?, organization?, clientId?, clientSecret? })`.
+- `getUserToken(env, { audience?, scope?, fresh? })`: password-realm access token for the test user (memoized).
+- `getClientCredentialsToken(env, { audience, scope?, organization?, clientId?, clientSecret?, fresh? })` (memoized).
+- `postTokenRequest(env, form)`: raw token endpoint POST with retry; returns `{ status, body }`.
 - `decodeClaims(token)`: unverified payload, for claim-name assertions only.
 - `startDownstreamApi({ domain, audience })`: local verifier; `{ url, calls, close }`.
 - `startMcpServer({ env, downstreamUrl, scopeMatching?, tokenStore?, requiredScopes?, organizationPolicy?, organizationId?, audience?, registerTools? })`: `{ url, client, close }`. Tools: `whoami`, `delegate({ scope?, audience? })`.
