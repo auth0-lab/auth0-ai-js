@@ -241,6 +241,8 @@ export function createRequestScopedClient(init: RequestScopedClientInit): Reques
           ...(options.scope !== undefined && { scope: options.scope }),
         })
       );
+      // RFC 6749 section 5.1: an absent `scope` means the grant equals the request, while an
+      // empty string means nothing was granted. `??` keeps those two apart; `||` would not.
       const grantedScopes = normalizeScopes(result.scope ?? options.scope ?? '');
       // Thrown outside `guarded`: this error is already sanitized and must keep its own cause.
       assertServerGrantCovers(options.scope, grantedScopes);

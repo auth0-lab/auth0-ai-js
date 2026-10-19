@@ -80,7 +80,8 @@ export interface TokenForServiceOptions {
 export interface ClientCredentialsTokenResult extends TokenSet {
   /**
    * The granted scopes, deduplicated and sorted. When the server returned no
-   * `scope` field this holds the normalized requested scopes.
+   * `scope` field this holds the normalized requested scopes (RFC 6749 section
+   * 5.1). An empty `scope` string means nothing was granted and this is empty.
    */
   grantedScopes: string[];
 }

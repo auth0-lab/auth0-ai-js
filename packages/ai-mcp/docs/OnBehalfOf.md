@@ -43,7 +43,12 @@ It resolves to an `OnBehalfOfTokenResult`:
 | `grantedScopes` | The scopes that were actually granted, normalized, deduplicated and sorted. Always present. |
 | `tokenType`, `issuedTokenType` | Token type values returned by the exchange, when present. |
 
-Use `grantedScopes`, not `scope`, to decide what a token covers. An empty `scope` string means Auth0 granted nothing, which a truthiness test on `scope` would misread as a full grant.
+Use `grantedScopes`, not `scope`, to decide what a token covers. The token response is read the way RFC 6749 section 5.1 defines it:
+
+- **`scope` absent.** The server omitted the field, which the RFC allows only when the grant is identical to the request. `grantedScopes` holds the normalized requested scopes.
+- **`scope` empty (`""`).** Nothing was granted, and `grantedScopes` is empty. When you requested scopes, this is a narrowed grant and the call fails as described below. A truthiness test on `scope` would misread it as a full grant.
+
+The same rule applies to client credentials grants.
 
 ## Narrowed grants
 
@@ -97,6 +102,6 @@ export async function readConfig(): Promise<string> {
 }
 ```
 
-The result is the core `TokenSet` (`accessToken`, `expiresAt`, `scope`, `tokenType`) plus `grantedScopes`. When the server returned no `scope` field, `grantedScopes` holds the normalized requested scopes. A client credentials grant that is narrower than requested is a server-side configuration failure, because the scopes belong to the server's own client and the caller cannot fix them. It surfaces as a generic 500 through `onError`, with the downscope detail as the error's `cause`, and not as a 403.
+The result is the core `TokenSet` (`accessToken`, `expiresAt`, `scope`, `tokenType`) plus `grantedScopes`. When the server returned no `scope` field, `grantedScopes` holds the normalized requested scopes. An empty `scope` string means nothing was granted, and `grantedScopes` is empty. A client credentials grant that is narrower than requested is a server-side configuration failure, because the scopes belong to the server's own client and the caller cannot fix them. It surfaces as a generic 500 through `onError`, with the downscope detail as the error's `cause`, and not as a 403.
 
 This package does not cache client credentials tokens.
