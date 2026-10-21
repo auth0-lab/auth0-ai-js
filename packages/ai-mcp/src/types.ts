@@ -162,10 +162,13 @@ export interface McpClientOptions {
   dpop?: ApiClientOptions['dpop'];
   /**
    * Upper limit, in milliseconds, for each outbound HTTP request the core client makes:
-   * the token exchange, discovery and JWKS fetches. A request that exceeds it is aborted
-   * and fails as a server error, never as an authentication challenge. Nothing is cached,
-   * and concurrent callers that shared the exchange all fail; the next call starts a new
-   * one. Must be a finite number greater than 0 and at most 2147483647, otherwise
+   * the token exchange, discovery and JWKS fetches. The limit covers the response body
+   * as well as the headers. A request that exceeds it is aborted. A stalled token exchange
+   * fails as a server error (the handler answers 500), never as an authentication
+   * challenge; nothing is cached, concurrent callers that shared the exchange all fail, and
+   * the next call starts a new one. A stalled discovery or JWKS fetch surfaces from core as
+   * a token verification failure, so at ingress it currently answers 401 `invalid_token`,
+   * not 500. Must be a finite number greater than 0 and at most 2147483647, otherwise
    * `createMcpClient` throws `InvalidConfigurationError`.
    * @defaultValue `10000`
    */

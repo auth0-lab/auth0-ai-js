@@ -37,7 +37,7 @@ Messages are generic by design:
 | `InsufficientScopeError` or `DownscopedTokenError` escaping a custom `createMcpHandler` handler | 403 | `insufficient_scope` |
 | Anything else thrown by your handler, including core and network errors | 500 | none, generic body |
 
-Only this package's three error classes become client-facing failures when they escape your handler. A failed token exchange or a `ForeignCallerError` is an internal error: the client gets a generic 500 and `onError` receives the real error.
+Only this package's three error classes become client-facing failures when they escape your handler. A failed token exchange or a `ForeignCallerError` is an internal error: the client gets a generic 500 and `onError` receives the real error. That includes an exchange that exceeds `requestTimeoutMs`. A discovery or JWKS fetch that exceeds it is different: core reports it as a failed token verification, so that request currently gets 401 `invalid_token`.
 
 With the official MCP SDK's `McpServer` (`createMcpSdkHandler` and `createNodeMcpHandler`), the SDK turns an error thrown inside a tool callback into a tool result with `isError: true` and a sanitized message, so the error does not reach the handler and the HTTP status stays 200. That includes `DownscopedTokenError` from a downscoped exchange. Catch errors in the tool when you want control over the message.
 
