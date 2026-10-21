@@ -10,6 +10,7 @@ import { UnauthenticatedError } from './errors.js';
 import { buildPrincipal } from './principal.js';
 import { createRequestScopedClient } from './request-scoped-client.js';
 import { SingleFlight } from './single-flight.js';
+import { DEFAULT_REQUEST_TIMEOUT_MS, assertValidTimeout, createTimeoutFetch } from './timeout-fetch.js';
 import type { McpClientOptions, Principal, RequestScopedMcpClient } from './types.js';
 
 /**
@@ -90,6 +91,7 @@ const CORE_CLIENT_OPTIONS = [
   'organizationPolicy',
   'organizationId',
   'dpop',
+  'requestTimeoutMs',
 ] as const;
 
 /**
@@ -102,7 +104,7 @@ const CORE_CLIENT_OPTIONS = [
  * the core client is rejected, so no setting is silently ignored.
  *
  * @throws {InvalidConfigurationError} On an unusable scope matching and store combination,
- * on `apiClient` combined with core client options, or on any invalid option the core
+ * on an invalid `requestTimeoutMs`, on `apiClient` combined with core client options, or on any invalid option the core
  * client rejects.
  */
 export function createMcpClient(options: McpClientOptions): McpClient {
@@ -119,6 +121,17 @@ export function createMcpClient(options: McpClientOptions): McpClient {
     );
   }
 
+  let timeoutMs = DEFAULT_REQUEST_TIMEOUT_MS;
+  if (options.apiClient === undefined && options.requestTimeoutMs !== undefined) {
+    try {
+      timeoutMs = assertValidTimeout(options.requestTimeoutMs);
+    } catch (error) {
+      throw new InvalidConfigurationError(
+        `Invalid configuration: "requestTimeoutMs" ${(error as RangeError).message}.`
+      );
+    }
+  }
+
   const apiClient =
     options.apiClient ??
     new ApiClient({
@@ -130,6 +143,7 @@ export function createMcpClient(options: McpClientOptions): McpClient {
       ...(options.organizationPolicy !== undefined && { organizationPolicy: options.organizationPolicy }),
       ...(options.organizationId !== undefined && { organizationId: options.organizationId }),
       ...(options.dpop !== undefined && { dpop: options.dpop }),
+      customFetch: createTimeoutFetch(timeoutMs),
     });
 
   const tokenStore = options.tokenStore;

@@ -85,6 +85,24 @@ Concurrent identical exchanges from one `McpClient` share a single request to Au
 
 Errors leave the request-scoped client with a fixed generic message. The original error is kept as `cause` for server-side diagnostics and must not be serialized into a response. Core errors keep their class, `code`, `statusCode` and `headers`, so `instanceof` checks against the error classes of `@auth0/auth0-api-js` still work. Catch these in your tool and return an `isError` result, as the example in [Examples](../EXAMPLES.md) does.
 
+## Timeouts
+
+Each outbound HTTP request the client makes (the token exchange, discovery and JWKS fetches) is aborted after `requestTimeoutMs`, which defaults to 10 seconds:
+
+```ts
+import { createMcpClient } from '@auth0/ai-mcp';
+
+const client = createMcpClient({
+  domain: 'example.auth0.com',
+  audience: 'https://mcp.example.com',
+  clientId: process.env.AUTH0_CLIENT_ID,
+  clientSecret: process.env.AUTH0_CLIENT_SECRET,
+  requestTimeoutMs: 5_000,
+});
+```
+
+The value must be a finite number greater than 0 and at most 2147483647. The limit covers the response body as well as the headers. When a token exchange times out, the underlying call is cancelled, nothing is cached, and every caller that shared that exchange fails with the same error. The next call starts a fresh exchange. The failure is a server error, so `createMcpHandler` answers 500 and never a 401 challenge. Discovery and JWKS fetches are bounded by the same limit, but their failure reaches you as a token verification failure: a request whose discovery or JWKS fetch times out currently gets 401 `invalid_token`, not 500. The limit applies to the client the package builds. If you pass your own `apiClient`, set a `customFetch` on it instead; combining `apiClient` with `requestTimeoutMs` throws `InvalidConfigurationError`.
+
 ## Client credentials
 
 `getClientCredentialsToken` obtains a token for the server itself, using its own client credentials, with no caller involved. Use it when the tool acts as the service, for example to call an internal API that is not user-scoped.

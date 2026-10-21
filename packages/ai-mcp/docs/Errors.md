@@ -37,7 +37,7 @@ Messages are generic by design:
 | `InsufficientScopeError` or `DownscopedTokenError` escaping a custom `createMcpHandler` handler | 403 | `insufficient_scope` |
 | Anything else thrown by your handler, including core and network errors | 500 | none, generic body |
 
-Only this package's three error classes become client-facing failures when they escape your handler. A failed token exchange or a `ForeignCallerError` is an internal error: the client gets a generic 500 and `onError` receives the real error.
+Only this package's three error classes become client-facing failures when they escape your handler. A failed token exchange or a `ForeignCallerError` is an internal error: the client gets a generic 500 and `onError` receives the real error. That includes an exchange that exceeds `requestTimeoutMs`. A discovery or JWKS fetch that exceeds it is different: core reports it as a failed token verification, so that request currently gets 401 `invalid_token`.
 
 With the official MCP SDK's `McpServer` (`createMcpSdkHandler` and `createNodeMcpHandler`), the SDK turns an error thrown inside a tool callback into a tool result with `isError: true` and a sanitized message, so the error does not reach the handler and the HTTP status stays 200. That includes `DownscopedTokenError` from a downscoped exchange. Catch errors in the tool when you want control over the message.
 
@@ -62,7 +62,8 @@ A request-scoped client method sanitizes the errors it throws: it replaces the m
 `InvalidConfigurationError` (from `@auth0/auth0-api-js`) is thrown at construction time when:
 
 - `scopeMatching` is `'non_strict'` and `tokenStore` is missing or not an indexed store,
-- you pass `apiClient` together with `clientId`, `clientSecret`, `scopeMatching`, `organizationPolicy`, `organizationId` or `dpop`,
+- you pass `apiClient` together with `clientId`, `clientSecret`, `scopeMatching`, `organizationPolicy`, `organizationId`, `dpop` or `requestTimeoutMs`,
+- `requestTimeoutMs` is not a finite number greater than 0 and at most 2147483647,
 - `organizationId` is set while `organizationPolicy` is not `'required'`,
 - `createEncryptedTokenStore` receives a `secret` shorter than 32 characters,
 - `MemoryIndexedTokenStore` receives a `maxEntries` that is not a positive integer,
