@@ -93,7 +93,7 @@ describe("documentation snippets", () => {
   }, 120_000);
 
   it("finds the documented code blocks", () => {
-    expect(snippets.length).toBe(29);
+    expect(snippets.length).toBe(30);
     const fenceCount = documentPaths().reduce(
       (total, file) =>
         total + (readFileSync(file, "utf8").match(/^```(?:ts|tsx|typescript|js|jsx|javascript)$/gm) ?? []).length,
