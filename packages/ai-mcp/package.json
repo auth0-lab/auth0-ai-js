@@ -22,7 +22,8 @@
     "lint": "eslint .",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
-    "test:smoke": "vitest run test/smoke"
+    "test:smoke": "vitest run test/smoke",
+    "test:e2e": "AUTH0_E2E=1 vitest run --config vitest.e2e.config.ts"
   },
   "files": [
     "dist/**/*.{*js,*js.map,d.ts,d.ts.map}",

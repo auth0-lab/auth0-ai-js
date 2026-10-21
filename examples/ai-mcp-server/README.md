@@ -30,6 +30,46 @@ Point an MCP client at `MCP_SERVER_URL` and send the user's access token as a be
 
 The `.env` file is read with Node's `--env-file` support, so no extra package is needed.
 
+## Run against a real tenant
+
+`npm run smoke:real` starts the downstream API and the MCP server on loopback, signs a test user in against your tenant, connects an MCP client over Streamable HTTP with that user's access token, lists the tools and calls both. The downstream API checks the exchanged token against the tenant's JWKS (signature, issuer, audience, expiry, scope), so a passing run shows that a real on-behalf-of token arrived.
+
+### Tenant prerequisites
+
+- An API for the MCP server. Its identifier is `MCP_SERVER_URL`. Define the scope you use for `MCP_ADMIN_SCOPE`, and give the test user's token that scope.
+- An API for the downstream service. Its identifier is `DOWNSTREAM_AUDIENCE`. Define the scope used for `DOWNSTREAM_SCOPE` and `DOWNSTREAM_REQUIRED_SCOPE`.
+- A custom API client for the MCP server API, with the on-behalf-of token exchange profile type allowed. Its id and secret go in `AUTH0_CLIENT_ID` and `AUTH0_CLIENT_SECRET`.
+- A client grant that lets that client request the downstream API and scope, with the subject type set to user.
+- A test user in a database connection, and a login client that the password grant is enabled for (the password-realm grant if you set `SMOKE_REALM`). The login client needs no grant of its own.
+
+The smoke test uses the Resource Owner Password grant to get the user token. That grant is for local testing only. Production clients should sign users in with the authorization code flow and PKCE.
+
+### Configure and run
+
+```sh
+cp .env.example .env   # fill in every value, including the SMOKE_* ones
+npm run smoke:real
+```
+
+`smoke:real` needs Node 22.9 or later, because it loads `.env` with `--env-file-if-exists`.
+
+`.env` is ignored by git. Keep real values out of any file that is committed.
+
+### Expected output
+
+```
+PASS  servers started  (mcp port 52006, downstream port 52005)
+PASS  user token issued  (length 734, claims aud,azp,exp,gty,iat,iss,scope,sub)
+PASS  mcp client connected
+PASS  tools listed  (admin_summary,list_reports)
+PASS  list_reports returned data fetched with an exchanged token  (2 reports)
+PASS  admin_summary allowed for the caller  (ok)
+
+6/6 checks passed
+```
+
+The ports and the token length vary. The script prints no token or secret values, and exits with a non-zero status if any check fails. It always shuts both servers down.
+
 ## Check
 
 ```sh
