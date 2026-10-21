@@ -19,7 +19,10 @@ import { createMcpApp } from "../src/mcp-app.js";
 
 // Offline: Auth0 is replaced by MSW handlers; both servers listen on loopback.
 const MCP_URL = "https://mcp.example.com/mcp";
-const DOWNSTREAM_AUDIENCE = "https://reports.example.com";
+const ORDERS = "https://orders.example.com";
+const INVENTORY = "https://inventory.example.com";
+const ANALYTICS = "https://analytics.example.com";
+const ALL_TOOLS = "openid tool:order_status_report tool:fulfill_order tool:sales_analytics_report";
 
 let key: TestKey;
 let tenant: ReturnType<typeof createAuth0Handlers>;
@@ -52,8 +55,9 @@ beforeAll(async () => {
 
   const downstreamConfig: DownstreamConfig = {
     domain: "tenant.example.com",
-    audience: DOWNSTREAM_AUDIENCE,
-    requiredScope: "read:reports",
+    ordersAudience: ORDERS,
+    inventoryAudience: INVENTORY,
+    analyticsAudience: ANALYTICS,
     port: 0,
   };
   downstream = createDownstreamServer(
@@ -70,10 +74,10 @@ beforeAll(async () => {
     clientId: "mcp-client",
     clientSecret: "secret",
     requiredScopes: [],
-    adminScope: "read:admin",
-    downstreamAudience: DOWNSTREAM_AUDIENCE,
-    downstreamUrl: `http://127.0.0.1:${downstreamPort}`,
-    downstreamScope: "read:reports",
+    ordersAudience: ORDERS,
+    inventoryAudience: INVENTORY,
+    analyticsAudience: ANALYTICS,
+    storeApiUrl: `http://127.0.0.1:${downstreamPort}`,
     downstreamTimeoutMs: 2000,
     port: 0,
   };
@@ -100,7 +104,11 @@ function callerToken(scope: string, sub = "user|1") {
   });
 }
 
-async function callTool(name: string, token?: string) {
+async function callTool(
+  name: string,
+  token?: string,
+  args: Record<string, unknown> = {},
+) {
   return fetch(`http://127.0.0.1:${mcpPort}/mcp`, {
     method: "POST",
     headers: {
@@ -112,7 +120,7 @@ async function callTool(name: string, token?: string) {
       jsonrpc: "2.0",
       id: 1,
       method: "tools/call",
-      params: { name, arguments: {} },
+      params: { name, arguments: args },
     }),
   });
 }
@@ -121,29 +129,119 @@ interface ToolResult {
   result?: { isError?: boolean; content: Array<{ text: string }> };
 }
 
+async function run(
+  name: string,
+  scope: string,
+  sub: string,
+  args: Record<string, unknown> = {},
+) {
+  const response = await callTool(name, await callerToken(scope, sub), args);
+  expect(response.status).toBe(200);
+  const body = (await response.json()) as ToolResult;
+  return { text: body.result?.content[0]?.text ?? "", isError: body.result?.isError };
+}
+
 describe("example MCP server", () => {
   it("rejects a request without a credential", async () => {
-    const response = await callTool("list_reports");
+    const response = await callTool("order_status_report");
     expect(response.status).toBe(401);
     expect(response.headers.get("www-authenticate")).toMatch(/^Bearer /);
   });
 
-  it("lists reports from the downstream API with an exchanged token", async () => {
-    const response = await callTool(
-      "list_reports",
-      await callerToken("openid"),
-    );
-    const body = (await response.json()) as ToolResult;
+  it("lists recent orders with two exchanged tokens", async () => {
+    const out = await run("order_status_report", ALL_TOOLS, "user|status");
 
-    expect(response.status).toBe(200);
-    expect(body.result?.isError).toBeFalsy();
-    expect(JSON.parse(body.result!.content[0]!.text)).toMatchObject({
-      reports: [{ id: "r-1" }, { id: "r-2" }],
+    expect(out.isError).toBeFalsy();
+    expect(out.text).toContain("Recent orders for user|status:");
+    expect(out.text).toContain("- ORD-1001 Wireless Headphones x1, shipped, stock left 24");
+    expect(out.text).toContain("- ORD-1002 Mechanical Keyboard x1, processing, stock left 12");
+    expect(out.text).toContain(`Orders (aud ${ORDERS}, scope read:orders`);
+    expect(out.text).toContain(`Inventory (aud ${INVENTORY}, scope read:inventory`);
+    expect(tenant.state.successfulExchangeCount).toBe(2);
+    expect(
+      tenant.state.requests.map((r) => r.params["audience"]).sort(),
+    ).toEqual([INVENTORY, ORDERS]);
+  });
+
+  it("reuses saved tokens on a repeat lookup", async () => {
+    await run("order_status_report", ALL_TOOLS, "user|repeat");
+    expect(tenant.state.successfulExchangeCount).toBe(2);
+    tenant.state.requests.length = 0;
+    tenant.state.exchangeCount = 0;
+    await run("order_status_report", ALL_TOOLS, "user|repeat");
+    expect(tenant.state.exchangeCount).toBe(0);
+  });
+
+  it("reuses the Orders token when fulfilling right after a status report", async () => {
+    await run("order_status_report", ALL_TOOLS, "user|reuse");
+    tenant.state.exchangeCount = 0;
+    await run("fulfill_order", ALL_TOOLS, "user|reuse", { order_id: "ORD-1001" });
+    // Only the Inventory write token is new.
+    expect(tenant.state.exchangeCount).toBe(1);
+    expect(tenant.state.lastExchangeRequest?.params["audience"]).toBe(INVENTORY);
+  });
+
+  it("shows one order, and reports an unknown one", async () => {
+    const one = await run("order_status_report", ALL_TOOLS, "user|one", {
+      order_id: "ORD-1003",
     });
-    expect(tenant.state.successfulExchangeCount).toBe(1);
-    expect(tenant.state.lastExchangeRequest?.params["audience"]).toBe(
-      DOWNSTREAM_AUDIENCE,
+    expect(one.text).toContain("Status of ORD-1003 for user|one:");
+    expect(one.text).not.toContain("ORD-1001");
+
+    const missing = await run("order_status_report", ALL_TOOLS, "user|one", {
+      order_id: "ORD-9999",
+    });
+    expect(missing.isError).toBe(true);
+    expect(missing.text).toBe("Order ORD-9999 was not found.");
+  });
+
+  it("fulfills an order once and changes stock", async () => {
+    const first = await run("fulfill_order", ALL_TOOLS, "user|fulfill", {
+      order_id: "ORD-1002",
+    });
+    expect(first.isError).toBeFalsy();
+    expect(first.text).toContain(
+      "Order ORD-1002 fulfilled: reserved 1 x Mechanical Keyboard (stock 12 -> 11)",
     );
+    expect(first.text).toContain(`Inventory (aud ${INVENTORY}, scope write:inventory`);
+
+    const again = await run("fulfill_order", ALL_TOOLS, "user|fulfill", {
+      order_id: "ORD-1002",
+    });
+    expect(again.text).toContain(
+      "Order ORD-1002 was already fulfilled (stock stays 11)",
+    );
+
+    const report = await run("order_status_report", ALL_TOOLS, "user|fulfill");
+    expect(report.text).toContain("ORD-1002 Mechanical Keyboard x1, processing, stock left 11");
+  });
+
+  it("fetches sales numbers with the server's own token", async () => {
+    const out = await run("sales_analytics_report", ALL_TOOLS, "user|sales");
+
+    expect(out.text).toContain("Monthly revenue: $142,000 | Top product: Enterprise Suite");
+    expect(out.text).toContain(
+      `Checked by: Analytics (aud ${ANALYTICS}, scope read:analytics, service token for the server itself)`,
+    );
+    expect(tenant.state.clientCredentialsCount).toBe(1);
+    expect(tenant.state.successfulExchangeCount).toBe(0);
+  });
+
+  it("denies a tool per tool, with HTTP 200 and an error result", async () => {
+    const denied = await run(
+      "sales_analytics_report",
+      "openid tool:order_status_report",
+      "user|limited",
+    );
+    expect(denied.isError).toBe(true);
+    expect(tenant.state.clientCredentialsCount).toBe(0);
+
+    const allowed = await run(
+      "order_status_report",
+      "openid tool:order_status_report",
+      "user|limited",
+    );
+    expect(allowed.isError).toBeFalsy();
   });
 
   it("never returns exchange error text in the tool result", async () => {
@@ -156,115 +254,124 @@ describe("example MCP server", () => {
     };
     // A caller no earlier test used, so a cached exchange cannot hide the failure.
     const response = await callTool(
-      "list_reports",
-      await callerToken("openid", "user|failing"),
+      "order_status_report",
+      await callerToken(ALL_TOOLS, "user|failing"),
     );
     const raw = await response.text();
     const body = JSON.parse(raw) as ToolResult;
 
     expect(body.result?.isError).toBe(true);
-    expect(body.result?.content[0]?.text).toBe(
-      "Could not reach the downstream API.",
-    );
+    expect(body.result?.content[0]?.text).toBe("Could not reach the store API.");
     expect(raw).not.toContain("SECRET-INTERNAL-DETAIL");
     expect(raw).not.toContain("invalid_grant");
   });
-
-  it("denies the admin tool per tool, with HTTP 200 and an error result", async () => {
-    const response = await callTool(
-      "admin_summary",
-      await callerToken("openid"),
-    );
-    const body = (await response.json()) as ToolResult;
-
-    expect(response.status).toBe(200);
-    expect(body.result?.isError).toBe(true);
-  });
-
-  it("runs the admin tool for a caller with the admin scope", async () => {
-    const response = await callTool(
-      "admin_summary",
-      await callerToken("openid read:admin"),
-    );
-    const body = (await response.json()) as ToolResult;
-
-    expect(body.result?.isError).toBeFalsy();
-    expect(body.result?.content[0]?.text).toContain("Administrator summary");
-  });
 });
 
-describe("example downstream API", () => {
-  function get(token?: string) {
-    return fetch(`http://127.0.0.1:${downstreamPort}/reports`, {
+describe("example store API", () => {
+  function get(path: string, token?: string) {
+    return fetch(`http://127.0.0.1:${downstreamPort}${path}`, {
       headers: token ? { authorization: `Bearer ${token}` } : {},
     });
   }
 
+  function mint(
+    aud: string,
+    scope: string,
+    extra: { sub?: string; exp?: number } = {},
+  ) {
+    return mintAccessToken(key, {
+      iss: tenant.issuer,
+      aud,
+      sub: extra.sub ?? "user|1",
+      scope,
+      ...(extra.exp !== undefined && { exp: extra.exp }),
+    });
+  }
+
   it("answers 401 without a token", async () => {
-    expect((await get()).status).toBe(401);
+    const res = await get("/orders");
+    expect(res.status).toBe(401);
+    expect(res.headers.get("www-authenticate")).toBe("Bearer");
   });
 
-  it("answers 401 for a token issued for another audience", async () => {
-    const token = await mintAccessToken(key, {
-      iss: tenant.issuer,
-      aud: "https://other.example.com",
-      sub: "user|1",
-      scope: "read:reports",
-    });
-    expect((await get(token)).status).toBe(401);
+  it("answers 401 for a token issued for another service", async () => {
+    expect((await get("/orders", await mint(INVENTORY, "read:orders"))).status).toBe(401);
+    expect((await get("/inventory/SKU-HEAD-01", await mint(ORDERS, "read:inventory"))).status).toBe(401);
   });
 
   it("answers 403 when the scope is missing", async () => {
-    const token = await mintAccessToken(key, {
-      iss: tenant.issuer,
-      aud: DOWNSTREAM_AUDIENCE,
-      sub: "user|1",
-      scope: "other:scope",
-    });
-    expect((await get(token)).status).toBe(403);
+    const res = await get("/orders", await mint(ORDERS, "other:scope"));
+    expect(res.status).toBe(403);
+    expect(res.headers.get("www-authenticate")).toContain("insufficient_scope");
   });
 
-  it("answers 200 for a valid token", async () => {
-    const token = await mintAccessToken(key, {
-      iss: tenant.issuer,
-      aud: DOWNSTREAM_AUDIENCE,
-      sub: "user|1",
-      scope: "read:reports",
+  it("answers 200 with proof of what was checked", async () => {
+    const res = await get("/orders", await mint(ORDERS, "read:orders"));
+    const body = (await res.json()) as { orders: unknown[]; verified: object };
+    expect(res.status).toBe(200);
+    expect(body.orders).toHaveLength(3);
+    expect(body.verified).toMatchObject({
+      audience: ORDERS,
+      scope: "read:orders",
+      subject: "user|1",
     });
-    expect((await get(token)).status).toBe(200);
+  });
+
+  it("answers 404 for an unknown order, sku or route", async () => {
+    expect((await get("/orders/ORD-0", await mint(ORDERS, "read:orders"))).status).toBe(404);
+    expect((await get("/inventory/SKU-NONE", await mint(INVENTORY, "read:inventory"))).status).toBe(404);
+    expect((await get("/nothing", await mint(ORDERS, "read:orders"))).status).toBe(404);
+  });
+
+  it("needs the write scope to reserve stock, and rejects bad bodies", async () => {
+    const post = (token: string, body: string) =>
+      fetch(`http://127.0.0.1:${downstreamPort}/inventory/SKU-DOCK-03/reserve`, {
+        method: "POST",
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body,
+      });
+    const readOnly = await mint(INVENTORY, "read:inventory");
+    expect((await post(readOnly, "{}")).status).toBe(403);
+    const writer = await mint(INVENTORY, "read:inventory write:inventory");
+    expect((await post(writer, "not json")).status).toBe(400);
+    expect((await post(writer, JSON.stringify({ qty: 0, order_id: "ORD-1003" }))).status).toBe(400);
+    expect((await post(writer, JSON.stringify({ qty: 1, order_id: "ORD-0" }))).status).toBe(404);
+  });
+
+  it("serves analytics only to a service token", async () => {
+    const service = await mint(ANALYTICS, "read:analytics", { sub: "mcp-client@clients" });
+    expect((await get("/analytics/monthly-revenue", service)).status).toBe(200);
+    const user = await mint(ANALYTICS, "read:analytics");
+    expect((await get("/analytics/monthly-revenue", user)).status).toBe(401);
   });
 
   it("answers 401 for an unsigned alg:none token", async () => {
     const token = mintUnsignedToken({
       iss: tenant.issuer,
-      aud: DOWNSTREAM_AUDIENCE,
+      aud: ORDERS,
       sub: "user|1",
-      scope: "read:reports",
+      scope: "read:orders",
       exp: Math.floor(Date.now() / 1000) + 3600,
     });
-    expect((await get(token)).status).toBe(401);
+    expect((await get("/orders", token)).status).toBe(401);
   });
 
   it("answers 401 for an HS256 token signed with the public key material", async () => {
     const secret = new TextEncoder().encode(JSON.stringify(key.publicJwk));
-    const token = await new SignJWT({ scope: "read:reports" })
+    const token = await new SignJWT({ scope: "read:orders" })
       .setProtectedHeader({ alg: "HS256", kid: key.kid })
       .setIssuer(tenant.issuer)
-      .setAudience(DOWNSTREAM_AUDIENCE)
+      .setAudience(ORDERS)
       .setSubject("user|1")
       .setExpirationTime("1h")
       .sign(secret);
-    expect((await get(token)).status).toBe(401);
+    expect((await get("/orders", token)).status).toBe(401);
   });
 
   it("answers 401 for an expired token", async () => {
-    const token = await mintAccessToken(key, {
-      iss: tenant.issuer,
-      aud: DOWNSTREAM_AUDIENCE,
-      sub: "user|1",
-      scope: "read:reports",
+    const token = await mint(ORDERS, "read:orders", {
       exp: Math.floor(Date.now() / 1000) - 3600,
     });
-    expect((await get(token)).status).toBe(401);
+    expect((await get("/orders", token)).status).toBe(401);
   });
 });

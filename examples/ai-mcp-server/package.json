@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "MCP server that authenticates callers with Auth0 and calls a downstream API on their behalf",
+  "description": "Online store MCP server that authenticates callers with Auth0 and calls store APIs on their behalf",
   "scripts": {
     "build": "rm -rf dist && tsc -p tsconfig.build.json",
     "start": "tsx --env-file=.env src/server.ts",
@@ -20,7 +20,8 @@
   "dependencies": {
     "@auth0/ai-mcp": "*",
     "@modelcontextprotocol/sdk": "^1.31.0",
-    "jose": "^6.0.0"
+    "jose": "^6.0.0",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@eslint/js": "^9.18.0",

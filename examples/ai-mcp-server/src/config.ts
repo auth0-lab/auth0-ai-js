@@ -43,19 +43,21 @@ export interface McpServerConfig {
   clientId: string;
   clientSecret: string;
   requiredScopes: string[];
-  adminScope: string;
-  downstreamAudience: string;
-  downstreamUrl: string;
-  downstreamScope: string;
-  /** Longest wait for the downstream API, in milliseconds. */
+  ordersAudience: string;
+  inventoryAudience: string;
+  analyticsAudience: string;
+  /** Base URL of the store API. */
+  storeApiUrl: string;
+  /** Longest wait for the store API, in milliseconds. */
   downstreamTimeoutMs: number;
   port: number;
 }
 
 export interface DownstreamConfig {
   domain: string;
-  audience: string;
-  requiredScope: string;
+  ordersAudience: string;
+  inventoryAudience: string;
+  analyticsAudience: string;
   port: number;
 }
 
@@ -68,10 +70,10 @@ export function loadMcpServerConfig(
     clientId: required(env, "AUTH0_CLIENT_ID"),
     clientSecret: required(env, "AUTH0_CLIENT_SECRET"),
     requiredScopes: list(env["MCP_REQUIRED_SCOPES"]),
-    adminScope: required(env, "MCP_ADMIN_SCOPE"),
-    downstreamAudience: required(env, "DOWNSTREAM_AUDIENCE"),
-    downstreamUrl: required(env, "DOWNSTREAM_URL"),
-    downstreamScope: required(env, "DOWNSTREAM_SCOPE"),
+    ordersAudience: required(env, "ORDERS_AUDIENCE"),
+    inventoryAudience: required(env, "INVENTORY_AUDIENCE"),
+    analyticsAudience: required(env, "ANALYTICS_AUDIENCE"),
+    storeApiUrl: required(env, "STORE_API_URL"),
     downstreamTimeoutMs: positiveInt(env, "DOWNSTREAM_TIMEOUT_MS", 5000),
     port: port(env, "MCP_PORT", 3001),
   };
@@ -82,8 +84,9 @@ export function loadDownstreamConfig(
 ): DownstreamConfig {
   return {
     domain: required(env, "AUTH0_DOMAIN"),
-    audience: required(env, "DOWNSTREAM_AUDIENCE"),
-    requiredScope: required(env, "DOWNSTREAM_REQUIRED_SCOPE"),
-    port: port(env, "DOWNSTREAM_PORT", 3002),
+    ordersAudience: required(env, "ORDERS_AUDIENCE"),
+    inventoryAudience: required(env, "INVENTORY_AUDIENCE"),
+    analyticsAudience: required(env, "ANALYTICS_AUDIENCE"),
+    port: port(env, "DOWNSTREAM_PORT", 3003),
   };
 }
